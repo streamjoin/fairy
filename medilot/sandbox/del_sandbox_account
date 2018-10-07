@@ -1,0 +1,39 @@
+#!/bin/bash
+set -o nounset
+#set -o errexit
+set -o pipefail
+
+# Default settings
+DEFAULT_PEM_HOME="/home/ubuntu/sandbox_private_keys/"
+DEFAULT_USERNAME_INIT="sandbox"
+
+# Validate command parameters
+if [[ $# -lt 1 ]]; then
+  echo "Usage: $0 <sandbox_id>"
+  exit 1
+fi
+
+# Construct variables
+ID="$1"
+USERNAME="${DEFAULT_USERNAME_INIT}${ID}"
+
+# Delete account and the associated home folder
+sudo rm -rf /home/$USERNAME && sudo userdel $USERNAME
+
+RET="$?"
+
+# End of script
+BOLD="\033[1m"
+RED="\033[31m"
+GREEN="\033[32m"
+YELLOW="\033[33m"
+NE="\033[0m"
+
+if [[ ${RET} -eq 0 ]]; then
+  echo -e "account '${USERNAME}' has been deleted successfully"
+  rm -f $DEFAULT_PEM_HOME/${USERNAME}.pem
+else
+  echo -e "${RED}failed to delete account '${USERNAME}'${NE}"
+fi
+
+exit ${RET}

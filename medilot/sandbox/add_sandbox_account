@@ -1,0 +1,56 @@
+#!/bin/bash
+set -o nounset
+set -o errexit
+set -o pipefail
+
+# Default settings
+DEFAULT_PEM_HOME="/home/ubuntu/sandbox_private_keys/"
+DEFAULT_ENV_CONF_REF_ROOT="/usr/local/share"
+DEFAULT_USERNAME_INIT="sandbox"
+DEFAULT_PASSWORD_INIT="sb"
+
+# Validate command parameters
+if [[ $# -lt 1 ]]; then
+  echo "Usage: $0 <sandbox_id>"
+  exit 1
+fi
+
+# Construct variables
+ID="$1"
+USERNAME="${DEFAULT_USERNAME_INIT}${ID}"
+PASSWORD="${DEFAULT_PASSWORD_INIT}${ID}"
+GROUP="$DEFAULT_USERNAME_INIT"
+USER_HOME="/home/$USERNAME"
+
+# Create account
+sudo useradd -G $GROUP $USERNAME -m -s /bin/bash
+
+# Configure account password
+echo -e "${PASSWORD}\n${PASSWORD}" | sudo passwd -q ${USERNAME} >> /dev/null 2>&1
+
+# Confiugre enviornment
+link_conf() {
+  sudo rm -f $USER_HOME/$1
+  sudo ln -s $DEFAULT_ENV_CONF_REF_ROOT/$1 $USER_HOME/$1
+}
+
+link_conf .bash_aliases
+link_conf .profile
+link_conf .vimrc
+
+# Generate SSH keys (private/public)
+USER_SSH_ROOT="$USER_HOME/.ssh"
+sudo mkdir -p $USER_SSH_ROOT
+sudo ssh-keygen -t rsa -f $USER_SSH_ROOT/id_rsa -P '' -q
+sudo touch $USER_SSH_ROOT/authorized_keys
+sudo chmod 722 $USER_SSH_ROOT/authorized_keys
+sudo cat $USER_SSH_ROOT/id_rsa.pub >> $USER_SSH_ROOT/authorized_keys
+sudo chmod 600 $USER_SSH_ROOT/authorized_keys
+sudo cp -f $USER_SSH_ROOT/id_rsa $DEFAULT_PEM_HOME/${USERNAME}.pem
+sudo chmod +r $DEFAULT_PEM_HOME/${USERNAME}.pem 
+sudo chown -R $USERNAME:$USERNAME $USER_SSH_ROOT
+sudo chmod 700 $USER_HOME
+
+# End of script
+echo -e "account '${USERNAME}' has been created successfully"
+exit 0

@@ -1,0 +1,13 @@
+#!/bin/bash
+set -o nounset
+set -o errexit
+set -o pipefail
+
+# Default settings
+USERNAME_INIT="sandbox"
+
+# list usernames according to the specified pattern
+cut -d: -f1 /etc/passwd | grep ${USERNAME_INIT}.*
+
+# End of script
+exit $?

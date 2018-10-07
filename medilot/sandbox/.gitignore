@@ -1,0 +1,5 @@
+# Project files
+*.sublime-workspace
+
+# Temporary files from vim
+*.swp
