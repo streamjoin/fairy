@@ -27,6 +27,7 @@ USER_HOME="/home/$USERNAME"
 
 # Create account
 sudo useradd -G $GROUP $USERNAME -m -s /bin/bash
+sudo usermod -a -G docker $USERNAME 
 
 # Configure account password
 echo -e "${PASSWORD}\n${PASSWORD}" | sudo passwd -q ${USERNAME} >> /dev/null 2>&1
