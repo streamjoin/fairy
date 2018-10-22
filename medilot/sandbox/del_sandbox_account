@@ -1,11 +1,16 @@
 #!/bin/bash
-set -o nounset
+#set -o nounset
 #set -o errexit
-set -o pipefail
+#set -o pipefail
 
-# Default settings
-DEFAULT_PEM_HOME="/home/ubuntu/sandbox_private_keys/"
-DEFAULT_USERNAME_INIT="sandbox"
+DEFAULT_SANDBOX_SCRIPT_CONF="/home/ubuntu/sandbox_scripts/sandbox_script.conf"
+
+# Inlcude script configuration
+if [[ -z $SANDBOX_SCRIPT_CONF ]]; then
+  source $DEFAULT_SANDBOX_SCRIPT_CONF
+else
+  source $SANDBOX_SCRIPT_CONF
+fi
 
 # Validate command parameters
 if [[ $# -lt 1 ]]; then

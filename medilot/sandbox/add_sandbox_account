@@ -1,13 +1,16 @@
 #!/bin/bash
-set -o nounset
+#set -o nounset
 set -o errexit
 set -o pipefail
 
-# Default settings
-DEFAULT_PEM_HOME="/home/ubuntu/sandbox_private_keys/"
-DEFAULT_ENV_CONF_REF_ROOT="/usr/local/share"
-DEFAULT_USERNAME_INIT="sandbox"
-DEFAULT_PASSWORD_INIT="sb"
+DEFAULT_SANDBOX_SCRIPT_CONF="/home/ubuntu/sandbox_scripts/sandbox_script.conf"
+
+# Inlcude script configuration
+if [[ -z $SANDBOX_SCRIPT_CONF ]]; then
+  source $DEFAULT_SANDBOX_SCRIPT_CONF
+else
+  source $SANDBOX_SCRIPT_CONF
+fi
 
 # Validate command parameters
 if [[ $# -lt 1 ]]; then
@@ -29,14 +32,17 @@ sudo useradd -G $GROUP $USERNAME -m -s /bin/bash
 echo -e "${PASSWORD}\n${PASSWORD}" | sudo passwd -q ${USERNAME} >> /dev/null 2>&1
 
 # Confiugre enviornment
-link_conf() {
-  sudo rm -f $USER_HOME/$1
-  sudo ln -s $DEFAULT_ENV_CONF_REF_ROOT/$1 $USER_HOME/$1
+init_conf() {
+  sudo touch $USER_HOME/$1
+  sudo chmod 722 $USER_HOME/$1
+  sudo cat $DEFAULT_ENV_CONF_REF_ROOT/$1 > $USER_HOME/$1
+  sudo chmod 644 $USER_HOME/$1
+  sudo chown $USERNAME:$USERNAME $USER_HOME/$1
 }
 
-link_conf .bash_aliases
-link_conf .profile
-link_conf .vimrc
+init_conf .bash_aliases
+init_conf .profile
+init_conf .vimrc
 
 # Generate SSH keys (private/public)
 USER_SSH_ROOT="$USER_HOME/.ssh"
