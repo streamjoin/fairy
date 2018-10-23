@@ -93,6 +93,7 @@ init_conf() {
 init_conf .bashrc
 init_conf .bash_aliases
 init_conf .bash_profile
+init_conf .profile
 init_conf .vimrc
 
 # Generate SSH keys (private/public)
