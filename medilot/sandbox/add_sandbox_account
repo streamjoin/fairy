@@ -1,48 +1,98 @@
 #!/bin/bash
 #set -o nounset
-set -o errexit
+# set -o errexit
 set -o pipefail
 
-DEFAULT_SANDBOX_SCRIPT_CONF="/home/ubuntu/sandbox_scripts/sandbox_script.conf"
+DEFAULT_SANDBOX_SCRIPT_CONF="${HOME}/sandbox_scripts/sandbox_script.conf.default"
 
 # Inlcude script configuration
-if [[ -z $SANDBOX_SCRIPT_CONF ]]; then
-  source $DEFAULT_SANDBOX_SCRIPT_CONF
+if [[ $SANDBOX_SCRIPT_CONF ]]; then
+	source $SANDBOX_SCRIPT_CONF
 else
-  source $SANDBOX_SCRIPT_CONF
+	source $DEFAULT_SANDBOX_SCRIPT_CONF
 fi
 
 # Validate command parameters
 if [[ $# -lt 1 ]]; then
-  echo "Usage: $0 <sandbox_id>"
-  exit 1
+	echo "Usage: $0 <sandbox_id>"
+	exit 1
 fi
 
-# Construct variables
+# Set variables
 ID="$1"
-USERNAME="${DEFAULT_USERNAME_INIT}${ID}"
+
+GROUP="${DEFAULT_USERNAME_INIT}"
+if [[ $SANDBOX_USERNAME_INIT ]]; then
+	GROUP="${SANDBOX_USERNAME_INIT}"
+fi
+
+USERNAME="${GROUP}-${ID}"
+USER_HOME="/home/${USERNAME}"
+
 PASSWORD="${DEFAULT_PASSWORD_INIT}${ID}"
-GROUP="$DEFAULT_USERNAME_INIT"
-USER_HOME="/home/$USERNAME"
+if [[ $SANDBOX_PASSWORD_INIT ]]; then
+	PASSWORD="${SANDBOX_PASSWORD_INIT}${ID}"
+fi
+
+PEM_HOME="${DEFAULT_PEM_HOME}"
+if [[ $SANDBOX_PEM_HOME ]]; then
+	PEM_HOME="${SANDBOX_PEM_HOME}"
+fi
+
+ENV_CONF_REF_ROOT="${DEFAULT_ENV_CONF_REF_ROOT}"
+if [[ $SANDBOX_ENV_CONF_REF_ROOT ]]; then
+	ENV_CONF_REF_ROOT="${SANDBOX_ENV_CONF_REF_ROOT}"
+fi
+
+RED="\033[31m"
+NE="\033[0m"
+
+# Create groups, if necessary
+if [[ -z $(getent group $GROUP) ]]; then
+	sudo groupadd $GROUP
+fi
+
+if [[ -z $(getent group docker) ]]; then
+	sudo groupadd docker
+fi
 
 # Create account
-sudo useradd -G $GROUP $USERNAME -m -s /bin/bash
+sudo useradd -G $GROUP $USERNAME -m -s /bin/bash &&
 sudo usermod -a -G docker $USERNAME 
 
+RET="$?"
+if [[ ${RET} -ne 0 ]]; then
+	echo -e "${RED}failed to create account '${USERNAME}'${NE}"
+	exit ${RET}
+fi
+
 # Configure account password
-echo -e "${PASSWORD}\n${PASSWORD}" | sudo passwd -q ${USERNAME} >> /dev/null 2>&1
+echo -e "${PASSWORD}\n${PASSWORD}" | sudo passwd ${USERNAME} >> /dev/null 2>&1
+
+RET="$?"
+if [[ ${RET} -ne 0 ]]; then
+	echo -e "${RED}failed to set password for account '${USERNAME}'${NE}"
+	exit ${RET}
+fi
 
 # Confiugre enviornment
+sudo chmod 777 $USER_HOME
+
 init_conf() {
-  sudo touch $USER_HOME/$1
-  sudo chmod 722 $USER_HOME/$1
-  sudo cat $DEFAULT_ENV_CONF_REF_ROOT/$1 > $USER_HOME/$1
-  sudo chmod 644 $USER_HOME/$1
-  sudo chown $USERNAME:$USERNAME $USER_HOME/$1
+	SRC_CONF_FILE="${ENV_CONF_REF_ROOT}/$1"
+	if [[ -f $SRC_CONF_FILE ]]; then
+		DST_CONF_FILE="$USER_HOME/$1"
+		sudo touch $DST_CONF_FILE
+		sudo chmod 722 $DST_CONF_FILE
+		sudo cat $SRC_CONF_FILE > $DST_CONF_FILE
+		sudo chmod 644 $DST_CONF_FILE
+		sudo chown ${USERNAME}:${USERNAME} $DST_CONF_FILE
+	fi
 }
 
+init_conf .bashrc
 init_conf .bash_aliases
-init_conf .profile
+init_conf .bash_profile
 init_conf .vimrc
 
 # Generate SSH keys (private/public)
@@ -53,9 +103,10 @@ sudo touch $USER_SSH_ROOT/authorized_keys
 sudo chmod 722 $USER_SSH_ROOT/authorized_keys
 sudo cat $USER_SSH_ROOT/id_rsa.pub >> $USER_SSH_ROOT/authorized_keys
 sudo chmod 600 $USER_SSH_ROOT/authorized_keys
-sudo cp -f $USER_SSH_ROOT/id_rsa $DEFAULT_PEM_HOME/${USERNAME}.pem
-sudo chmod +r $DEFAULT_PEM_HOME/${USERNAME}.pem 
-sudo chown -R $USERNAME:$USERNAME $USER_SSH_ROOT
+sudo mkdir -p ${PEM_HOME}
+sudo cp -f $USER_SSH_ROOT/id_rsa ${PEM_HOME}/${USERNAME}.pem
+sudo chmod +r ${PEM_HOME}/${USERNAME}.pem 
+sudo chown -R ${USERNAME}:${USERNAME} $USER_SSH_ROOT
 sudo chmod 700 $USER_HOME
 
 # End of script
