@@ -1,4 +1,4 @@
-DEFAULT_PEM_HOME="${HOME}/sandbox_private_keys/"
+DEFAULT_PEM_HOME="$HOME/sandbox/private_keys"
 DEFAULT_ENV_CONF_REF_ROOT="/usr/local/share"
 DEFAULT_USERNAME_INIT="sandbox"
 DEFAULT_PASSWORD_INIT="sb"

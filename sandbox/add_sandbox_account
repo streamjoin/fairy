@@ -3,7 +3,7 @@
 # set -o errexit
 set -o pipefail
 
-DEFAULT_SANDBOX_SCRIPT_CONF="${HOME}/sandbox_scripts/sandbox_script.conf.default"
+DEFAULT_SANDBOX_SCRIPT_CONF="$HOME/sandbox/scripts/sandbox_script.conf.default"
 
 # Inlcude script configuration
 if [[ $SANDBOX_SCRIPT_CONF ]]; then
