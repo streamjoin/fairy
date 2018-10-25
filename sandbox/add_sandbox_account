@@ -44,21 +44,33 @@ if [[ $SANDBOX_ENV_CONF_REF_ROOT ]]; then
 	ENV_CONF_REF_ROOT="${SANDBOX_ENV_CONF_REF_ROOT}"
 fi
 
+ENV_CONF_LIST="${DEFAULT_ENV_CONF_LIST}"
+if [[ $SANDBOX_ENV_CONF_LIST ]]; then
+	ENV_CONF_LIST="${SANDBOX_ENV_CONF_LIST}"
+fi
+
+ADD_ON_GROUPS="${DEFAULT_ADD_ON_GROUPS}"
+if [[ $SANDBOX_ADD_ON_GROUPS ]]; then
+	ADD_ON_GROUPS="${SANDBOX_ADD_ON_GROUPS}"
+fi
+GROUP_LIST="$GROUP $ADD_ON_GROUPS"
+
 RED="\033[31m"
 NE="\033[0m"
 
 # Create groups, if necessary
-if [[ -z $(getent group $GROUP) ]]; then
-	sudo groupadd $GROUP
-fi
-
-if [[ -z $(getent group docker) ]]; then
-	sudo groupadd docker
-fi
+for G in $GROUP_LIST; do
+	if [[ -z $(getent group $G) ]]; then
+		sudo groupadd $G
+	fi
+done
 
 # Create account
 sudo useradd -G $GROUP $USERNAME -m -s /bin/bash &&
-sudo usermod -a -G docker $USERNAME 
+
+for G in $ADD_ON_GROUPS; do
+	sudo usermod -a -G $G $USERNAME 
+done
 
 RET="$?"
 if [[ ${RET} -ne 0 ]]; then
@@ -90,11 +102,9 @@ init_conf() {
 	fi
 }
 
-init_conf .bashrc
-init_conf .bash_aliases
-init_conf .bash_profile
-init_conf .profile
-init_conf .vimrc
+for CONF_FILE in $ENV_CONF_LIST; do
+	init_conf $CONF_FILE
+done
 
 # Generate SSH keys (private/public)
 USER_SSH_ROOT="$USER_HOME/.ssh"

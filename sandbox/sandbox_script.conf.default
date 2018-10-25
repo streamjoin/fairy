@@ -1,4 +1,6 @@
 DEFAULT_PEM_HOME="$HOME/sandbox/private_keys"
 DEFAULT_ENV_CONF_REF_ROOT="/usr/local/share"
+DEFAULT_ENV_CONF_LIST=".bashrc .bash_aliases .bash_profile .profile .vimrc"
+DEFAULT_ADD_ON_GROUPS="docker"
 DEFAULT_USERNAME_INIT="sandbox"
 DEFAULT_PASSWORD_INIT="sb"

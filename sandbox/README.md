@@ -29,8 +29,10 @@ Note that all the above scripts (including `add_sandbox_account`) must be run by
 By default, the above scripts load configuration from `sandbox_script.conf.default` whose path is *hard-coded* as the `DEFAULT_SANDBOX_SCRIPT_CONF` variable in each script. The default configuration contains settings of the following variables: 
 
 - `DEFAULT_PEM_HOME`: Default folder used to store private keys associated with active sandbox accounts. 
-- `DEFAULT_ENV_CONF_REF_ROOT`: Default folder containing the account configuration files such as `.bashrc`, `.bash_aliases `, `.bash_profile`, `.profile` and `.vimrc`. As long as these configuration files exist in the default folder, they will be copied to the home folder of sandbox account upon account creation. Any missing of configuration file will cause the corresponding initialization of configuration for the sandbox account to be omitted. 
-- `DEFAULT_USERNAME_INIT`: Default initial string of username of sandbox account. 
+- `DEFAULT_ENV_CONF_REF_ROOT`: Default folder containing the account configuration files. 
+- `DEFAULT_ENV_CONF_LIST`: Default list of account configuration files such as `.bashrc`, `.bash_profile`, `.profile` and `.vimrc`. As long as these configuration files exist in the folder specified by `SANDBOX_ENV_CONF_REF_ROOT` (or `DEFAULT_ENV_CONF_REF_ROOT` by default), they will be copied to the home folder of sandbox account upon account creation. Any missing of configuration file will cause the corresponding initialization of configuration for the sandbox account to be omitted.
+- `DEFAULT_ADD_ON_GROUPS`: Default list of groups that each sandbox account would be added to. If any group does not exist, it will be created automatically along with the execution of `add_sandbox_account`. Note that each sandbox account is implicitly added to the group named by `SANDBOX_USERNAME_INIT` (or `DEFAULT_USERNAME_INIT` by default), which is referred as the *common sandbox group*. Therefore, this variable should list the groups other than the common sandbox group. 
+- `DEFAULT_USERNAME_INIT`: Default initial string of username of sandbox account. This variable also defines the name of the common sandbox group. 
 - `DEFAULT_PASSWORD_INIT`: Default initial string of password of sandbox account. 
 
 Generally, there are two ways to change the script configuration without modifying the scripts. 
@@ -49,9 +51,11 @@ The following environment variables starting with `SANDBOX_` correspond to the a
 
 - `SANDBOX_PEM_HOME`: Customized folder used to store private keys associated with active sandbox accounts.
 - `SANDBOX_ENV_CONF_REF_ROOT`: Customized folder containing the account configuration files.
-- `SANDBOX_USERNAME_INIT`: Customized initial string of username of sandbox account.
+- `SANDBOX_ENV_CONF_LIST`: Customized list of account configuration files. 
+- `SANDBOX_ADD_ON_GROUPS`: Customized list of groups that each sandbox account would be added to. Note that the common sandbox group named by `SANDBOX_USERNAME_INIT` (or `DEFAULT_USERNAME_INIT` by default) should be excluded.
+- `SANDBOX_USERNAME_INIT`: Customized initial string of username of sandbox account. It is also used to name the common sandbox group. 
 - `SANDBOX_PASSWORD_INIT`: Customized initial string of password of sandbox account.
 
 Settings specified by these `SANDBOX_` environment variables are prioritized over their default configuration counterparts. In other words, once a `SANDBOX_` environment variable is set, the corresponding `DEFAULT_` setting would be ignored. 
 
-----
+----------
