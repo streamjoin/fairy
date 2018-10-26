@@ -4,12 +4,12 @@ Currently, sandbox is account based. The development environment is shared among
 
 ## Creating Account ##
 
-Create a new account using `add_sandbox_account` which takes an ID as parameter. For example, 
+Administrator can create a new account using `add_sandbox_account` which takes an ID as parameter. For example, 
 
     $ add_sandbox_account 00
     account 'sandbox-00' has been created successfully
 
-Initial password for the generated account is `sb<ID>`. A randomly generated SSH private key is copied to `$HOME/sandbox/private_keys`, and the corresponding public key is activated for the account. `HOME` refers to the home folder of the administrator account. 
+Default password for the generated account is `sb<ID>`. A randomly generated SSH private key is copied to `$HOME/sandbox/private_keys`, and the corresponding public key is activated for the account. `HOME` refers to the home folder of the administrator account. 
 
 Once the account is created, administrator can pass the account name (e.g. `sandbox-00`) and the private key (e.g. `sandbox-00.pem`) to user for login. 
 
@@ -39,7 +39,7 @@ Generally, there are two ways to change the script configuration without modifyi
 
 ### Using Customized Default Configuration ### 
 
-By all means, it is *not recommended* to edit the `sandbox_script.conf.default` file. Instead, you are suggested to copy it out, e.g. saved as `sandbox_script.conf` and further make changes in `sandbox_script.conf`. Once the customization is done, set the environment variable `SANDBOX_SCRIPT_CONF` to refer to the path of the customized configuration file. For example, 
+By all means, it is *not recommended* to edit the `sandbox_script.conf.default` file. Instead, you are suggested to copy it out, e.g. saved as `sandbox_script.conf`, and further make changes in `sandbox_script.conf`. Once the customization is done, set the environment variable `SANDBOX_SCRIPT_CONF` to refer to the path of the customized configuration file. For example, 
 
     export SANDBOX_SCRIPT_CONF="/path/to/sandbox_script.conf"
 
