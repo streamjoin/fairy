@@ -27,7 +27,7 @@ if [[ $SANDBOX_USERNAME_INIT ]]; then
 fi
 
 USERNAME="${GROUP}-${ID}"
-USER_HOME="/home/${USERNAME}"
+USER_HOME="/home/$USERNAME"
 
 PASSWORD="${DEFAULT_PASSWORD_INIT}${ID}"
 if [[ $SANDBOX_PASSWORD_INIT ]]; then
@@ -66,17 +66,17 @@ for G in $GROUP_LIST; do
 done
 
 # Create account
-sudo useradd -G $GROUP $USERNAME -m -s /bin/bash &&
-
-for G in $ADD_ON_GROUPS; do
-	sudo usermod -a -G $G $USERNAME 
-done
+sudo useradd -G $GROUP $USERNAME -m -s /bin/bash
 
 RET="$?"
 if [[ ${RET} -ne 0 ]]; then
 	echo -e "${RED}failed to create account '${USERNAME}'${NE}"
 	exit ${RET}
 fi
+
+for G in $ADD_ON_GROUPS; do
+	sudo usermod -a -G $G $USERNAME 
+done
 
 # Configure account password
 echo -e "${PASSWORD}\n${PASSWORD}" | sudo passwd ${USERNAME} >> /dev/null 2>&1
