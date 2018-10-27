@@ -7,15 +7,15 @@ DEFAULT_SANDBOX_SCRIPT_CONF="$HOME/sandbox/scripts/sandbox_script.conf.default"
 
 # Inlcude script configuration
 if [[ $SANDBOX_SCRIPT_CONF ]]; then
-	source $SANDBOX_SCRIPT_CONF
+  source $SANDBOX_SCRIPT_CONF
 else
-	source $DEFAULT_SANDBOX_SCRIPT_CONF
+  source $DEFAULT_SANDBOX_SCRIPT_CONF
 fi
 
 # Validate command parameters
 if [[ $# -lt 1 ]]; then
-	echo "Usage: $0 <sandbox_id>"
-	exit 1
+  echo "Usage: $0 <sandbox_id>" >&2
+  exit 1
 fi
 
 # Set variables
@@ -23,12 +23,12 @@ ID="$1"
 
 USERNAME="${DEFAULT_USERNAME_INIT}-${ID}"
 if [[ $SANDBOX_USERNAME_INIT ]]; then
-	USERNAME="${SANDBOX_USERNAME_INIT}-${ID}"
+  USERNAME="${SANDBOX_USERNAME_INIT}-${ID}"
 fi
 
 PEM_HOME="${DEFAULT_PEM_HOME}"
 if [[ $SANDBOX_PEM_HOME ]]; then
-	PEM_HOME="${SANDBOX_PEM_HOME}"
+  PEM_HOME="${SANDBOX_PEM_HOME}"
 fi
 
 RED="\033[31m"
@@ -41,10 +41,10 @@ sudo userdel $USERNAME
 
 RET="$?"
 if [[ ${RET} -eq 0 ]]; then
-	echo -e "account '${USERNAME}' has been deleted successfully"
-	sudo rm -f ${PEM_HOME}/${USERNAME}.pem
+  echo -e "account '${USERNAME}' has been deleted successfully"
+  sudo rm -f ${PEM_HOME}/${USERNAME}.pem
 else
-	echo -e "${RED}failed to delete account '${USERNAME}'${NE}"
+  echo -e "${RED}failed to delete account '${USERNAME}'${NE}" >&2
 fi
 
 # End of script

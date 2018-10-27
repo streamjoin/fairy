@@ -6,7 +6,7 @@ set -o pipefail
 # Set variables
 USERNAME="$USER"
 if [[ $# -gt 0 ]]; then
-	USERNAME="$1"
+  USERNAME="$1"
 fi
 
 USER_SSH_ROOT="/home/$USERNAME/.ssh"
@@ -16,8 +16,8 @@ NE="\033[0m"
 
 # Validate the existence of user account
 if ! id -u $USERNAME > /dev/null 2>&1; then
-	echo -e "${RED}account '${USERNAME}' does not exist${NE}"
-	exit 2
+  echo -e "${RED}account '${USERNAME}' does not exist${NE}" >&2
+  exit 2
 fi
 
 # Generate SSH keys (private/public)

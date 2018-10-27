@@ -57,5 +57,3 @@ The following environment variables starting with `SANDBOX_` correspond to the a
 - `SANDBOX_PASSWORD_INIT`: Customized initial string of password of sandbox account.
 
 Settings specified by these `SANDBOX_` environment variables are prioritized over their default configuration counterparts. In other words, once a `SANDBOX_` environment variable is set, the corresponding `DEFAULT_` setting would be ignored. 
-
-----------

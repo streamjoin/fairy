@@ -7,15 +7,15 @@ DEFAULT_SANDBOX_SCRIPT_CONF="$HOME/sandbox/scripts/sandbox_script.conf.default"
 
 # Inlcude script configuration
 if [[ $SANDBOX_SCRIPT_CONF ]]; then
-	source $SANDBOX_SCRIPT_CONF
+  source $SANDBOX_SCRIPT_CONF
 else
-	source $DEFAULT_SANDBOX_SCRIPT_CONF
+  source $DEFAULT_SANDBOX_SCRIPT_CONF
 fi
 
 # Validate command parameters
 if [[ $# -lt 1 ]]; then
-	echo "Usage: $0 <sandbox_id>"
-	exit 1
+  echo "Usage: $0 <sandbox_id>" >&2
+  exit 1
 fi
 
 # Set variables
@@ -23,7 +23,7 @@ ID="$1"
 
 GROUP="${DEFAULT_USERNAME_INIT}"
 if [[ $SANDBOX_USERNAME_INIT ]]; then
-	GROUP="${SANDBOX_USERNAME_INIT}"
+  GROUP="${SANDBOX_USERNAME_INIT}"
 fi
 
 USERNAME="${GROUP}-${ID}"
@@ -31,27 +31,27 @@ USER_HOME="/home/$USERNAME"
 
 PASSWORD="${DEFAULT_PASSWORD_INIT}${ID}"
 if [[ $SANDBOX_PASSWORD_INIT ]]; then
-	PASSWORD="${SANDBOX_PASSWORD_INIT}${ID}"
+  PASSWORD="${SANDBOX_PASSWORD_INIT}${ID}"
 fi
 
 PEM_HOME="${DEFAULT_PEM_HOME}"
 if [[ $SANDBOX_PEM_HOME ]]; then
-	PEM_HOME="${SANDBOX_PEM_HOME}"
+  PEM_HOME="${SANDBOX_PEM_HOME}"
 fi
 
 ENV_CONF_REF_ROOT="${DEFAULT_ENV_CONF_REF_ROOT}"
 if [[ $SANDBOX_ENV_CONF_REF_ROOT ]]; then
-	ENV_CONF_REF_ROOT="${SANDBOX_ENV_CONF_REF_ROOT}"
+  ENV_CONF_REF_ROOT="${SANDBOX_ENV_CONF_REF_ROOT}"
 fi
 
 ENV_CONF_LIST="${DEFAULT_ENV_CONF_LIST}"
 if [[ $SANDBOX_ENV_CONF_LIST ]]; then
-	ENV_CONF_LIST="${SANDBOX_ENV_CONF_LIST}"
+  ENV_CONF_LIST="${SANDBOX_ENV_CONF_LIST}"
 fi
 
 ADD_ON_GROUPS="${DEFAULT_ADD_ON_GROUPS}"
 if [[ $SANDBOX_ADD_ON_GROUPS ]]; then
-	ADD_ON_GROUPS="${SANDBOX_ADD_ON_GROUPS}"
+  ADD_ON_GROUPS="${SANDBOX_ADD_ON_GROUPS}"
 fi
 GROUP_LIST="$GROUP $ADD_ON_GROUPS"
 
@@ -60,9 +60,9 @@ NE="\033[0m"
 
 # Create groups, if necessary
 for G in $GROUP_LIST; do
-	if [[ -z $(getent group $G) ]]; then
-		sudo groupadd $G
-	fi
+  if [[ -z $(getent group $G) ]]; then
+    sudo groupadd $G
+  fi
 done
 
 # Create account
@@ -70,12 +70,12 @@ sudo useradd -G $GROUP $USERNAME -m -s /bin/bash
 
 RET="$?"
 if [[ ${RET} -ne 0 ]]; then
-	echo -e "${RED}failed to create account '${USERNAME}'${NE}"
-	exit ${RET}
+  echo -e "${RED}failed to create account '${USERNAME}'${NE}" >&2
+  exit ${RET}
 fi
 
 for G in $ADD_ON_GROUPS; do
-	sudo usermod -a -G $G $USERNAME 
+  sudo usermod -a -G $G $USERNAME 
 done
 
 # Configure account password
@@ -83,27 +83,27 @@ echo -e "${PASSWORD}\n${PASSWORD}" | sudo passwd ${USERNAME} >> /dev/null 2>&1
 
 RET="$?"
 if [[ ${RET} -ne 0 ]]; then
-	echo -e "${RED}failed to set password for account '${USERNAME}'${NE}"
-	exit ${RET}
+  echo -e "${RED}failed to set password for account '${USERNAME}'${NE}" >&2
+  exit ${RET}
 fi
 
 # Confiugre enviornment
 sudo chmod 777 $USER_HOME
 
 init_conf() {
-	SRC_CONF_FILE="${ENV_CONF_REF_ROOT}/$1"
-	if [[ -f $SRC_CONF_FILE ]]; then
-		DST_CONF_FILE="$USER_HOME/$1"
-		sudo touch $DST_CONF_FILE
-		sudo chmod 722 $DST_CONF_FILE
-		sudo cat $SRC_CONF_FILE > $DST_CONF_FILE
-		sudo chmod 644 $DST_CONF_FILE
-		sudo chown ${USERNAME}:${USERNAME} $DST_CONF_FILE
-	fi
+  SRC_CONF_FILE="${ENV_CONF_REF_ROOT}/$1"
+  if [[ -f $SRC_CONF_FILE ]]; then
+    DST_CONF_FILE="$USER_HOME/$1"
+    sudo touch $DST_CONF_FILE
+    sudo chmod 722 $DST_CONF_FILE
+    sudo cat $SRC_CONF_FILE > $DST_CONF_FILE
+    sudo chmod 644 $DST_CONF_FILE
+    sudo chown ${USERNAME}:${USERNAME} $DST_CONF_FILE
+  fi
 }
 
 for CONF_FILE in $ENV_CONF_LIST; do
-	init_conf $CONF_FILE
+  init_conf $CONF_FILE
 done
 
 # Generate SSH keys (private/public)
