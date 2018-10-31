@@ -12,9 +12,20 @@ else
   source $DEFAULT_SANDBOX_SCRIPT_CONF
 fi
 
+# Output utilities
+err() {
+  echo -e "$@" >&2
+}
+
+failed() {
+  printf "\033[31m" >&1  # set to red font for stdout
+  printf "$@" >&2  # output to stderr
+  printf "\033[0m\n" >&1  # reset color for stdout
+}
+
 # Validate command parameters
 if [[ $# -lt 1 ]]; then
-  echo "Usage: $0 <sandbox_id>" >&2
+  err "Usage: $0 <sandbox_id>"
   exit 1
 fi
 
@@ -65,12 +76,17 @@ for G in $GROUP_LIST; do
   fi
 done
 
+# Delete the group named after the account
+if [[ $(getent group $USERNAME) ]]; then
+  sudo groupdel $USERNAME
+fi
+
 # Create account
 sudo useradd -G $GROUP $USERNAME -m -s /bin/bash
 
 RET="$?"
 if [[ ${RET} -ne 0 ]]; then
-  echo -e "${RED}failed to create account '${USERNAME}'${NE}" >&2
+  failed "failed to create account '${USERNAME}'"
   exit ${RET}
 fi
 
@@ -83,7 +99,7 @@ echo -e "${PASSWORD}\n${PASSWORD}" | sudo passwd ${USERNAME} >> /dev/null 2>&1
 
 RET="$?"
 if [[ ${RET} -ne 0 ]]; then
-  echo -e "${RED}failed to set password for account '${USERNAME}'${NE}" >&2
+  failed "failed to set password for account '${USERNAME}'"
   exit ${RET}
 fi
 
@@ -121,5 +137,5 @@ sudo chown -R ${USERNAME}:${USERNAME} $USER_SSH_ROOT
 sudo chmod 700 $USER_HOME
 
 # End of script
-echo -e "account '${USERNAME}' has been created successfully"
+echo "account '${USERNAME}' has been created successfully"
 exit 0

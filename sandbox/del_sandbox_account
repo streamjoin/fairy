@@ -12,9 +12,20 @@ else
   source $DEFAULT_SANDBOX_SCRIPT_CONF
 fi
 
+# Output utilities
+err() {
+  echo -e "$@" >&2
+}
+
+failed() {
+  printf "\033[31m" >&1  # set to red font for stdout
+  printf "$@" >&2  # output to stderr
+  printf "\033[0m\n" >&1  # reset color for stdout
+}
+
 # Validate command parameters
 if [[ $# -lt 1 ]]; then
-  echo "Usage: $0 <sandbox_id>" >&2
+  err "Usage: $0 <sandbox_id>"
   exit 1
 fi
 
@@ -31,9 +42,6 @@ if [[ $SANDBOX_PEM_HOME ]]; then
   PEM_HOME="${SANDBOX_PEM_HOME}"
 fi
 
-RED="\033[31m"
-NE="\033[0m"
-
 # Delete account and the associated home folder and mailbox file
 sudo rm -rf /home/${USERNAME} && 
 sudo rm -f /var/spool/mail/${USERNAME} && 
@@ -41,10 +49,10 @@ sudo userdel $USERNAME
 
 RET="$?"
 if [[ ${RET} -eq 0 ]]; then
-  echo -e "account '${USERNAME}' has been deleted successfully"
+  echo "account '${USERNAME}' has been deleted successfully"
   sudo rm -f ${PEM_HOME}/${USERNAME}.pem
 else
-  echo -e "${RED}failed to delete account '${USERNAME}'${NE}" >&2
+  failed "failed to delete account '${USERNAME}'"
 fi
 
 # End of script
