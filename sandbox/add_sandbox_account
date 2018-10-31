@@ -3,13 +3,13 @@
 # set -o errexit
 set -o pipefail
 
-DEFAULT_SANDBOX_SCRIPT_CONF="$HOME/sandbox/scripts/sandbox_script.conf.default"
+DEFAULT_SANDBOX_SCRIPT_CONF="${HOME}/sandbox/scripts/sandbox_script.conf.default"
 
 # Inlcude script configuration
-if [[ $SANDBOX_SCRIPT_CONF ]]; then
-  source $SANDBOX_SCRIPT_CONF
+if [[ "${SANDBOX_SCRIPT_CONF}" ]]; then
+  source "${SANDBOX_SCRIPT_CONF}"
 else
-  source $DEFAULT_SANDBOX_SCRIPT_CONF
+  source "${DEFAULT_SANDBOX_SCRIPT_CONF}"
 fi
 
 # Output utilities
@@ -24,117 +24,114 @@ failed() {
 }
 
 # Validate command parameters
-if [[ $# -lt 1 ]]; then
-  err "Usage: $0 <sandbox_id>"
+if [[ "$#" -lt 1 ]]; then
+  err "Usage: $(basename "$0") <sandbox_id>"
   exit 1
 fi
 
 # Set variables
-ID="$1"
+readonly ID="$1"
 
 GROUP="${DEFAULT_USERNAME_INIT}"
-if [[ $SANDBOX_USERNAME_INIT ]]; then
+if [[ "${SANDBOX_USERNAME_INIT}" ]]; then
   GROUP="${SANDBOX_USERNAME_INIT}"
 fi
 
-USERNAME="${GROUP}-${ID}"
-USER_HOME="/home/$USERNAME"
+readonly USERNAME="${GROUP}-${ID}"
+readonly USER_HOME="/home/$USERNAME"
 
 PASSWORD="${DEFAULT_PASSWORD_INIT}${ID}"
-if [[ $SANDBOX_PASSWORD_INIT ]]; then
+if [[ "${SANDBOX_PASSWORD_INIT}" ]]; then
   PASSWORD="${SANDBOX_PASSWORD_INIT}${ID}"
 fi
 
 PEM_HOME="${DEFAULT_PEM_HOME}"
-if [[ $SANDBOX_PEM_HOME ]]; then
+if [[ "${SANDBOX_PEM_HOME}" ]]; then
   PEM_HOME="${SANDBOX_PEM_HOME}"
 fi
 
 ENV_CONF_REF_ROOT="${DEFAULT_ENV_CONF_REF_ROOT}"
-if [[ $SANDBOX_ENV_CONF_REF_ROOT ]]; then
+if [[ "${SANDBOX_ENV_CONF_REF_ROOT}" ]]; then
   ENV_CONF_REF_ROOT="${SANDBOX_ENV_CONF_REF_ROOT}"
 fi
 
 ENV_CONF_LIST="${DEFAULT_ENV_CONF_LIST}"
-if [[ $SANDBOX_ENV_CONF_LIST ]]; then
+if [[ "${SANDBOX_ENV_CONF_LIST}" ]]; then
   ENV_CONF_LIST="${SANDBOX_ENV_CONF_LIST}"
 fi
 
 ADD_ON_GROUPS="${DEFAULT_ADD_ON_GROUPS}"
-if [[ $SANDBOX_ADD_ON_GROUPS ]]; then
+if [[ "${SANDBOX_ADD_ON_GROUPS}" ]]; then
   ADD_ON_GROUPS="${SANDBOX_ADD_ON_GROUPS}"
 fi
-GROUP_LIST="$GROUP $ADD_ON_GROUPS"
-
-RED="\033[31m"
-NE="\033[0m"
+readonly GROUP_LIST="${GROUP} ${ADD_ON_GROUPS}"
 
 # Create groups, if necessary
-for G in $GROUP_LIST; do
-  if [[ -z $(getent group $G) ]]; then
-    sudo groupadd $G
+for G in ${GROUP_LIST}; do
+  if [[ -z "$(getent group "${G}")" ]]; then
+    sudo groupadd "${G}"
   fi
 done
 
 # Delete the group named after the account
-if [[ $(getent group $USERNAME) ]]; then
-  sudo groupdel $USERNAME
+if [[ "$(getent group "${USERNAME}")" ]]; then
+  sudo groupdel "${USERNAME}"
 fi
 
 # Create account
-sudo useradd -G $GROUP $USERNAME -m -s /bin/bash
+sudo useradd -G "${GROUP}" "${USERNAME}" -m -s /bin/bash
 
 RET="$?"
-if [[ ${RET} -ne 0 ]]; then
+if [[ "${RET}" -ne 0 ]]; then
   failed "failed to create account '${USERNAME}'"
-  exit ${RET}
+  exit "${RET}"
 fi
 
-for G in $ADD_ON_GROUPS; do
-  sudo usermod -a -G $G $USERNAME 
+for G in ${ADD_ON_GROUPS}; do
+  sudo usermod -a -G "${G}" "${USERNAME}" 
 done
 
 # Configure account password
-echo -e "${PASSWORD}\n${PASSWORD}" | sudo passwd ${USERNAME} >> /dev/null 2>&1
+echo -e "${PASSWORD}\n${PASSWORD}" | sudo passwd "${USERNAME}" > /dev/null 2>&1
 
 RET="$?"
-if [[ ${RET} -ne 0 ]]; then
+if [[ "${RET}" -ne 0 ]]; then
   failed "failed to set password for account '${USERNAME}'"
-  exit ${RET}
+  exit "${RET}"
 fi
 
 # Confiugre enviornment
-sudo chmod 777 $USER_HOME
+sudo chmod 777 "${USER_HOME}"
 
 init_conf() {
-  SRC_CONF_FILE="${ENV_CONF_REF_ROOT}/$1"
-  if [[ -f $SRC_CONF_FILE ]]; then
-    DST_CONF_FILE="$USER_HOME/$1"
-    sudo touch $DST_CONF_FILE
-    sudo chmod 722 $DST_CONF_FILE
-    sudo cat $SRC_CONF_FILE > $DST_CONF_FILE
-    sudo chmod 644 $DST_CONF_FILE
-    sudo chown ${USERNAME}:${USERNAME} $DST_CONF_FILE
+  local -r SRC_CONF_FILE="${ENV_CONF_REF_ROOT}/$1"
+  if [[ -f "${SRC_CONF_FILE}" ]]; then
+    local -r DST_CONF_FILE="${USER_HOME}/$1"
+    sudo touch "${DST_CONF_FILE}"
+    sudo chmod 722 "${DST_CONF_FILE}"
+    sudo cat "${SRC_CONF_FILE}" > "${DST_CONF_FILE}"
+    sudo chmod 644 "${DST_CONF_FILE}"
+    sudo chown "${USERNAME}":"${USERNAME}" "${DST_CONF_FILE}"
   fi
 }
 
-for CONF_FILE in $ENV_CONF_LIST; do
-  init_conf $CONF_FILE
+for CONF_FILE in ${ENV_CONF_LIST}; do
+  init_conf "${CONF_FILE}"
 done
 
 # Generate SSH keys (private/public)
-USER_SSH_ROOT="$USER_HOME/.ssh"
-sudo mkdir -p $USER_SSH_ROOT
-sudo ssh-keygen -t rsa -f $USER_SSH_ROOT/id_rsa -P '' -q
-sudo touch $USER_SSH_ROOT/authorized_keys
-sudo chmod 722 $USER_SSH_ROOT/authorized_keys
-sudo cat $USER_SSH_ROOT/id_rsa.pub >> $USER_SSH_ROOT/authorized_keys
-sudo chmod 600 $USER_SSH_ROOT/authorized_keys
-sudo mkdir -p ${PEM_HOME}
-sudo cp -f $USER_SSH_ROOT/id_rsa ${PEM_HOME}/${USERNAME}.pem
-sudo chmod +r ${PEM_HOME}/${USERNAME}.pem 
-sudo chown -R ${USERNAME}:${USERNAME} $USER_SSH_ROOT
-sudo chmod 700 $USER_HOME
+readonly USER_SSH_ROOT="${USER_HOME}/.ssh"
+sudo mkdir -p "${USER_SSH_ROOT}"
+sudo ssh-keygen -t rsa -f "${USER_SSH_ROOT}/id_rsa" -P '' -q
+sudo touch "${USER_SSH_ROOT}/authorized_keys"
+sudo chmod 722 "${USER_SSH_ROOT}/authorized_keys"
+sudo cat "${USER_SSH_ROOT}/id_rsa.pub" >> "${USER_SSH_ROOT}/authorized_keys"
+sudo chmod 600 "${USER_SSH_ROOT}/authorized_keys"
+sudo mkdir -p "${PEM_HOME}"
+sudo cp -f "${USER_SSH_ROOT}/id_rsa" "${PEM_HOME}/${USERNAME}.pem"
+sudo chmod +r "${PEM_HOME}/${USERNAME}.pem" 
+sudo chown -R "${USERNAME}":"${USERNAME}" "${USER_SSH_ROOT}"
+sudo chmod 700 "${USER_HOME}"
 
 # End of script
 echo "account '${USERNAME}' has been created successfully"

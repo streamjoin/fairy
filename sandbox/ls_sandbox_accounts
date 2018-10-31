@@ -3,23 +3,23 @@
 set -o errexit
 set -o pipefail
 
-DEFAULT_SANDBOX_SCRIPT_CONF="$HOME/sandbox/scripts/sandbox_script.conf.default"
+DEFAULT_SANDBOX_SCRIPT_CONF="${HOME}/sandbox/scripts/sandbox_script.conf.default"
 
 # Inlcude script configuration
-if [[ $SANDBOX_SCRIPT_CONF ]]; then
-  source $SANDBOX_SCRIPT_CONF
+if [[ "${SANDBOX_SCRIPT_CONF}" ]]; then
+  source "${SANDBOX_SCRIPT_CONF}"
 else
-  source $DEFAULT_SANDBOX_SCRIPT_CONF
+  source "${DEFAULT_SANDBOX_SCRIPT_CONF}"
 fi
 
 # Set variables
 USERNAME_INIT="${DEFAULT_USERNAME_INIT}"
-if [[ $SANDBOX_USERNAME_INIT ]]; then
+if [[ "${SANDBOX_USERNAME_INIT}" ]]; then
   USERNAME_INIT="${SANDBOX_USERNAME_INIT}"
 fi
 
 # List usernames according to the specified pattern
-cut -d: -f1 /etc/passwd | grep ${USERNAME_INIT}.*
+cut -d: -f1 /etc/passwd | grep "${USERNAME_INIT}.*"
 
 # End of script
-exit $?
+exit "$?"

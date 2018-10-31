@@ -3,13 +3,13 @@
 #set -o errexit
 set -o pipefail
 
-DEFAULT_SANDBOX_SCRIPT_CONF="$HOME/sandbox/scripts/sandbox_script.conf.default"
+DEFAULT_SANDBOX_SCRIPT_CONF="${HOME}/sandbox/scripts/sandbox_script.conf.default"
 
 # Inlcude script configuration
-if [[ $SANDBOX_SCRIPT_CONF ]]; then
-  source $SANDBOX_SCRIPT_CONF
+if [[ "${SANDBOX_SCRIPT_CONF}" ]]; then
+  source "${SANDBOX_SCRIPT_CONF}"
 else
-  source $DEFAULT_SANDBOX_SCRIPT_CONF
+  source "${DEFAULT_SANDBOX_SCRIPT_CONF}"
 fi
 
 # Output utilities
@@ -24,36 +24,36 @@ failed() {
 }
 
 # Validate command parameters
-if [[ $# -lt 1 ]]; then
-  err "Usage: $0 <sandbox_id>"
+if [[ "$#" -lt 1 ]]; then
+  err "Usage: $(basename "$0") <sandbox_id>"
   exit 1
 fi
 
 # Set variables
-ID="$1"
+readonly ID="$1"
 
 USERNAME="${DEFAULT_USERNAME_INIT}-${ID}"
-if [[ $SANDBOX_USERNAME_INIT ]]; then
+if [[ "${SANDBOX_USERNAME_INIT}" ]]; then
   USERNAME="${SANDBOX_USERNAME_INIT}-${ID}"
 fi
 
 PEM_HOME="${DEFAULT_PEM_HOME}"
-if [[ $SANDBOX_PEM_HOME ]]; then
+if [[ "${SANDBOX_PEM_HOME}" ]]; then
   PEM_HOME="${SANDBOX_PEM_HOME}"
 fi
 
 # Delete account and the associated home folder and mailbox file
-sudo rm -rf /home/${USERNAME} && 
-sudo rm -f /var/spool/mail/${USERNAME} && 
-sudo userdel $USERNAME
+sudo rm -rf "/home/${USERNAME}" && 
+sudo rm -f "/var/spool/mail/${USERNAME}" && 
+sudo userdel "${USERNAME}"
 
 RET="$?"
-if [[ ${RET} -eq 0 ]]; then
+if [[ "${RET}" -eq 0 ]]; then
   echo "account '${USERNAME}' has been deleted successfully"
-  sudo rm -f ${PEM_HOME}/${USERNAME}.pem
+  sudo rm -f "${PEM_HOME}/${USERNAME}.pem"
 else
   failed "failed to delete account '${USERNAME}'"
 fi
 
 # End of script
-exit ${RET}
+exit "${RET}"

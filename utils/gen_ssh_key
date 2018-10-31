@@ -16,28 +16,28 @@ failed() {
 
 # Set variables
 USERNAME="$USER"
-if [[ $# -gt 0 ]]; then
+if [[ "$#" -gt 0 ]]; then
   USERNAME="$1"
 fi
 
-USER_SSH_ROOT="/home/$USERNAME/.ssh"
+readonly USER_SSH_ROOT="/home/$USERNAME/.ssh"
 
 # Validate the existence of user account
-if ! id -u $USERNAME > /dev/null 2>&1; then
+if ! id -u "${USERNAME}" > /dev/null 2>&1; then
   failed "account '${USERNAME}' does not exist$"
   exit 2
 fi
 
 # Generate SSH keys (private/public)
-mkdir -p $USER_SSH_ROOT
-chown -R ${USERNAME}:${USERNAME} $USER_SSH_ROOT
-ssh-keygen -t rsa -f $USER_SSH_ROOT/id_rsa -P '' -q
+mkdir -p "${USER_SSH_ROOT}"
+chown -R "${USERNAME}":"${USERNAME}" "${USER_SSH_ROOT}"
+ssh-keygen -t rsa -f "${USER_SSH_ROOT}/id_rsa" -P '' -q
 
 # Authorize the public key for the user account
-touch $USER_SSH_ROOT/authorized_keys
-chmod 722 $USER_SSH_ROOT/authorized_keys
-cat $USER_SSH_ROOT/id_rsa.pub >> $USER_SSH_ROOT/authorized_keys
-chmod 600 $USER_SSH_ROOT/authorized_keys
+touch "${USER_SSH_ROOT}/authorized_keys"
+chmod 722 "${USER_SSH_ROOT}/authorized_keys"
+cat "${USER_SSH_ROOT}/id_rsa.pub" >> "${USER_SSH_ROOT}/authorized_keys"
+chmod 600 "${USER_SSH_ROOT}/authorized_keys"
 
 # End of script
 echo "SSH key pair has been generated for account '${USERNAME}'"
