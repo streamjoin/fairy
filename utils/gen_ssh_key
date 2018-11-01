@@ -1,4 +1,7 @@
 #!/bin/bash
+#
+# Generate SSH key pair for current account or a specified account.
+
 set -o nounset
 set -o errexit
 set -o pipefail

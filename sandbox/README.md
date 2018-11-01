@@ -17,12 +17,11 @@ Once the account is created, administrator can pass the account name (e.g. `sand
 
 The following scripts are used for sandbox account management: 
 
-- `ls_sandbox_accounts`: list all sandbox accounts. 
-- `chg_sandbox_account_password <ID> <Password>`: update the password of a sandbox account. 
-- `del_sandbox_account <ID>`: delete a sandbox account. Note that the associated private key will be also deleted. 
+- `ls_sandbox_accounts`: List all sandbox accounts. 
+- `chg_sandbox_account_password <ID> <Password>`: Update the password of a sandbox account. 
+- `del_sandbox_account <ID>`: Delete a sandbox account. Note that the associated private key will be also deleted. 
 
 Note that all the above scripts (including `add_sandbox_account`) must be run by administrator who has the `sudo` privilege. 
-
 
 ## Customization ##
 

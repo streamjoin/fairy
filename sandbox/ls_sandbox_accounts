@@ -1,4 +1,7 @@
 #!/bin/bash
+#
+# List all sandbox accounts.
+
 #set -o nounset
 set -o errexit
 set -o pipefail

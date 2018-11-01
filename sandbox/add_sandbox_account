@@ -1,12 +1,15 @@
 #!/bin/bash
-#set -o nounset
+#
+# Create a sandbox account. 
+
+# set -o nounset
 # set -o errexit
 set -o pipefail
 
 DEFAULT_SANDBOX_SCRIPT_CONF="${HOME}/sandbox/scripts/sandbox_script.conf.default"
 
 # Inlcude script configuration
-if [[ "${SANDBOX_SCRIPT_CONF}" ]]; then
+if [[ -n "${SANDBOX_SCRIPT_CONF}" ]]; then
   source "${SANDBOX_SCRIPT_CONF}"
 else
   source "${DEFAULT_SANDBOX_SCRIPT_CONF}"
@@ -32,38 +35,45 @@ fi
 # Set variables
 readonly ID="$1"
 
-GROUP="${DEFAULT_USERNAME_INIT}"
-if [[ "${SANDBOX_USERNAME_INIT}" ]]; then
-  GROUP="${SANDBOX_USERNAME_INIT}"
+if [[ -n "${SANDBOX_USERNAME_INIT}" ]]; then
+  readonly GROUP="${SANDBOX_USERNAME_INIT}"
+else
+  readonly GROUP="${DEFAULT_USERNAME_INIT}"
 fi
 
 readonly USERNAME="${GROUP}-${ID}"
 readonly USER_HOME="/home/$USERNAME"
 
-PASSWORD="${DEFAULT_PASSWORD_INIT}${ID}"
-if [[ "${SANDBOX_PASSWORD_INIT}" ]]; then
-  PASSWORD="${SANDBOX_PASSWORD_INIT}${ID}"
+if [[ -n "${SANDBOX_PASSWORD_INIT}" ]]; then
+  readonly PASSWORD="${SANDBOX_PASSWORD_INIT}${ID}"
+else
+  readonly PASSWORD="${DEFAULT_PASSWORD_INIT}${ID}"
 fi
 
-PEM_HOME="${DEFAULT_PEM_HOME}"
-if [[ "${SANDBOX_PEM_HOME}" ]]; then
-  PEM_HOME="${SANDBOX_PEM_HOME}"
+if [[ -n "${SANDBOX_PEM_HOME}" ]]; then
+  readonly PEM_HOME="${SANDBOX_PEM_HOME}"
+else
+  readonly PEM_HOME="${DEFAULT_PEM_HOME}"
 fi
 
-ENV_CONF_REF_ROOT="${DEFAULT_ENV_CONF_REF_ROOT}"
-if [[ "${SANDBOX_ENV_CONF_REF_ROOT}" ]]; then
-  ENV_CONF_REF_ROOT="${SANDBOX_ENV_CONF_REF_ROOT}"
+if [[ -n "${SANDBOX_ENV_CONF_REF_ROOT}" ]]; then
+  readonly ENV_CONF_REF_ROOT="${SANDBOX_ENV_CONF_REF_ROOT}"
+else
+  readonly ENV_CONF_REF_ROOT="${DEFAULT_ENV_CONF_REF_ROOT}"
 fi
 
-ENV_CONF_LIST="${DEFAULT_ENV_CONF_LIST}"
-if [[ "${SANDBOX_ENV_CONF_LIST}" ]]; then
-  ENV_CONF_LIST="${SANDBOX_ENV_CONF_LIST}"
+if [[ -n "${SANDBOX_ENV_CONF_LIST}" ]]; then
+  readonly ENV_CONF_LIST="${SANDBOX_ENV_CONF_LIST}"
+else
+  readonly ENV_CONF_LIST="${DEFAULT_ENV_CONF_LIST}"
 fi
 
-ADD_ON_GROUPS="${DEFAULT_ADD_ON_GROUPS}"
-if [[ "${SANDBOX_ADD_ON_GROUPS}" ]]; then
-  ADD_ON_GROUPS="${SANDBOX_ADD_ON_GROUPS}"
+if [[ -n "${SANDBOX_ADD_ON_GROUPS}" ]]; then
+  readonly ADD_ON_GROUPS="${SANDBOX_ADD_ON_GROUPS}"
+else
+  readonly ADD_ON_GROUPS="${DEFAULT_ADD_ON_GROUPS}"
 fi
+
 readonly GROUP_LIST="${GROUP} ${ADD_ON_GROUPS}"
 
 # Create groups, if necessary
@@ -74,7 +84,7 @@ for G in ${GROUP_LIST}; do
 done
 
 # Delete the group named after the account
-if [[ "$(getent group "${USERNAME}")" ]]; then
+if [[ -n "$(getent group "${USERNAME}")" ]]; then
   sudo groupdel "${USERNAME}"
 fi
 

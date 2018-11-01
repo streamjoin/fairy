@@ -1,4 +1,7 @@
 #!/bin/bash
+#
+# Probe the accessibility of remote nodes.
+
 set -o nounset
 # set -o errexit
 # set -o pipefail
