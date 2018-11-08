@@ -10,7 +10,7 @@ DEFAULT_SANDBOX_SCRIPT_CONF="${HOME}/sandbox/scripts/sandbox_script.conf.default
 
 # Output utilities
 err() {
-  echo -e "$@" >&2
+  echo -e "$@" >&2  # output to stderr
 }
 
 failed() {
@@ -19,28 +19,38 @@ failed() {
   printf "\033[0m\n" >&1  # reset color for stdout
 }
 
+check_err() {
+  local -r RET="$?"
+  if [[ "${RET}" -ne 0 ]]; then
+    err "$@"
+    exit "${RET}"
+  fi
+}
+
+check_failed() {
+  local -r RET="$?"
+  if [[ "${RET}" -ne 0 ]]; then
+    failed "$@"
+    exit "${RET}"
+  fi
+}
+
 # Inlcude script configuration
 readonly SCRIPT_CONF="${SANDBOX_SCRIPT_CONF:-${DEFAULT_SANDBOX_SCRIPT_CONF}}"
-if [[ -n "${SCRIPT_CONF}" ]]; then
-  source "${SCRIPT_CONF}"
-  if [[ "$?" -ne 0 ]]; then
-    err "Failed to load script configuration: ${SCRIPT_CONF}"
-    exit 5
-  fi
-else
-  err "Script configuration is not specified"
-  exit 4
-fi
+[[ -n "${SCRIPT_CONF}" ]]
+check_err "Script configuration is not specified"
 
-# Validate command parameters
-if [[ "$#" -lt 1 ]]; then
-  err "Usage: $(basename "$0") <sandbox_id>"
-  exit 1
-fi
+source "${SCRIPT_CONF}"
+check_err "Failed to load script configuration: ${SCRIPT_CONF}"
+
+readonly SCRIPT_NAME="$(basename "$0")"
+
+# Command parameters
+readonly ID="$1"
+[[ -n "${ID}" ]]
+check_err "Usage: ${SCRIPT_NAME} <sandbox_id>"
 
 # Set variables
-readonly ID="$1"
-
 if [[ -n "${SANDBOX_USERNAME_INIT+x}" ]]; then
   readonly GROUP="${SANDBOX_USERNAME_INIT}"
 else
@@ -97,28 +107,20 @@ readonly GROUP_LIST="${GROUP} ${ADD_ON_GROUPS}"
 
 # Create groups, if necessary
 for G in ${GROUP_LIST}; do
-  if [[ -z "$(getent group "${G}")" ]]; then
-    sudo groupadd "${G}"
-  fi
+  [[ -n "$(getent group "${G}")" ]] || (sudo groupadd "${G}")
+  check_failed "failed to create non-existing group '${G}'"
 done
 
 # Delete the group named after the account
-if [[ -n "$(getent group "${USERNAME}")" ]]; then
-  sudo groupdel "${USERNAME}"
-fi
+[[ -z "$(getent group "${USERNAME}")" ]] || (sudo groupdel "${USERNAME}")
+check_failed "failed to delete existing group '${USERNAME}'"
 
 # Create account
-if [[ -n "${GROUP}" ]]; then
-  sudo useradd "${USERNAME}" -G "${GROUP}" -m -d "${USER_HOME}" -s /bin/bash
-else
-  sudo useradd "${USERNAME}" -m -d "${USER_HOME}" -s /bin/bash
-fi
-
-RET="$?"
-if [[ "${RET}" -ne 0 ]]; then
-  failed "failed to create account '${USERNAME}'"
-  exit "${RET}"
-fi
+create_account() {
+  sudo useradd "$1" "${2:+"-G"}" "$2" -m -d "$3" -s /bin/bash
+}
+create_account "${USERNAME}" "${GROUP}" "${USER_HOME}"
+check_failed "failed to create account '${USERNAME}'"
 
 for G in ${ADD_ON_GROUPS}; do
   sudo usermod -a -G "${G}" "${USERNAME}" 
@@ -126,12 +128,7 @@ done
 
 # Configure account password
 echo -e "${PASSWORD}\n${PASSWORD}" | sudo passwd "${USERNAME}" > /dev/null 2>&1
-
-RET="$?"
-if [[ "${RET}" -ne 0 ]]; then
-  failed "failed to set password for account '${USERNAME}'"
-  exit "${RET}"
-fi
+check_failed "failed to set password for account '${USERNAME}'"
 
 # Confiugre enviornment
 sudo chmod 777 "${USER_HOME}"

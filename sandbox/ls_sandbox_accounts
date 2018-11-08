@@ -10,7 +10,7 @@ DEFAULT_SANDBOX_SCRIPT_CONF="${HOME}/sandbox/scripts/sandbox_script.conf.default
 
 # Output utilities
 err() {
-  echo -e "$@" >&2
+  echo -e "$@" >&2  # output to stderr
 }
 
 failed() {
@@ -19,18 +19,31 @@ failed() {
   printf "\033[0m\n" >&1  # reset color for stdout
 }
 
+check_err() {
+  local -r RET="$?"
+  if [[ "${RET}" -ne 0 ]]; then
+    err "$@"
+    exit "${RET}"
+  fi
+}
+
+check_failed() {
+  local -r RET="$?"
+  if [[ "${RET}" -ne 0 ]]; then
+    failed "$@"
+    exit "${RET}"
+  fi
+}
+
 # Inlcude script configuration
 readonly SCRIPT_CONF="${SANDBOX_SCRIPT_CONF:-${DEFAULT_SANDBOX_SCRIPT_CONF}}"
-if [[ -n "${SCRIPT_CONF}" ]]; then
-  source "${SCRIPT_CONF}"
-  if [[ "$?" -ne 0 ]]; then
-    err "Failed to load script configuration: ${SCRIPT_CONF}"
-    exit 5
-  fi
-else
-  err "Script configuration is not specified"
-  exit 4
-fi
+[[ -n "${SCRIPT_CONF}" ]]
+check_err "Script configuration is not specified"
+
+source "${SCRIPT_CONF}"
+check_err "Failed to load script configuration: ${SCRIPT_CONF}"
+
+readonly SCRIPT_NAME="$(basename "$0")"
 
 # Set variables
 if [[ -n "${SANDBOX_USERNAME_INIT}" ]]; then

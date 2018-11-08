@@ -8,7 +8,7 @@ set -o pipefail
 
 # Output utilities
 err() {
-  echo -e "$@" >&2
+  echo -e "$@" >&2  # output to stderr
 }
 
 failed() {
@@ -17,13 +17,26 @@ failed() {
   printf "\033[0m\n" >&1  # reset color for stdout
 }
 
-# Set variables
-if [[ "$#" -gt 0 ]]; then
-  readonly USERNAME="$1"
-else
-  readonly USERNAME="$USER"
-fi
+check_err() {
+  local -r RET="$?"
+  if [[ "${RET}" -ne 0 ]]; then
+    err "$@"
+    exit "${RET}"
+  fi
+}
 
+check_failed() {
+  local -r RET="$?"
+  if [[ "${RET}" -ne 0 ]]; then
+    failed "$@"
+    exit "${RET}"
+  fi
+}
+
+# Command parameters
+readonly USERNAME="${1:-${USER}}"
+
+# Set variables
 readonly USER_SSH_ROOT="/home/$USERNAME/.ssh"
 
 # Validate the existence of user account
