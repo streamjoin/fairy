@@ -18,9 +18,10 @@ failed() {
 }
 
 # Set variables
-USERNAME="$USER"
 if [[ "$#" -gt 0 ]]; then
-  USERNAME="$1"
+  readonly USERNAME="$1"
+else
+  readonly USERNAME="$USER"
 fi
 
 readonly USER_SSH_ROOT="/home/$USERNAME/.ssh"

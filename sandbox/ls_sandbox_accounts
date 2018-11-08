@@ -8,17 +8,35 @@ set -o pipefail
 
 DEFAULT_SANDBOX_SCRIPT_CONF="${HOME}/sandbox/scripts/sandbox_script.conf.default"
 
+# Output utilities
+err() {
+  echo -e "$@" >&2
+}
+
+failed() {
+  printf "\033[31m" >&1  # set to red font for stdout
+  printf "$@" >&2  # output to stderr
+  printf "\033[0m\n" >&1  # reset color for stdout
+}
+
 # Inlcude script configuration
-if [[ "${SANDBOX_SCRIPT_CONF}" ]]; then
-  source "${SANDBOX_SCRIPT_CONF}"
+readonly SCRIPT_CONF="${SANDBOX_SCRIPT_CONF:-${DEFAULT_SANDBOX_SCRIPT_CONF}}"
+if [[ -n "${SCRIPT_CONF}" ]]; then
+  source "${SCRIPT_CONF}"
+  if [[ "$?" -ne 0 ]]; then
+    err "Failed to load script configuration: ${SCRIPT_CONF}"
+    exit 5
+  fi
 else
-  source "${DEFAULT_SANDBOX_SCRIPT_CONF}"
+  err "Script configuration is not specified"
+  exit 4
 fi
 
 # Set variables
-USERNAME_INIT="${DEFAULT_USERNAME_INIT}"
-if [[ "${SANDBOX_USERNAME_INIT}" ]]; then
-  USERNAME_INIT="${SANDBOX_USERNAME_INIT}"
+if [[ -n "${SANDBOX_USERNAME_INIT}" ]]; then
+  readonly USERNAME_INIT="${SANDBOX_USERNAME_INIT}"
+else
+  readonly USERNAME_INIT="${DEFAULT_USERNAME_INIT}"
 fi
 
 # List usernames according to the specified pattern
