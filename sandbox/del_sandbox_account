@@ -6,83 +6,37 @@
 #set -o errexit
 set -o pipefail
 
-DEFAULT_SANDBOX_SCRIPT_CONF="${HOME}/sandbox/scripts/sandbox_script.conf.default"
-
-# Output utilities
-err() {
-  echo -e "$@" >&2  # output to stderr
-}
-
-failed() {
-  printf "\033[31m" >&1  # set to red font for stdout
-  printf "$@" >&2  # output to stderr
-  printf "\033[0m\n" >&1  # reset color for stdout
-}
-
-check_err() {
-  local -r RET="$?"
-  if [[ "${RET}" -ne 0 ]]; then
-    err "$@"
-    exit "${RET}"
-  fi
-}
-
-check_failed() {
-  local -r RET="$?"
-  if [[ "${RET}" -ne 0 ]]; then
-    failed "$@"
-    exit "${RET}"
-  fi
-}
-
-# Inlcude script configuration
-readonly SCRIPT_CONF="${SANDBOX_SCRIPT_CONF:-${DEFAULT_SANDBOX_SCRIPT_CONF}}"
-[[ -n "${SCRIPT_CONF}" ]]
-check_err "Script configuration is not specified"
-
-source "${SCRIPT_CONF}"
-check_err "Failed to load script configuration: ${SCRIPT_CONF}"
-
-readonly SCRIPT_NAME="$(basename "$0")"
+# Include libraries
+readonly SCRIPT_LIB_HOME="$(cd "$(dirname "$0")"; pwd -P)/lib"
+source "${SCRIPT_LIB_HOME}/output_utils.sh"
+source "${SCRIPT_LIB_HOME}/load_script_conf.sh"
 
 # Command parameters
 readonly ID="$1"
 [[ -n "${ID}" ]]
-check_err "Usage: ${SCRIPT_NAME} <sandbox_id>"
+check_cmd_args "<sandbox_id>"
 
 # Set variables
-if [[ -n "${SANDBOX_USERNAME_INIT}" ]]; then
-  readonly USERNAME="${SANDBOX_USERNAME_INIT}-${ID}"
-else
-  readonly USERNAME="${DEFAULT_USERNAME_INIT}-${ID}"
-fi
+readonly USERNAME_INIT="${SANDBOX_USERNAME_INIT-${DEFAULT_USERNAME_INIT}}"
 
-if [[ -n "${SANDBOX_USER_HOME_ROOT}" ]]; then
-  readonly USER_HOME_ROOT="${SANDBOX_USER_HOME_ROOT}"
-elif [[ -n "${DEFAULT_USER_HOME_ROOT}" ]]; then
-  readonly USER_HOME_ROOT="${DEFAULT_USER_HOME_ROOT}"
-else
-  readonly USER_HOME_ROOT="/home"
-fi
+readonly USERNAME="${USERNAME_INIT:+"${USERNAME_INIT}-"}${ID}"
 
-if [[ -n "${SANDBOX_PEM_HOME}" ]]; then
-  readonly PEM_HOME="${SANDBOX_PEM_HOME}"
-else
-  readonly PEM_HOME="${DEFAULT_PEM_HOME}"
-fi
+readonly USER_HOME_ROOT=\
+"${SANDBOX_USER_HOME_ROOT:-${DEFAULT_USER_HOME_ROOT:-$(dirname "$HOME")}}"
+
+readonly PEM_HOME="${SANDBOX_PEM_HOME-${DEFAULT_PEM_HOME}}"
 
 # Delete account and the associated home folder and mailbox file
 sudo rm -rf "${USER_HOME_ROOT}/${USERNAME}" && 
 sudo rm -f "/var/spool/mail/${USERNAME}" && 
 sudo userdel "${USERNAME}"
+check_failed "failed to delete account '${USERNAME}'"
 
-RET="$?"
-if [[ "${RET}" -eq 0 ]]; then
-  echo "account '${USERNAME}' has been deleted successfully"
+# Delete the associated private key
+if [[ -n "${PEM_HOME}" ]]; then
   sudo rm -f "${PEM_HOME}/${USERNAME}.pem"
-else
-  failed "failed to delete account '${USERNAME}'"
 fi
 
 # End of script
-exit "${RET}"
+echo "account '${USERNAME}' has been deleted successfully"
+exit 0
