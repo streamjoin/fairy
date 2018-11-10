@@ -3,3 +3,7 @@
 
 # Temporary files from vim
 *.swp
+
+# Customized configurations
+*.conf
+!*.default
