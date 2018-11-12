@@ -7,10 +7,10 @@ err() {
 }
 
 check_err() {
-  local -r RET="$?"
-  if [[ "${RET}" -ne 0 ]]; then
-    err "$@"
-    exit "${RET}"
+  local -r EXIT_CODE="$?"
+  if [[ "${EXIT_CODE}" -ne 0 ]]; then
+    err "$@ [EXIT:${EXIT_CODE}]"
+    exit "${EXIT_CODE}"
   fi
 }
 
@@ -21,17 +21,17 @@ failed() {
 }
 
 check_failed() {
-  local -r RET="$?"
-  if [[ "${RET}" -ne 0 ]]; then
-    failed "$@"
-    exit "${RET}"
+  local -r EXIT_CODE="$?"
+  if [[ "${EXIT_CODE}" -ne 0 ]]; then
+    failed "$@ [EXIT:${EXIT_CODE}]"
+    exit "${EXIT_CODE}"
   fi
 }
 
 check_cmd_args() {
-  local -r RET="$?"
-  if [[ "${RET}" -ne 0 ]]; then
+  local -r EXIT_CODE="$?"
+  if [[ "${EXIT_CODE}" -ne 0 ]]; then
     err "Usage: $(basename "$0") $@"
-    exit "${RET}"
+    exit "${EXIT_CODE}"
   fi
 }
