@@ -7,9 +7,9 @@
 set -o pipefail
 
 # Include libraries
-readonly SCRIPT_LIB_HOME="$(cd "$(dirname "$0")"; pwd -P)/lib"
-source "${SCRIPT_LIB_HOME}/output_utils.sh"
-source "${SCRIPT_LIB_HOME}/load_script_conf.sh"
+readonly SCRIPT_HOME="$(cd "$(dirname "$0")"; pwd -P)"
+source "${SCRIPT_HOME}/../_common_lib/output_utils.sh"
+source "${SCRIPT_HOME}/lib/load_script_conf.sh"
 
 # Command parameters
 readonly ID="$1"
@@ -22,7 +22,7 @@ readonly GROUP="${SANDBOX_USERNAME_INIT-${DEFAULT_USERNAME_INIT}}"
 readonly USERNAME="${GROUP:+"${GROUP}-"}${ID}"
 
 readonly USER_HOME_ROOT=\
-"${SANDBOX_USER_HOME_ROOT:-${DEFAULT_USER_HOME_ROOT:-$(dirname "$HOME")}}"
+"${SANDBOX_USER_HOME_ROOT:-${DEFAULT_USER_HOME_ROOT:-$(dirname "${HOME}")}}"
 
 readonly USER_HOME="${USER_HOME_ROOT}/${USERNAME}"
 
@@ -82,15 +82,22 @@ fi
 readonly USER_SSH_ROOT="${USER_HOME}/.ssh"
 sudo mkdir -p "${USER_SSH_ROOT}"
 sudo ssh-keygen -t rsa -f "${USER_SSH_ROOT}/id_rsa" -P '' -q
+check_failed "failed to generate SSH key pair for account '${USERNAME}'"
+
+# Authorize the public key for the user account
 sudo touch "${USER_SSH_ROOT}/authorized_keys"
 sudo chmod 722 "${USER_SSH_ROOT}/authorized_keys"
 sudo cat "${USER_SSH_ROOT}/id_rsa.pub" >> "${USER_SSH_ROOT}/authorized_keys"
 sudo chmod 600 "${USER_SSH_ROOT}/authorized_keys"
+
+# Copy the private key to the management folder
 if [[ -n "${PEM_HOME}" ]]; then
   sudo mkdir -p "${PEM_HOME}"
   sudo cp -f "${USER_SSH_ROOT}/id_rsa" "${PEM_HOME}/${USERNAME}.pem"
   sudo chmod +r "${PEM_HOME}/${USERNAME}.pem" 
 fi
+
+# Configure access admissions
 sudo chown -R "${USERNAME}":"${USERNAME}" "${USER_SSH_ROOT}"
 sudo chmod 700 "${USER_HOME}"
 

@@ -7,9 +7,9 @@
 set -o pipefail
 
 # Include libraries
-readonly SCRIPT_LIB_HOME="$(cd "$(dirname "$0")"; pwd -P)/lib"
-source "${SCRIPT_LIB_HOME}/output_utils.sh"
-source "${SCRIPT_LIB_HOME}/load_script_conf.sh"
+readonly SCRIPT_HOME="$(cd "$(dirname "$0")"; pwd -P)"
+source "${SCRIPT_HOME}/../_common_lib/output_utils.sh"
+source "${SCRIPT_HOME}/lib/load_script_conf.sh"
 
 # Command parameters
 readonly ID="$1"
@@ -22,7 +22,7 @@ readonly USERNAME_INIT="${SANDBOX_USERNAME_INIT-${DEFAULT_USERNAME_INIT}}"
 readonly USERNAME="${USERNAME_INIT:+"${USERNAME_INIT}-"}${ID}"
 
 readonly USER_HOME_ROOT=\
-"${SANDBOX_USER_HOME_ROOT:-${DEFAULT_USER_HOME_ROOT:-$(dirname "$HOME")}}"
+"${SANDBOX_USER_HOME_ROOT:-${DEFAULT_USER_HOME_ROOT:-$(dirname "${HOME}")}}"
 
 readonly PEM_HOME="${SANDBOX_PEM_HOME-${DEFAULT_PEM_HOME}}"
 

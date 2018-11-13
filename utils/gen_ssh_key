@@ -3,55 +3,22 @@
 # Generate SSH key pair for current account or a specified account.
 
 set -o nounset
-set -o errexit
+# set -o errexit
 set -o pipefail
 
-# Output utilities
-err() {
-  echo -e "$@" >&2  # output to stderr
-}
-
-check_err() {
-  local -r EXIT_CODE="$?"
-  if [[ "${EXIT_CODE}" -ne 0 ]]; then
-    err "$@ [EXIT:${EXIT_CODE}]"
-    exit "${EXIT_CODE}"
-  fi
-}
-
-failed() {
-  printf "\033[31m" >&1  # set to red font for stdout
-  printf "$@" >&2  # output to stderr
-  printf "\033[0m\n" >&1  # reset color for stdout
-}
-
-check_failed() {
-  local -r EXIT_CODE="$?"
-  if [[ "${EXIT_CODE}" -ne 0 ]]; then
-    failed "$@ [EXIT:${EXIT_CODE}]"
-    exit "${EXIT_CODE}"
-  fi
-}
-
-check_cmd_args() {
-  local -r EXIT_CODE="$?"
-  if [[ "${EXIT_CODE}" -ne 0 ]]; then
-    err "Usage: $(basename "$0") $@"
-    exit "${EXIT_CODE}"
-  fi
-}
+# Include libraries
+readonly SCRIPT_HOME="$(cd "$(dirname "$0")"; pwd -P)"
+source "${SCRIPT_HOME}/../_common_lib/output_utils.sh"
 
 # Command parameters
 readonly USERNAME="${1:-${USER}}"
 
 # Set variables
-readonly USER_SSH_ROOT="/home/$USERNAME/.ssh"
+readonly USER_SSH_ROOT="$(getent passwd "${USERNAME}" | cut -d: -f6)/.ssh"
 
 # Validate the existence of user account
-if ! id -u "${USERNAME}" > /dev/null 2>&1; then
-  failed "account '${USERNAME}' does not exist$"
-  exit 2
-fi
+id -u "${USERNAME}" > /dev/null 2>&1
+check_failed "account '${USERNAME}' does not exist"
 
 # Generate SSH keys (private/public)
 mkdir -p "${USER_SSH_ROOT}"
