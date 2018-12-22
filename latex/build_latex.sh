@@ -1,9 +1,7 @@
 #!/bin/sh
 #
-# Compile LaTeX project. 
+# Execution of compiling LaTeX project. 
 
-# set -o nounset
-# set -o errexit
 set -o pipefail
 
 # Include libraries

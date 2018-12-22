@@ -7,8 +7,8 @@ Here is a minimum example:
     # Name of the main .tex file
     export TEX_NAME="main"
     
-    # Name of the .bib file
-    export SRC_BIB_NAME="references"
+    # Name of the .bib file used as the parameter to \bibliography{}
+    export TARGET_BIB_NAME="references"
     
     # Path of the fairy project
     export FAIRY_HOME="/path/to/fairy"
