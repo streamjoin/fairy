@@ -19,8 +19,8 @@ check_err "'TEX_NAME' undefined: name of the main .tex file"
 
 [[ -n "${CMD_BIBTEX}" ]] || readonly CMD_BIBTEX="bibtex"
 
-[[ -n "${TARGET_BIB_NAME}" ]] || 
-readonly TARGET_BIB_NAME="${SRC_BIB_NAME:+${SRC_BIB_NAME}-trim}"
+[[ -n "${TGT_BIB_NAME}" ]] || 
+readonly TGT_BIB_NAME="${SRC_BIB_NAME:+${SRC_BIB_NAME}-trim}"
 
 [[ -n "${TRIMBIB_LOG}" ]] || readonly TRIMBIB_LOG="trimbib_log.txt"
 
@@ -54,7 +54,7 @@ compile_tex() {
 compile_bib() {
   cd "${BUILD_DIR}"
   ${CMD_BIBTEX} "${TEX_NAME}.aux"
-  check_err "failed to compile '\\\\bibliography{${TARGET_BIB%.*}}'"
+  check_err "failed to compile '\\\\bibliography{${TGT_BIB%.*}}'"
 }
 
 # Prepare
@@ -73,30 +73,30 @@ if [[ -n "${CMD_BIBTEX}" ]]; then
     [[ -f "${JAR_TRIMBIB}" ]]
     check_err "failed to find trimbib.jar in the path '${JAR_TRIMBIB}'"
 
-    readonly TARGET_BIB="${TARGET_BIB_NAME}.bib"
+    readonly TGT_BIB="${TGT_BIB_NAME}.bib"
 
     printf "Formatting ${WORK_DIR}/${SRC_BIB} ... "
 
     java -jar "${JAR_TRIMBIB}" -i "${WORK_DIR}/${SRC_BIB}" -d "${WORK_DIR}" \
-    -o "${TARGET_BIB}" --overwrite "${TRIMBIB_ARGS}" \
+    -o "${TGT_BIB}" --overwrite "${TRIMBIB_ARGS}" \
     > "${WORK_DIR}/${TRIMBIB_LOG}" 2>&1
     check_err "failed to format '${WORK_DIR}/${SRC_BIB}'"
 
     echo "done"
-    echo "Formatted bib: ${WORK_DIR}/${TARGET_BIB}"
+    echo "Formatted bib: ${WORK_DIR}/${TGT_BIB}"
     echo "Log of bib formatting: ${WORK_DIR}/${TRIMBIB_LOG}"
 
   else  # no bib formatting to perform
-    if [[ -f "${WORK_DIR}/${TARGET_BIB_NAME}.bib" ]]; then
-      readonly TARGET_BIB="${TARGET_BIB_NAME}.bib"
+    if [[ -f "${WORK_DIR}/${TGT_BIB_NAME}.bib" ]]; then
+      readonly TGT_BIB="${TGT_BIB_NAME}.bib"
     elif [[ -f "${WORK_DIR}/${SRC_BIB}" ]]; then
-      readonly TARGET_BIB="${SRC_BIB}"
+      readonly TGT_BIB="${SRC_BIB}"
     else
       check_err "failed to find .bib file"
     fi
   fi
 
-  ln -s "${WORK_DIR}/${TARGET_BIB}" "${BUILD_DIR}/${TARGET_BIB}"
+  ln -s "${WORK_DIR}/${TGT_BIB}" "${BUILD_DIR}/${TGT_BIB}"
 
   find "${WORK_DIR}" -iname \*.bst | 
   build_dir="${BUILD_DIR}" xargs -n 1 sh -c 'ln -s $0 "${build_dir}"'

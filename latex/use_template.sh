@@ -10,11 +10,11 @@ export TEX_NAME="main"
 # Name of the output .pdf file
 export PDF_NAME="The-Little-Fairy"
 
-# Name of the .bib file used as the parameter to \bibliography{}
-export TARGET_BIB_NAME="${SRC_BIB_NAME}-trim"
-
 # Name of the .bib file used as the input to trimbib
 export SRC_BIB_NAME="references"
+
+# Name of the .bib file used as the parameter to \bibliography{}
+export TGT_BIB_NAME="${SRC_BIB_NAME}-trim"
 
 # Path of the fairy project
 export FAIRY_HOME="/path/to/fairy"
