@@ -1,6 +1,8 @@
 #!/bin/bash
 #
 # Load script configuration
+#
+# Dependencies: output_utils.sh
 
 DEFAULT_SANDBOX_SCRIPT_CONF=\
 "${HOME}/sandbox/scripts/conf/sandbox_script.conf.default"
