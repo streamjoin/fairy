@@ -99,7 +99,7 @@ if [[ -n "${CMD_BIBTEX}" ]]; then
   ln -s "${WORK_DIR}/${TGT_BIB}" "${BUILD_DIR}/${TGT_BIB}"
 
   find "${WORK_DIR}" -iname \*.bst | 
-  build_dir="${BUILD_DIR}" xargs -n 1 sh -c 'ln -s $0 "${build_dir}"'
+  to_dir="${BUILD_DIR}" xargs -n 1 sh -c 'ln -s $0 "${to_dir}"'
 fi
 
 # Compile
@@ -118,7 +118,7 @@ if [[ "${CMD_LATEX}" = "latex" ]]; then
   [[ -d "${EXP_DIR}" ]] && ln -s "${EXP_DIR}" "${BUILD_DIR}"
 
   find "${WORK_DIR}" -iname "*.eps" | 
-  build_dir="${BUILD_DIR}" xargs -n 1 sh -c 'ln -s $0 "${build_dir}"'
+  to_dir="${BUILD_DIR}" xargs -n 1 sh -c 'ln -s $0 "${to_dir}"'
 
   dvips -P pdf -t letter -o "${PS_FILE}" "${TEX_NAME}.dvi"
 
