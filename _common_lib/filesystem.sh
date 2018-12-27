@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Utilities for file and directory mannipulation.
+# Utilities for file and directory manipulation.
 #
 # Dependencies: output_utils.sh
 
@@ -57,5 +57,5 @@ file_size_bytes() {
   [[ -f "${file}" ]]
   check_err "invalid path of file '${file}'"
 
-  ls -l "${file}" | cut -d ' ' -f5
+  ls -l "${file}" | awk '{ print $5 }'
 }

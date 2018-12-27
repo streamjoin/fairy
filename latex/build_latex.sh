@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Execution of compiling LaTeX project. 
 
@@ -62,7 +62,7 @@ delete_dir "${BUILD_DIR}"
 mkdir -p "${BUILD_DIR}" 
 
 if [[ -n "${CMD_BIBTEX}" ]]; then
-	delete_file "${TEX_NAME}.bbl"
+  delete_file "${TEX_NAME}.bbl"
 
   readonly SRC_BIB="${SRC_BIB_NAME}.bib"
 
