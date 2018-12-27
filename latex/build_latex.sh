@@ -28,10 +28,6 @@ readonly TGT_BIB_NAME="${SRC_BIB_NAME:+${SRC_BIB_NAME}-trim}"
 
 [[ -n "${BUILD_DIR}" ]] || readonly BUILD_DIR="${WORK_DIR}/pdfbuild"
 
-[[ -n "${PIC_DIR}" ]] || readonly PIC_DIR="${WORK_DIR}/pic"
-
-[[ -n "${EXP_DIR}" ]] || readonly EXP_DIR="${WORK_DIR}/exp"
-
 # Set variables
 readonly JAR_TRIMBIB="${TRIMBIB_HOME:+${TRIMBIB_HOME}/release/trimbib.jar}"
 
@@ -59,6 +55,7 @@ compile_bib() {
 
 # Prepare
 delete_file "${PDF_NAME}.pdf"
+delete_file "${PDF_NAME}.md5"
 delete_file "${TEX_NAME}.aux"
 
 delete_dir "${BUILD_DIR}"
@@ -98,8 +95,7 @@ if [[ -n "${CMD_BIBTEX}" ]]; then
 
   ln -s "${WORK_DIR}/${TGT_BIB}" "${BUILD_DIR}/${TGT_BIB}"
 
-  find "${WORK_DIR}" -iname \*.bst | 
-  to_dir="${BUILD_DIR}" xargs -n 1 sh -c 'ln -s $0 "${to_dir}"'
+  find_and_link_files_by_ext "bst" "${WORK_DIR}" "${BUILD_DIR}"
 fi
 
 # Compile
@@ -114,11 +110,9 @@ if [[ "${CMD_LATEX}" = "latex" ]]; then
   cd "${BUILD_DIR}"
   readonly PS_FILE="${TEX_NAME}.ps"
 
-  [[ -d "${PIC_DIR}" ]] && ln -s "${PIC_DIR}" "${BUILD_DIR}"
-  [[ -d "${EXP_DIR}" ]] && ln -s "${EXP_DIR}" "${BUILD_DIR}"
+  find_and_link_subdirs "${WORK_DIR}" "${BUILD_DIR}"
 
-  find "${WORK_DIR}" -iname "*.eps" | 
-  to_dir="${BUILD_DIR}" xargs -n 1 sh -c 'ln -s $0 "${to_dir}"'
+  find_and_link_files_by_ext "eps" "${WORK_DIR}" "${BUILD_DIR}"
 
   dvips -P pdf -t letter -o "${PS_FILE}" "${TEX_NAME}.dvi"
 
@@ -133,6 +127,10 @@ mv "${BUILD_DIR}/${TEX_NAME}.aux" "${WORK_DIR}/${TEX_NAME}.aux"
 mv "${BUILD_DIR}/${TEX_NAME}.bbl" "${WORK_DIR}/${TEX_NAME}.bbl"
 
 cd "${WORK_DIR}" 
+md5sum "${PDF_NAME}.pdf" > "${PDF_NAME}.md5"
 delete_dir "${BUILD_DIR}"
+
+readonly PDF_BYTES="$(file_size_bytes "${WORK_DIR}/${PDF_NAME}.pdf")"
+info "Output: ${WORK_DIR}/${PDF_NAME}.pdf (${PDF_BYTES} bytes)"
 
 exit 0

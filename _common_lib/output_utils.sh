@@ -2,8 +2,12 @@
 #
 # Output utilities
 
+info() {
+  echo -e "[INFO] $@" >&2
+}
+
 err() {
-  echo -e "$@" >&2  # output to stderr
+  echo -e "[ERROR] $@" >&2  # output to stderr
 }
 
 check_err() {

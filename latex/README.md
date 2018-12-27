@@ -43,5 +43,3 @@ The following environment variables can be optionally configured for purposed cu
 - `TRIMBIB_LOG`:
 - `WORK_DIR`:
 - `BUILD_DIR`:
-- `PIC_DIR`:
-- `EXP_DIR`:
