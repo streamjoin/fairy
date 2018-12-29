@@ -29,7 +29,7 @@ find_and_link_files_by_ext() {
   local -r to_dir="$3"
   mkdir -p "${to_dir}"
   
-  find "${from_dir}" -maxdepth 1 -iname "*.${ext}" |
+  find "${from_dir}" -maxdepth 1 -type f -iname "*.${ext}" |
   td="${to_dir}" xargs -n 1 sh -c '[[ -f "$0" ]] && ln -s "$0" ${td}'
 }
 
@@ -37,7 +37,9 @@ find_and_link_files_by_regex() {
   [[ "$#" -eq 3 ]]
   check_err "wrong number of parameters to 'find_and_link_files_by_regex()'"
   
-  local -r regex="$1"
+  local regex="$1"
+  [[ "$(os_type)" != "Mac" ]] &&
+  regex="$(echo "${regex//|/\\|}" | sed 's/(/\\(/g' | sed 's/)/\\)/g')"
   
   local -r from_dir="$2"
   [[ -d "${from_dir}" ]]
@@ -46,20 +48,8 @@ find_and_link_files_by_regex() {
   local -r to_dir="$3"
   mkdir -p "${to_dir}"
   
-  find "${from_dir}" -maxdepth 1 -regex "${regex}" |
+  find $(arg_find_e) "${from_dir}" -maxdepth 1 -type f -iregex "${regex}" |
   td="${to_dir}" xargs -n 1 sh -c '[[ -f "$0" ]] && ln -s "$0" ${td}'
-}
-
-find_and_link_files_by_ext_list() {
-  [[ "$#" -eq 3 ]]
-  check_err "wrong number of parameters to 'find_and_link_files_by_ext_list()'"
-  
-  local regex=""
-  for ext in $1; do
-    regex="${regex}\\|.*\\.${ext}"
-  done
-  
-  find_and_link_files_by_regex "${regex:2}" "$2" "$3"
 }
 
 find_and_link_subdirs() {

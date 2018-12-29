@@ -107,7 +107,7 @@ fi
 if [[ "${CMD_LATEX}" = "latex" ]]; then
   find_and_link_subdirs "${WORK_DIR}" "${BUILD_DIR}" &
   
-  find_and_link_files_by_ext_list "eps ps pdf jpg jpeg png bmp" \
+  find_and_link_files_by_regex ".*\.(eps|ps|pdf|jpg|jpeg|png|bmp)$" \
   "${WORK_DIR}" "${BUILD_DIR}" &
 fi
 

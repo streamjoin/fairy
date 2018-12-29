@@ -16,6 +16,15 @@ os_type() {
   echo "${os_name}"
 }
 
+arg_find_e() {
+  case $(os_type) in
+    "Mac") arg="-E" ;;
+    *) arg="" ;;
+  esac
+  
+  echo "${arg} "
+}
+
 cmd_md5sum() {
   case $(os_type) in
     "Mac") cmd="md5" ;;
