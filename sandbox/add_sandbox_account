@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Create a sandbox account. 
+# Create a sandbox account.
 
 # set -o nounset
 # set -o errexit
@@ -54,7 +54,7 @@ sudo useradd "${USERNAME}" "${GROUP:+"-G"}" "${GROUP}" \
 check_failed "failed to create account '${USERNAME}'"
 
 for group in ${ADD_ON_GROUPS}; do
-  sudo usermod -a -G "${group}" "${USERNAME}" 
+  sudo usermod -a -G "${group}" "${USERNAME}"
 done
 
 # Configure account password
@@ -94,7 +94,7 @@ sudo chmod 600 "${USER_SSH_ROOT}/authorized_keys"
 if [[ -n "${PEM_HOME}" ]]; then
   sudo mkdir -p "${PEM_HOME}"
   sudo cp -f "${USER_SSH_ROOT}/id_rsa" "${PEM_HOME}/${USERNAME}.pem"
-  sudo chmod +r "${PEM_HOME}/${USERNAME}.pem" 
+  sudo chmod +r "${PEM_HOME}/${USERNAME}.pem"
 fi
 
 # Configure access admissions

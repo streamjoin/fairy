@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Delete a sandbox account. 
+# Delete a sandbox account.
 
 #set -o nounset
 #set -o errexit
@@ -27,8 +27,8 @@ readonly USER_HOME_ROOT=\
 readonly PEM_HOME="${SANDBOX_PEM_HOME-${DEFAULT_PEM_HOME}}"
 
 # Delete account and the associated home folder and mailbox file
-sudo rm -rf "${USER_HOME_ROOT}/${USERNAME}" && 
-sudo rm -f "/var/spool/mail/${USERNAME}" && 
+sudo rm -rf "${USER_HOME_ROOT}/${USERNAME}" &&
+sudo rm -f "/var/spool/mail/${USERNAME}" &&
 sudo userdel "${USERNAME}"
 check_failed "failed to delete account '${USERNAME}'"
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Compile LaTeX project. 
+# Compile LaTeX project.
 
 set -o pipefail
 

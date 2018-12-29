@@ -1,12 +1,13 @@
 #!/bin/bash
 #
-# Execution of compiling LaTeX project. 
+# Execution of compiling LaTeX project.
 
 set -o pipefail
 
 # Include libraries
 readonly SCRIPT_HOME="$(cd "$(dirname "$0")"; pwd -P)"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/output_utils.sh"
+source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/system.sh"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/filesystem.sh"
 
 # Check environment variables
@@ -16,10 +17,12 @@ check_err "'TEX_NAME' undefined: name of the main .tex file"
 [[ -n "${PDF_NAME}" ]] || readonly PDF_NAME="${TEX_NAME}"
 
 [[ -n "${CMD_LATEX}" ]] || readonly CMD_LATEX="latex"
+check_cmd_exists "${CMD_LATEX}" "compile .tex"
 
 [[ -n "${CMD_BIBTEX}" ]] || readonly CMD_BIBTEX="bibtex"
+check_cmd_exists "${CMD_BIBTEX}" "compile .bib"
 
-[[ -n "${TGT_BIB_NAME}" ]] || 
+[[ -n "${TGT_BIB_NAME}" ]] ||
 readonly TGT_BIB_NAME="${SRC_BIB_NAME:+${SRC_BIB_NAME}-trim}"
 
 [[ -n "${TRIMBIB_LOG}" ]] || readonly TRIMBIB_LOG="trimbib_log.txt"
@@ -37,10 +40,10 @@ compile_tex() {
   if [[ "${CMD_LATEX}" = "latex" ]]; then
     ${CMD_LATEX} -output-directory="${BUILD_DIR}" \
     -aux-directory="${BUILD_DIR}" "${TEX_NAME}.tex"
-
+    
   elif [[ "${CMD_LATEX}" = "pdflatex" ]]; then
     pdflatex -output-directory "${BUILD_DIR}" "${TEX_NAME}.tex"
-
+    
   else
     check_err "unknown latex command '${CMD_LATEX}'"
   fi
@@ -58,31 +61,33 @@ delete_file "${PDF_NAME}.pdf"
 delete_file "${PDF_NAME}.md5"
 delete_file "${TEX_NAME}.aux"
 
-delete_dir "${BUILD_DIR}"
-mkdir -p "${BUILD_DIR}" 
+delete_dir "${BUILD_DIR}" && mkdir -p "${BUILD_DIR}"
+[[ "$(cd "${BUILD_DIR}"; pwd -P)" != "$(cd "${WORK_DIR}"; pwd -P)" ]]
+check_err "the build directory cannot be the working directory itself"
 
 if [[ -n "${CMD_BIBTEX}" ]]; then
   delete_file "${TEX_NAME}.bbl"
-
+  
   readonly SRC_BIB="${SRC_BIB_NAME}.bib"
-
+  
   if [[ -n "${JAR_TRIMBIB}" ]] && [[ -f "${WORK_DIR}/${SRC_BIB}" ]]; then
     [[ -f "${JAR_TRIMBIB}" ]]
     check_err "failed to find trimbib.jar in the path '${JAR_TRIMBIB}'"
-
+    
     readonly TGT_BIB="${TGT_BIB_NAME}.bib"
-
+    
     printf "Formatting ${WORK_DIR}/${SRC_BIB} ... "
-
+    
+    check_cmd_exists "java"
     java -jar "${JAR_TRIMBIB}" -i "${WORK_DIR}/${SRC_BIB}" -d "${WORK_DIR}" \
     -o "${TGT_BIB}" --overwrite "${TRIMBIB_ARGS}" \
     > "${WORK_DIR}/${TRIMBIB_LOG}" 2>&1
     check_err "failed to format '${WORK_DIR}/${SRC_BIB}'"
-
+    
     echo "done"
     echo "Formatted bib: ${WORK_DIR}/${TGT_BIB}"
     echo "Log of bib formatting: ${WORK_DIR}/${TRIMBIB_LOG}"
-
+    
   else  # no bib formatting to perform
     if [[ -f "${WORK_DIR}/${TGT_BIB_NAME}.bib" ]]; then
       readonly TGT_BIB="${TGT_BIB_NAME}.bib"
@@ -92,45 +97,47 @@ if [[ -n "${CMD_BIBTEX}" ]]; then
       check_err "failed to find .bib file"
     fi
   fi
-
+  
   ln -s "${WORK_DIR}/${TGT_BIB}" "${BUILD_DIR}/${TGT_BIB}"
-
-  find_and_link_files_by_ext "bst" "${WORK_DIR}" "${BUILD_DIR}"
+  
+  find_and_link_files_by_ext "bst" "${WORK_DIR}" "${BUILD_DIR}" &
 fi
 
 # Compile
-compile_tex
-if [[ -n "${CMD_BIBTEX}" ]]; then
-  compile_bib
-  compile_tex
-  compile_tex
+if [[ "${CMD_LATEX}" = "latex" ]]; then
+  find_and_link_subdirs "${WORK_DIR}" "${BUILD_DIR}" &
+  
+  find_and_link_files_by_ext_list "eps ps pdf jpg jpeg png bmp" \
+  "${WORK_DIR}" "${BUILD_DIR}" &
 fi
+
+compile_tex
+[[ -n "${CMD_BIBTEX}" ]] && compile_bib && compile_tex && compile_tex
 
 if [[ "${CMD_LATEX}" = "latex" ]]; then
   cd "${BUILD_DIR}"
-  readonly PS_FILE="${TEX_NAME}.ps"
-
-  find_and_link_subdirs "${WORK_DIR}" "${BUILD_DIR}"
-
-  find_and_link_files_by_ext "eps" "${WORK_DIR}" "${BUILD_DIR}"
-
-  dvips -P pdf -t letter -o "${PS_FILE}" "${TEX_NAME}.dvi"
-
+  dvips -P pdf -t letter -o "${TEX_NAME}.ps" "${TEX_NAME}.dvi"
   ps2pdf -dPDFSETTINGS#/prepress -dCompatibilityLevel#1.4 -dSubsetFonts#true \
-  -dEmbedAllFonts#true "${PS_FILE}" "${TEX_NAME}.pdf"
+  -dEmbedAllFonts#true "${TEX_NAME}.ps" "${TEX_NAME}.pdf"
 fi
 
-mv "${BUILD_DIR}/${TEX_NAME}.pdf" "${WORK_DIR}/${PDF_NAME}.pdf"
-mv "${BUILD_DIR}/${TEX_NAME}.aux" "${WORK_DIR}/${TEX_NAME}.aux"
+# Post-processing
+cd "${WORK_DIR}"
 
-[[ -n "${CMD_BIBTEX}" ]] && 
-mv "${BUILD_DIR}/${TEX_NAME}.bbl" "${WORK_DIR}/${TEX_NAME}.bbl"
+mv "${BUILD_DIR}/${TEX_NAME}.pdf" "${PDF_NAME}.pdf"
+mv "${BUILD_DIR}/${TEX_NAME}.aux" "${TEX_NAME}.aux"
 
-cd "${WORK_DIR}" 
-md5sum "${PDF_NAME}.pdf" > "${PDF_NAME}.md5"
+[[ -n "${CMD_BIBTEX}" ]] &&
+mv "${BUILD_DIR}/${TEX_NAME}.bbl" "${TEX_NAME}.bbl"
+
 delete_dir "${BUILD_DIR}"
 
-readonly PDF_BYTES="$(file_size_bytes "${WORK_DIR}/${PDF_NAME}.pdf")"
+readonly CMD_MD5SUM="$(cmd_md5sum)"
+[[ "$(command -v "${CMD_MD5SUM}")" ]] &&
+${CMD_MD5SUM} "${PDF_NAME}.pdf" > "${PDF_NAME}.md5" &
+
+# End of script
+readonly PDF_BYTES="$(file_size_bytes "${PDF_NAME}.pdf")"
 info "Output: ${WORK_DIR}/${PDF_NAME}.pdf (${PDF_BYTES} bytes)"
 
 exit 0

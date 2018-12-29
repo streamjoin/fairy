@@ -18,6 +18,11 @@ check_err() {
   fi
 }
 
+check_cmd_exists() {
+  [[ "$(command -v "$1")" ]]
+  check_err "command ${1:+'$1'} not found${2:+: $2}"
+}
+
 failed() {
   printf "\033[31m" >&1  # set to red font for stdout
   printf "$@" >&2  # output to stderr
