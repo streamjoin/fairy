@@ -10,6 +10,8 @@ source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/output_utils.sh"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/system.sh"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/filesystem.sh"
 
+readonly START_TIME="$(timer)"
+
 # Check environment variables
 [[ -n "${WORK_DIR}" ]] || readonly WORK_DIR="$(cd "$(dirname "$0")"; pwd -P)"
 
@@ -34,15 +36,6 @@ check_cmd_exists "${CMD_LATEX}" "compile .tex"
 CMD_BIBTEX="${CMD_BIBTEX-"bibtex"}"
 [[ "${CMD_BIBTEX}" = "<none>" ]] && CMD_BIBTEX=""
 readonly CMD_BIBTEX
-# [[ -z "${CMD_BIBTEX}" ]] || [[ "${CMD_BIBTEX}" = "<none>" ]] ||
-# [[ "$(command -v "${CMD_BIBTEX}")" ]]
-# check_err "command '${CMD_BIBTEX}' not found: compile .bib"
-
-# [[ -n "${TGT_BIB_NAME}" ]] ||
-# readonly TGT_BIB_NAME="${SRC_BIB_NAME:+${SRC_BIB_NAME}-trim}"
-# [[ -z "${CMD_BIBTEX}" ]] || [[ "${CMD_BIBTEX}" = "<none>" ]] ||
-# [[ "${TGT_BIB_NAME}" != "${SRC_BIB_NAME}" ]]
-# check_err "target .bib cannot be the source .bib itself"
 
 if [[ -n "${CMD_BIBTEX}" ]]; then
   [[ "$(command -v "${CMD_BIBTEX}")" ]]
@@ -163,5 +156,6 @@ ${CMD_MD5SUM} "${PDF_NAME}.pdf" > "${PDF_NAME}.md5"
 # End of script
 readonly PDF_BYTES="$(file_size_bytes "${PDF_NAME}.pdf")"
 info "Output: ${WORK_DIR}/${PDF_NAME}.pdf (${PDF_BYTES} bytes)"
+info "Total time: $(timer "${START_TIME}")"
 
 exit 0

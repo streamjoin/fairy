@@ -33,3 +33,29 @@ cmd_md5sum() {
   
   echo "${cmd}"
 }
+
+function timer()
+{
+  if [[ "$#" -eq 0 ]]; then
+    echo "$(date '+%s')"
+  else
+    local stime=$1
+    local -r etime="$(date '+%s')"
+    
+    if [[ -z "${stime}" ]]; then stime="${etime}"; fi
+    local -r delta="$((etime - stime))"
+    
+    local -r sec="$((delta % 60))"
+    if [[ "${delta}" -lt 60 ]]; then
+      echo "${sec} sec"
+    else
+      local -r min="$(((delta / 60) % 60))"
+      if [[ "${delta}" -lt 3600 ]]; then
+        echo "${min} min ${sec} sec"
+      else
+        local -r hr="$((delta / 3600))"
+        echo "${hr} hr ${min} min ${sec} sec"
+      fi
+    fi
+  fi
+}
