@@ -4,7 +4,7 @@
 
 To use `build_latex.sh` to compile LaTeX project, the following environment variables are compulsory to configure in the driver script. 
 
-- `TEX_NAME`: Name of the main .tex file for compilation. 
+- `TEX_NAME`: Name of the main .tex file for compilation. By default, the script will look for `main.tex` or `ms.tex` if this variable is not set. 
 - `TGT_BIB_NAME`: Name of the .bib file used as the parameter to `\bibliography{}` stated in the the .tex file. 
 - `FAIRY_HOME`: Path of the root of the fairy project. This must be set in order to properly resolved dependencies required in `build_latex.sh`. 
 
@@ -37,7 +37,7 @@ The following environment variables can be optionally configured for purposed cu
 - `PDF_NAME`: Name of the output .pdf file.
 - `SRC_BIB_NAME`: 
 - `CMD_LATEX`:
-- `CMD_BIBTEX`:
+- `CMD_BIBTEX`: Set it to empty string will bypass the compilation of bibliography. 
 - `TRIMBIB_HOME`:
 - `TRIMBIB_ARGS`:
 - `TRIMBIB_LOG`:

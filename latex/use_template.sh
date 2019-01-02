@@ -19,10 +19,12 @@ export TGT_BIB_NAME="${SRC_BIB_NAME}-trim"
 # Path of the fairy project cloned from https://github.com/streamjoin/fairy
 export FAIRY_HOME="/path/to/fairy"
 
+# Command for compiling .tex
 # Options: latex, pdflatex, xelatex
 export CMD_LATEX="latex"
 
-# Options: bibtex, biber
+# Command for compiling .bib
+# Options: bibtex, biber, <none>
 export CMD_BIBTEX="bibtex"
 
 # Path of the trimbib project cloned from https://github.com/streamjoin/trimbib

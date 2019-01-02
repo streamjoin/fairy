@@ -11,25 +11,48 @@ source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/system.sh"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/filesystem.sh"
 
 # Check environment variables
-[[ -n "${TEX_NAME}" ]]
+[[ -n "${WORK_DIR}" ]] || readonly WORK_DIR="$(cd "$(dirname "$0")"; pwd -P)"
+
+[[ -n "${BUILD_DIR}" ]] || readonly BUILD_DIR="${WORK_DIR}/pdfbuild"
+
+if [[ -z "${TEX_NAME}" ]]; then
+  if [[ -f "${WORK_DIR}/main.tex" ]]; then
+    readonly TEX_NAME="main"
+  elif [[ -f "${WORK_DIR}/ms.tex" ]]; then
+    readonly TEX_NAME="ms"
+  fi
+fi
 check_err "'TEX_NAME' undefined: name of the main .tex file"
 
 [[ -n "${PDF_NAME}" ]] || readonly PDF_NAME="${TEX_NAME}"
 
+[[ -n "${TRIMBIB_LOG}" ]] || readonly TRIMBIB_LOG="trimbib_log.txt"
+
 [[ -n "${CMD_LATEX}" ]] || readonly CMD_LATEX="latex"
 check_cmd_exists "${CMD_LATEX}" "compile .tex"
 
-[[ -n "${CMD_BIBTEX}" ]] || readonly CMD_BIBTEX="bibtex"
-check_cmd_exists "${CMD_BIBTEX}" "compile .bib"
+CMD_BIBTEX="${CMD_BIBTEX-"bibtex"}"
+[[ "${CMD_BIBTEX}" = "<none>" ]] && CMD_BIBTEX=""
+readonly CMD_BIBTEX
+# [[ -z "${CMD_BIBTEX}" ]] || [[ "${CMD_BIBTEX}" = "<none>" ]] ||
+# [[ "$(command -v "${CMD_BIBTEX}")" ]]
+# check_err "command '${CMD_BIBTEX}' not found: compile .bib"
 
-[[ -n "${TGT_BIB_NAME}" ]] ||
-readonly TGT_BIB_NAME="${SRC_BIB_NAME:+${SRC_BIB_NAME}-trim}"
+# [[ -n "${TGT_BIB_NAME}" ]] ||
+# readonly TGT_BIB_NAME="${SRC_BIB_NAME:+${SRC_BIB_NAME}-trim}"
+# [[ -z "${CMD_BIBTEX}" ]] || [[ "${CMD_BIBTEX}" = "<none>" ]] ||
+# [[ "${TGT_BIB_NAME}" != "${SRC_BIB_NAME}" ]]
+# check_err "target .bib cannot be the source .bib itself"
 
-[[ -n "${TRIMBIB_LOG}" ]] || readonly TRIMBIB_LOG="trimbib_log.txt"
-
-[[ -n "${WORK_DIR}" ]] || readonly WORK_DIR="$(cd "$(dirname "$0")"; pwd -P)"
-
-[[ -n "${BUILD_DIR}" ]] || readonly BUILD_DIR="${WORK_DIR}/pdfbuild"
+if [[ -n "${CMD_BIBTEX}" ]]; then
+  [[ "$(command -v "${CMD_BIBTEX}")" ]]
+  check_err "command '${CMD_BIBTEX}' not found: compile .bib"
+  
+  [[ -n "${TGT_BIB_NAME}" ]] ||
+  readonly TGT_BIB_NAME="${SRC_BIB_NAME:+${SRC_BIB_NAME}-trim}"
+  [[ "${TGT_BIB_NAME}" != "${SRC_BIB_NAME}" ]]
+  check_err "target .bib cannot be the source .bib itself"
+fi
 
 # Set variables
 readonly JAR_TRIMBIB="${TRIMBIB_HOME:+${TRIMBIB_HOME}/release/trimbib.jar}"
@@ -37,16 +60,19 @@ readonly JAR_TRIMBIB="${TRIMBIB_HOME:+${TRIMBIB_HOME}/release/trimbib.jar}"
 # Functions
 compile_tex() {
   cd "${WORK_DIR}"
-  if [[ "${CMD_LATEX}" = "latex" ]]; then
-    ${CMD_LATEX} -output-directory="${BUILD_DIR}" \
-    -aux-directory="${BUILD_DIR}" "${TEX_NAME}.tex"
-    
-  elif [[ "${CMD_LATEX}" = "pdflatex" ]]; then
-    pdflatex -output-directory "${BUILD_DIR}" "${TEX_NAME}.tex"
-    
-  else
-    check_err "unknown latex command '${CMD_LATEX}'"
-  fi
+  case "${CMD_LATEX}" in
+    latex|xelatex)
+      ${CMD_LATEX} -output-directory="${BUILD_DIR}" \
+      -aux-directory="${BUILD_DIR}" "${TEX_NAME}.tex"
+    ;;
+    pdflatex)
+      ${CMD_LATEX} -output-directory "${BUILD_DIR}" "${TEX_NAME}.tex"
+    ;;
+    *)
+      err "unknown latex command '${CMD_LATEX}'"
+      exit 127
+    ;;
+  esac
   check_err "failed to compile '${TEX_NAME}.tex'"
 }
 
@@ -100,21 +126,19 @@ if [[ -n "${CMD_BIBTEX}" ]]; then
   
   ln -s "${WORK_DIR}/${TGT_BIB}" "${BUILD_DIR}/${TGT_BIB}"
   
-  find_and_link_files_by_ext "bst" "${WORK_DIR}" "${BUILD_DIR}" &
+  find_and_link_files_by_ext "bst" "${WORK_DIR}" "${BUILD_DIR}"
 fi
 
 # Compile
-if [[ "${CMD_LATEX}" = "latex" ]]; then
-  find_and_link_subdirs "${WORK_DIR}" "${BUILD_DIR}" &
-  
-  find_and_link_files_by_regex ".*\.(eps|ps|pdf|jpg|jpeg|png|bmp)$" \
-  "${WORK_DIR}" "${BUILD_DIR}" &
-fi
-
 compile_tex
 [[ -n "${CMD_BIBTEX}" ]] && compile_bib && compile_tex && compile_tex
 
 if [[ "${CMD_LATEX}" = "latex" ]]; then
+  find_and_link_subdirs "${WORK_DIR}" "${BUILD_DIR}"
+  
+  find_and_link_files_by_regex ".*\.(eps|ps|pdf|jpg|jpeg|png|bmp)$" \
+  "${WORK_DIR}" "${BUILD_DIR}"
+  
   cd "${BUILD_DIR}"
   dvips -P pdf -t letter -o "${TEX_NAME}.ps" "${TEX_NAME}.dvi"
   ps2pdf -dPDFSETTINGS#/prepress -dCompatibilityLevel#1.4 -dSubsetFonts#true \
@@ -134,7 +158,7 @@ delete_dir "${BUILD_DIR}"
 
 readonly CMD_MD5SUM="$(cmd_md5sum)"
 [[ "$(command -v "${CMD_MD5SUM}")" ]] &&
-${CMD_MD5SUM} "${PDF_NAME}.pdf" > "${PDF_NAME}.md5" &
+${CMD_MD5SUM} "${PDF_NAME}.pdf" > "${PDF_NAME}.md5"
 
 # End of script
 readonly PDF_BYTES="$(file_size_bytes "${PDF_NAME}.pdf")"
