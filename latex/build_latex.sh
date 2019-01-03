@@ -10,6 +10,7 @@ source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/output_utils.sh"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/system.sh"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/filesystem.sh"
 
+info "This is Fairy LaTeX Compilation (under the MIT License)"
 readonly START_TIME="$(timer)"
 
 # Check environment variables
@@ -155,7 +156,13 @@ ${CMD_MD5SUM} "${PDF_NAME}.pdf" > "${PDF_NAME}.md5"
 
 # End of script
 readonly PDF_BYTES="$(file_size_bytes "${PDF_NAME}.pdf")"
+
+info "------------------------------------------------------------------------"
+info_bold_green "BUILD SUCCESSFUL"
+info "------------------------------------------------------------------------"
 info "Output: ${WORK_DIR}/${PDF_NAME}.pdf (${PDF_BYTES} bytes)"
+info "Finished at: $(date +"%T %Z, %-d %B %Y")"
 info "Total time: $(timer "${START_TIME}")"
+info "------------------------------------------------------------------------"
 
 exit 0
