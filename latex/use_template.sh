@@ -16,7 +16,7 @@ export SRC_BIB_NAME="references"
 # Name of the .bib file used as the parameter to \bibliography{}
 export TGT_BIB_NAME="${SRC_BIB_NAME}-trim"
 
-# Path of the fairy project cloned from https://github.com/streamjoin/fairy
+# Path of the Fairy project cloned from https://github.com/streamjoin/fairy
 export FAIRY_HOME="/path/to/fairy"
 
 # Command for compiling .tex
