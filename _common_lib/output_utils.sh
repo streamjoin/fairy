@@ -9,6 +9,9 @@ info() {
 info_bold_green() {
   info "\033[1m\033[32m$@\033[0m"
 }
+info_bold_blue() {
+  info "\033[1m\033[34m$@\033[0m"
+}
 
 warn() {
   printf "[" >&2
@@ -34,11 +37,6 @@ check_err() {
   fi
 }
 
-check_cmd_exists() {
-  [[ "$(command -v "$1")" ]]
-  check_err "command ${1:+'$1'} not found${2:+: $2}"
-}
-
 failed() {
   printf "\033[31m" >&1  # set to red font for stdout
   printf "$@" >&2  # to stderr
@@ -49,14 +47,6 @@ check_failed() {
   local -r EXIT_CODE="$?"
   if [[ "${EXIT_CODE}" -ne 0 ]]; then
     failed "$@ [EXIT:${EXIT_CODE}]"
-    exit "${EXIT_CODE}"
-  fi
-}
-
-check_cmd_args() {
-  local -r EXIT_CODE="$?"
-  if [[ "${EXIT_CODE}" -ne 0 ]]; then
-    err "Usage: $(basename "$0") $@"
     exit "${EXIT_CODE}"
   fi
 }

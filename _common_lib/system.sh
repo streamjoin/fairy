@@ -1,6 +1,24 @@
 #!/bin/bash
 #
 # Operating system related utilities.
+#
+# Dependencies: output_utils.sh
+
+check_cmd_exists() {
+  [[ "$#" -gt 0 ]] && [[ "$#" -le 2 ]]
+  check_err "wrong number of parameters to 'check_cmd_exists()'"
+  
+  [[ "$(command -v "$1")" ]]
+  check_err "command ${1:+'$1'} not found${2:+: $2}"
+}
+
+check_cmd_args() {
+  local -r EXIT_CODE="$?"
+  if [[ "${EXIT_CODE}" -ne 0 ]]; then
+    err "Usage: $(basename "$0") $@"
+    exit "${EXIT_CODE}"
+  fi
+}
 
 os_type() {
   local -r kern_name="$(uname -s)"

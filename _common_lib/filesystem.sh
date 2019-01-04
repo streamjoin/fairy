@@ -68,13 +68,27 @@ find_and_link_subdirs() {
   sh -c '[[ "$0" != "." ]] && ln -s "${fd}/$0" "${td}"'
 }
 
+check_file_exists() {
+  [[ "$#" -eq 1 ]]
+  check_err "wrong number of parameters to 'check_file_exists()'"
+  
+  [[ -f "$1" ]]
+  check_err "invalid path of file '$1'"
+}
+
+check_dir_exists() {
+  [[ "$#" -eq 1 ]]
+  check_err "wrong number of parameters to 'check_dir_exists()'"
+  
+  [[ -d "$1" ]]
+  check_err "invalid path of directory '$1'"
+}
+
 file_size_bytes() {
   [[ "$#" -eq 1 ]]
   check_err "wrong number of parameters to 'get_file_size_bytes()'"
   
-  local -r file="$1"
-  [[ -f "${file}" ]]
-  check_err "invalid path of file '${file}'"
+  check_file_exists "$1"
   
-  ls -l "${file}" | awk '{ print $5 }'
+  ls -l "$1" | awk '{ print $5 }'
 }

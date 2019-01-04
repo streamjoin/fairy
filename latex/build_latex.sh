@@ -10,13 +10,26 @@ source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/output_utils.sh"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/system.sh"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/filesystem.sh"
 
-info "This is Fairy LaTeX Compilation (under the MIT License)"
+# Help
+if [[ "$1" = "--help" ]] || [[ "$1" = "-?" ]]; then
+  info_bold_blue "USAGE"
+  info "  $(basename "$0") [OPTION]"
+  info_bold_blue "OPTIONS"
+  info "  -c, --clean    delete all generated files and exit"
+  info "  -?, --help     display this help and exit"
+  exit 0
+fi
+
 readonly START_TIME="$(timer)"
 
 # Check environment variables
-[[ -n "${WORK_DIR}" ]] || readonly WORK_DIR="$(cd "$(dirname "$0")"; pwd -P)"
+[[ -n "${WORK_DIR}" ]] || WORK_DIR="$(cd "$(dirname "$0")"; pwd -P)"
+check_dir_exists "${WORK_DIR}"
+readonly WORK_DIR="$(cd "${WORK_DIR}"; pwd -P)"  # canonical path
 
-[[ -n "${BUILD_DIR}" ]] || readonly BUILD_DIR="${WORK_DIR}/pdfbuild"
+[[ -n "${BUILD_DIR}" ]] || BUILD_DIR="${WORK_DIR}/pdfbuild"
+mkdir -p "${BUILD_DIR}"
+readonly BUILD_DIR="$(cd "${BUILD_DIR}"; pwd -P)"  # canonical path
 
 if [[ -z "${TEX_NAME}" ]]; then
   if [[ -f "${WORK_DIR}/main.tex" ]]; then
@@ -76,17 +89,44 @@ compile_bib() {
   check_err "failed to compile '\\\\bibliography{${TGT_BIB%.*}}'"
 }
 
-# Prepare
-delete_file "${PDF_NAME}.pdf"
-delete_file "${PDF_NAME}.md5"
-delete_file "${TEX_NAME}.aux"
+# Command parameters (other than '--help')
+if [[ "$#" > 0 ]]; then
+  case "$1" in
+    --clean|-c)
+      delete_file "${WORK_DIR}/${PDF_NAME}.pdf"
+      delete_file "${WORK_DIR}/${PDF_NAME}.md5"
+      delete_file "${WORK_DIR}/${TEX_NAME}.aux"
+      
+      [[ -n "${CMD_BIBTEX}" ]] && delete_file "${WORK_DIR}/${TEX_NAME}.bbl"
+      
+      if [[ "${BUILD_DIR}" = "${WORK_DIR}" ]]; then
+        warn "the build directory is set to the working directory itself"
+        warn "Path: ${BUILD_DIR}/"
+      else
+        delete_dir "${BUILD_DIR}"
+      fi
+      
+      exit 0
+    ;;
+    *)
+      err "unknown command argument(s) '$@' (see '--help' for usage)"
+      exit 126
+    ;;
+  esac
+fi
+info "This is Fairy LaTeX Compilation (under the MIT License)"
 
-delete_dir "${BUILD_DIR}" && mkdir -p "${BUILD_DIR}"
-[[ "$(cd "${BUILD_DIR}"; pwd -P)" != "$(cd "${WORK_DIR}"; pwd -P)" ]]
+# Prepare
+delete_file "${WORK_DIR}/${PDF_NAME}.pdf"
+delete_file "${WORK_DIR}/${PDF_NAME}.md5"
+delete_file "${WORK_DIR}/${TEX_NAME}.aux"
+
+[[ "${BUILD_DIR}" != "${WORK_DIR}" ]]
 check_err "the build directory cannot be the working directory itself"
+delete_dir "${BUILD_DIR}" && mkdir -p "${BUILD_DIR}"
 
 if [[ -n "${CMD_BIBTEX}" ]]; then
-  delete_file "${TEX_NAME}.bbl"
+  delete_file "${WORK_DIR}/${TEX_NAME}.bbl"
   
   readonly SRC_BIB="${SRC_BIB_NAME}.bib"
   
