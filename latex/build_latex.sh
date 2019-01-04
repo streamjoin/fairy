@@ -33,12 +33,13 @@ readonly BUILD_DIR="$(cd "${BUILD_DIR}"; pwd -P)"  # canonical path
 
 if [[ -z "${TEX_NAME}" ]]; then
   if [[ -f "${WORK_DIR}/main.tex" ]]; then
-    readonly TEX_NAME="main"
+    TEX_NAME="main"
   elif [[ -f "${WORK_DIR}/ms.tex" ]]; then
-    readonly TEX_NAME="ms"
+    TEX_NAME="ms"
   fi
 fi
 check_err "'TEX_NAME' undefined: name of the main .tex file"
+readonly TEX_NAME
 
 [[ -n "${PDF_NAME}" ]] || readonly PDF_NAME="${TEX_NAME}"
 
@@ -65,6 +66,18 @@ fi
 readonly JAR_TRIMBIB="${TRIMBIB_HOME:+${TRIMBIB_HOME}/release/trimbib.jar}"
 
 # Functions
+clean_all() {
+  delete_file "${WORK_DIR}/${PDF_NAME}.pdf"
+  delete_file "${WORK_DIR}/${PDF_NAME}.md5"
+  delete_file "${WORK_DIR}/${TEX_NAME}.aux"
+  
+  [[ -n "${CMD_BIBTEX}" ]] && delete_file "${WORK_DIR}/${TEX_NAME}.bbl"
+  
+  [[ "${BUILD_DIR}" != "${WORK_DIR}" ]]
+  check_err "the build directory cannot be the working directory itself"
+  delete_dir "${BUILD_DIR}"
+}
+
 compile_tex() {
   cd "${WORK_DIR}"
   case "${CMD_LATEX}" in
@@ -93,19 +106,7 @@ compile_bib() {
 if [[ "$#" > 0 ]]; then
   case "$1" in
     --clean|-c)
-      delete_file "${WORK_DIR}/${PDF_NAME}.pdf"
-      delete_file "${WORK_DIR}/${PDF_NAME}.md5"
-      delete_file "${WORK_DIR}/${TEX_NAME}.aux"
-      
-      [[ -n "${CMD_BIBTEX}" ]] && delete_file "${WORK_DIR}/${TEX_NAME}.bbl"
-      
-      if [[ "${BUILD_DIR}" = "${WORK_DIR}" ]]; then
-        warn "the build directory is set to the working directory itself"
-        warn "Path: ${BUILD_DIR}/"
-      else
-        delete_dir "${BUILD_DIR}"
-      fi
-      
+      clean_all
       exit 0
     ;;
     *)
@@ -117,17 +118,10 @@ fi
 info "This is Fairy LaTeX Compilation (under the MIT License)"
 
 # Prepare
-delete_file "${WORK_DIR}/${PDF_NAME}.pdf"
-delete_file "${WORK_DIR}/${PDF_NAME}.md5"
-delete_file "${WORK_DIR}/${TEX_NAME}.aux"
-
-[[ "${BUILD_DIR}" != "${WORK_DIR}" ]]
-check_err "the build directory cannot be the working directory itself"
-delete_dir "${BUILD_DIR}" && mkdir -p "${BUILD_DIR}"
+clean_all
+mkdir -p "${BUILD_DIR}"
 
 if [[ -n "${CMD_BIBTEX}" ]]; then
-  delete_file "${WORK_DIR}/${TEX_NAME}.bbl"
-  
   readonly SRC_BIB="${SRC_BIB_NAME}.bib"
   
   if [[ -n "${JAR_TRIMBIB}" ]] && [[ -f "${WORK_DIR}/${SRC_BIB}" ]]; then
