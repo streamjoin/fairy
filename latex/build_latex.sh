@@ -12,11 +12,27 @@ source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/filesystem.sh"
 
 # Help
 if [[ "$1" = "--help" ]] || [[ "$1" = "-?" ]]; then
-  info_bold_blue "USAGE"
-  info "  $(basename "$0") [OPTION]"
-  info_bold_blue "OPTIONS"
-  info "  -c, --clean    delete all generated files and exit"
-  info "  -?, --help     display this help and exit"
+  echo_bold_blue "USAGE"
+  echo "  $(basename "$0") [OPTION]"
+  echo
+  echo_bold_blue "OPTIONS"
+  echo "  -c, --clean    delete all generated files and exit"
+  echo "  -?, --help     display this help and exit"
+  echo
+  echo_bold_blue "ENVIRONMENT VARIABLES"
+  echo "  FAIRY_HOME    ..."
+  echo "  TRIMBIB_HOME    ..."
+  echo "  TRIMBIB_ARGS    ..."
+  echo "  WORK_DIR    ..."
+  echo "  BUILD_DIR   ..."
+  echo "  TEX_NAME   ..."
+  echo "  PDF_NAME   ..."
+  echo "  TRIMBIB_LOG   ..."
+  echo "  CMD_LATEX   ..."
+  echo "  CMD_BIBTEX   ..."
+  echo "  SRC_BIB_NAME   ..."
+  echo "  TGT_BIB_NAME   ..."
+  echo
   exit 0
 fi
 

@@ -2,6 +2,10 @@
 #
 # Output utilities
 
+echo_bold_blue() {
+  printf "\033[1m\033[34m$@\033[0m\n"
+}
+
 info() {
   printf "[\033[1m\033[34mINFO\033[0m] $@\n" >&1  # to stdout
 }
