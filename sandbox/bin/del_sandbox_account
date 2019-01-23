@@ -39,5 +39,5 @@ if [[ -n "${PEM_HOME}" ]]; then
 fi
 
 # End of script
-echo "account '${USERNAME}' has been deleted successfully"
+info "Account '${USERNAME}' has been deleted successfully"
 exit 0

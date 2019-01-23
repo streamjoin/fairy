@@ -103,5 +103,5 @@ sudo chown -R "${USERNAME}":"${USERNAME}" "${USER_SSH_ROOT}"
 sudo chmod 700 "${USER_HOME}"
 
 # End of script
-echo "account '${USERNAME}' has been created successfully"
+info "Account '${USERNAME}' has been created successfully"
 exit 0

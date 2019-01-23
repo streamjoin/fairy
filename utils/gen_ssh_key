@@ -32,5 +32,5 @@ cat "${USER_SSH_ROOT}/id_rsa.pub" >> "${USER_SSH_ROOT}/authorized_keys"
 chmod 600 "${USER_SSH_ROOT}/authorized_keys"
 
 # End of script
-echo "SSH key pair has been generated for account '${USERNAME}'"
+info "SSH key pair has been generated for account '${USERNAME}'"
 exit 0
