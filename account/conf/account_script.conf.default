@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# Sandbox script configuration.
+# Account script configuration.
 
-DEFAULT_PEM_HOME="$HOME/sandbox/private_keys"
+DEFAULT_PEM_HOME="$HOME/account/private_keys"
 DEFAULT_USER_HOME_ROOT="$(dirname "$HOME")"
 DEFAULT_ENV_CONF_REF_ROOT="/usr/local/share"
 DEFAULT_ENV_CONF_LIST=".bashrc .bash_aliases .bash_profile .profile .vimrc"

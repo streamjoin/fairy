@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# List all sandbox accounts.
+# List all accounts.
 
 #set -o nounset
 set -o errexit
@@ -9,10 +9,10 @@ set -o pipefail
 # Include libraries
 readonly SCRIPT_HOME="$(cd "$(dirname "$0")"; pwd -P)"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/../..}/_common_lib/output_utils.sh"
-source "${FAIRY_HOME:-${SCRIPT_HOME}/../..}/sandbox/lib/load_script_conf.sh"
+source "${FAIRY_HOME:-${SCRIPT_HOME}/../..}/account/lib/load_script_conf.sh"
 
 # Set variables
-readonly USERNAME_INIT="${SANDBOX_USERNAME_INIT-${DEFAULT_USERNAME_INIT}}"
+readonly USERNAME_INIT="${ACCOUNT_USERNAME_INIT-${DEFAULT_USERNAME_INIT}}"
 
 # List usernames according to the specified pattern
 cut -d: -f1 /etc/passwd | grep "${USERNAME_INIT}.*"

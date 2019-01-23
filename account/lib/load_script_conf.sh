@@ -4,11 +4,10 @@
 #
 # Dependencies: output_utils.sh
 
-DEFAULT_SANDBOX_SCRIPT_CONF=\
-"${HOME}/sandbox/scripts/conf/sandbox_script.conf.default"
+DEFAULT_ACCOUNT_SCRIPT_CONF="${HOME}/account/conf/account_script.conf.default"
 
 # Inlcude script configuration
-readonly SCRIPT_CONF="${SANDBOX_SCRIPT_CONF:-${DEFAULT_SANDBOX_SCRIPT_CONF}}"
+readonly SCRIPT_CONF="${ACCOUNT_SCRIPT_CONF:-${DEFAULT_ACCOUNT_SCRIPT_CONF}}"
 [[ -n "${SCRIPT_CONF}" ]]
 check_err "Script configuration is not specified"
 [[ -f "${SCRIPT_CONF}" ]]

@@ -15,7 +15,7 @@ check_cmd_exists() {
 check_cmd_args() {
   local -r EXIT_CODE="$?"
   if [[ "${EXIT_CODE}" -ne 0 ]]; then
-    err "Usage: $(basename "$0") $@"
+    err "Usage: $(basename "$0") $*"
     exit "${EXIT_CODE}"
   fi
 }

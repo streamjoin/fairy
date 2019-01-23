@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Delete a sandbox account.
+# Delete an account.
 
 #set -o nounset
 #set -o errexit
@@ -10,22 +10,22 @@ set -o pipefail
 readonly SCRIPT_HOME="$(cd "$(dirname "$0")"; pwd -P)"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/../..}/_common_lib/output_utils.sh"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/../..}/_common_lib/system.sh"
-source "${FAIRY_HOME:-${SCRIPT_HOME}/../..}/sandbox/lib/load_script_conf.sh"
+source "${FAIRY_HOME:-${SCRIPT_HOME}/../..}/account/lib/load_script_conf.sh"
 
 # Command parameters
 readonly ID="$1"
 [[ -n "${ID}" ]]
-check_cmd_args "<sandbox_id>"
+check_cmd_args "<account_id>"
 
 # Set variables
-readonly USERNAME_INIT="${SANDBOX_USERNAME_INIT-${DEFAULT_USERNAME_INIT}}"
+readonly USERNAME_INIT="${ACCOUNT_USERNAME_INIT-${DEFAULT_USERNAME_INIT}}"
 
 readonly USERNAME="${USERNAME_INIT:+"${USERNAME_INIT}-"}${ID}"
 
 readonly USER_HOME_ROOT=\
-"${SANDBOX_USER_HOME_ROOT:-${DEFAULT_USER_HOME_ROOT:-$(dirname "${HOME}")}}"
+"${ACCOUNT_USER_HOME_ROOT:-${DEFAULT_USER_HOME_ROOT:-$(dirname "${HOME}")}}"
 
-readonly PEM_HOME="${SANDBOX_PEM_HOME-${DEFAULT_PEM_HOME}}"
+readonly PEM_HOME="${ACCOUNT_PEM_HOME-${DEFAULT_PEM_HOME}}"
 
 # Delete account and the associated home folder and mailbox file
 sudo rm -rf "${USER_HOME_ROOT}/${USERNAME}" &&

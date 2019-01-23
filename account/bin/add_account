@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Create a sandbox account.
+# Create an account.
 
 # set -o nounset
 # set -o errexit
@@ -10,33 +10,33 @@ set -o pipefail
 readonly SCRIPT_HOME="$(cd "$(dirname "$0")"; pwd -P)"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/../..}/_common_lib/output_utils.sh"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/../..}/_common_lib/system.sh"
-source "${FAIRY_HOME:-${SCRIPT_HOME}/../..}/sandbox/lib/load_script_conf.sh"
+source "${FAIRY_HOME:-${SCRIPT_HOME}/../..}/account/lib/load_script_conf.sh"
 
 # Command parameters
 readonly ID="$1"
 [[ -n "${ID}" ]]
-check_cmd_args "<sandbox_id>"
+check_cmd_args "<account_id>"
 
 # Set variables
-readonly GROUP="${SANDBOX_USERNAME_INIT-${DEFAULT_USERNAME_INIT}}"
+readonly GROUP="${ACCOUNT_USERNAME_INIT-${DEFAULT_USERNAME_INIT}}"
 
 readonly USERNAME="${GROUP:+"${GROUP}-"}${ID}"
 
 readonly USER_HOME_ROOT=\
-"${SANDBOX_USER_HOME_ROOT:-${DEFAULT_USER_HOME_ROOT:-$(dirname "${HOME}")}}"
+"${ACCOUNT_USER_HOME_ROOT:-${DEFAULT_USER_HOME_ROOT:-$(dirname "${HOME}")}}"
 
 readonly USER_HOME="${USER_HOME_ROOT}/${USERNAME}"
 
-readonly PASSWORD="${SANDBOX_PASSWORD_INIT-${DEFAULT_PASSWORD_INIT}}${ID}"
+readonly PASSWORD="${ACCOUNT_PASSWORD_INIT-${DEFAULT_PASSWORD_INIT}}${ID}"
 
-readonly PEM_HOME="${SANDBOX_PEM_HOME-${DEFAULT_PEM_HOME}}"
+readonly PEM_HOME="${ACCOUNT_PEM_HOME-${DEFAULT_PEM_HOME}}"
 
 readonly ENV_CONF_REF_ROOT=\
-"${SANDBOX_ENV_CONF_REF_ROOT-${DEFAULT_ENV_CONF_REF_ROOT}}"
+"${ACCOUNT_ENV_CONF_REF_ROOT-${DEFAULT_ENV_CONF_REF_ROOT}}"
 
-readonly ENV_CONF_LIST="${SANDBOX_ENV_CONF_LIST-${DEFAULT_ENV_CONF_LIST}}"
+readonly ENV_CONF_LIST="${ACCOUNT_ENV_CONF_LIST-${DEFAULT_ENV_CONF_LIST}}"
 
-readonly ADD_ON_GROUPS="${SANDBOX_ADD_ON_GROUPS-${DEFAULT_ADD_ON_GROUPS}}"
+readonly ADD_ON_GROUPS="${ACCOUNT_ADD_ON_GROUPS-${DEFAULT_ADD_ON_GROUPS}}"
 
 # Create groups, if necessary
 for group in ${GROUP} ${ADD_ON_GROUPS}; do
