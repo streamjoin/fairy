@@ -23,7 +23,7 @@ export USTORE_ROOT="$(cd "${SOURCE_DIR}"; pwd -P)"
 
 [[ -d "${LUCENE_DIR}" ]]
 check_err "Invalid path: '${LUCENE_DIR}'"
-readonly LUCENE_DIR_FULL="$(cd "${LUCENE_DIR}"; pwd -P)"
+readonly USTORE_LUCENE="$(cd "${LUCENE_DIR}"; pwd -P)"
 
 readonly WORK_DIR="$(pwd -P)"
 
@@ -32,19 +32,18 @@ cd "${WORK_DIR}"
 rm -f "${BUILD_DIR}"
 check_err "Failed to delete folder '${BUILD_DIR}'"
 mkdir -p "${BUILD_DIR}"
+
 cd "${BUILD_DIR}"
-
 cmake ${CMAKE_ARGS} "${USTORE_ROOT}"
-
 make -j "$(cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print $NF}')"
 
 export USTORE_HOME="$(cd "${WORK_DIR}/${BUILD_DIR}"; pwd -P)"
 
 # Build Lucene
-cd "${LUCENE_DIR_FULL}"
+cd "${USTORE_LUCENE}"
 mvn clean package
 check_err "Failed to build Lucene"
-export LUCENE_TARGET="${LUCENE_DIR_FULL}/target"
+export LUCENE_TARGET="${USTORE_LUCENE}/target"
 
 # Generate release
 cd "${WORK_DIR}"
