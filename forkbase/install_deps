@@ -20,6 +20,7 @@ readonly CMAKE_VER="3.13.4"
 readonly BOOST_VER="1_69_0"
 readonly GFLAGS_VER="2.2.2"
 readonly PROTOBUF_VER="3.6.1"
+readonly CRYPTOPP_VER="CRYPTOPP_8_0_0"
 
 readonly WORK_DIR="$(pwd -P)"
 [[ "${WORK_DIR}" != "${TEMP_DIR}" ]]
@@ -142,6 +143,33 @@ export CMAKE_LIBRARY_PATH="\${PROTOBUF_ROOT}/lib:\${CMAKE_LIBRARY_PATH}"
 EndOfMsg
 
 cd "${TEMP_DIR}" && sudo rm -rf "${PROTOBUF_DIR}" && rm "${PROTOBUF_PKG}"
+
+# Crypto++
+CRYPTOPP_PKG="${CRYPTOPP_VER}.tar.gz"
+CRYPTOPP_DIR="cryptopp-${CRYPTOPP_VER}"
+
+cd "${TEMP_DIR}"
+wget "https://github.com/weidai11/cryptopp/archive/${CRYPTOPP_PKG}"
+tar xzf "${CRYPTOPP_PKG}"
+
+cd "${CRYPTOPP_DIR}"
+make -j "${NCORES}" libcryptopp.a libcryptopp.so
+sudo make install PREFIX="${SHARE_HOME}/cryptopp"
+
+cat >> "${BASH_PROFILE}" <<- EndOfMsg
+# Crypto++
+export CRYPTOPP_ROOT="\${SHARE_HOME}/cryptopp"
+export CPATH="\${CRYPTOPP_ROOT}/include:\${CPATH}"
+export LD_LIBRARY_PATH="\${CRYPTOPP_ROOT}/lib:\${LD_LIBRARY_PATH}"
+export LIBRARY_PATH="\${CRYPTOPP_ROOT}/lib:\${LIBRARY_PATH}"
+export CMAKE_INCLUDE_PATH="\${CRYPTOPP_ROOT}/include:\${CMAKE_INCLUDE_PATH}"
+export CMAKE_LIBRARY_PATH="\${CRYPTOPP_ROOT}/lib:\${CMAKE_LIBRARY_PATH}"
+
+EndOfMsg
+
+cd "${TEMP_DIR}" && sudo rm -rf "${CRYPTOPP_DIR}" && rm "${CRYPTOPP_PKG}"
+
+
 
 # End of script
 cd "${WORK_DIR}"
