@@ -12,24 +12,22 @@ readonly SCRIPT_HOME="$(cd "$(dirname "$0")"; pwd -P)"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/output_utils.sh"
 
 # Set variables
-DEPS_DIR="/usr/local/share"
-BASH_PROFILE="${HOME}/.profile"
-TEMP_DIR="$(cd ${HOME}; pwd -P)/deps_install"
+readonly DEPS_DIR="/usr/local/share"
+readonly BASH_PROFILE="${HOME}/.profile"
+readonly TEMP_DIR="$(cd ${HOME}; pwd -P)/deps_install"
 
-CMAKE_VER="3.13.4"
-BOOST_VER="1_69_0"
-GFLAGS_VER="2.2.2"
+readonly CMAKE_VER="3.13.4"
+readonly BOOST_VER="1_69_0"
+readonly GFLAGS_VER="2.2.2"
+readonly PROTOBUF_VER="3.6.1"
 
-WORK_DIR="$(pwd -P)"
+readonly WORK_DIR="$(pwd -P)"
 [[ "${WORK_DIR}" != "${TEMP_DIR}" ]]
 check_err "The temporary directory cannot be the current working directory"
 
-mkdir -p "${TEMP_DIR}"
-
-# Instal compilation tools
+# Prepare
 sudo apt install build-essential autoconf pkg-config libtool git
 
-# Set environment variables
 cat >> "${BASH_PROFILE}" <<- EndOfMsg
 export SHARE_HOME="${DEPS_DIR}"
 export NCORES="$(cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print $NF}')"
@@ -37,12 +35,17 @@ export NCORES="$(cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print $NF}'
 EndOfMsg
 source "${BASH_PROFILE}"
 
-# CMake
-cd "${TEMP_DIR}"
-wget "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER}/cmake-${CMAKE_VER}.tar.gz"
-tar xzf "cmake-${CMAKE_VER}.tar.gz"
+mkdir -p "${TEMP_DIR}"
 
-cd "cmake-${CMAKE_VER}"
+# CMake
+readonly CMAKE_PKG="cmake-${CMAKE_VER}.tar.gz"
+readonly CMAKE_DIR="cmake-${CMAKE_VER}"
+
+cd "${TEMP_DIR}"
+wget "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER}/${CMAKE_PKG}"
+tar xzf "${CMAKE_PKG}"
+
+cd "${CMAKE_DIR}"
 ./bootstrap --prefix="${SHARE_HOME}/cmake" --parallel="${NCORES}"
 make -j "${NCORES}"
 sudo make install
@@ -55,19 +58,20 @@ export PATH="\${CMAKE_HOME}/bin:\${PATH}"
 EndOfMsg
 source "${BASH_PROFILE}"
 
-cd "${TEMP_DIR}"
-sudo rm -rf "cmake-${CMAKE_VER}"
-rm "cmake-${CMAKE_VER}.tar.gz"
+cd "${TEMP_DIR}" && sudo rm -rf "${CMAKE_DIR}" && rm "${CMAKE_PKG}"
 
 # OpenSSL
 sudo apt install openssl
 
 # Boost
-cd "${TEMP_DIR}"
-wget "https://dl.bintray.com/boostorg/release/1.69.0/source/boost_${BOOST_VER}.tar.bz2"
-tar xjf "boost_${BOOST_VER}.tar.bz2"
+readonly BOOST_PKG="boost_${BOOST_VER}.tar.bz2"
+readonly BOOST_DIR="boost_${BOOST_VER}"
 
-cd "boost_${BOOST_VER}"
+cd "${TEMP_DIR}"
+wget "https://dl.bintray.com/boostorg/release/1.69.0/source/${BOOST_PKG}"
+tar xjf "${BOOST_PKG}"
+
+cd "${BOOST_DIR}"
 ./bootstrap.sh --prefix="${SHARE_HOME}/boost"
 sudo ./b2 install -j "${NCORES}"
 
@@ -80,18 +84,19 @@ export LIBRARY_PATH="\${BOOST_ROOT}/lib:\${LIBRARY_PATH}"
 
 EndOfMsg
 
-cd "${TEMP_DIR}"
-sudo rm -rf "boost_${BOOST_VER}"
-rm "boost_${BOOST_VER}.tar.bz2"
+cd "${TEMP_DIR}" && sudo rm -rf "${BOOST_DIR}" && rm "${BOOST_PKG}"
 
 # Gflags
-cd "${TEMP_DIR}"
-wget "https://github.com/gflags/gflags/archive/v${GFLAGS_VER}.tar.gz"
-tar xzf "v${GFLAGS_VER}.tar.gz"
+readonly GFLAGS_PKG="v${GFLAGS_VER}.tar.gz"
+readonly GFLAGS_DIR="gflags-${GFLAGS_VER}"
 
-cd "gflags-${GFLAGS_VER}"
-mkdir -p build 
-rm -rf build/* 
+cd "${TEMP_DIR}"
+wget "https://github.com/gflags/gflags/archive/${GFLAGS_PKG}"
+tar xzf "${GFLAGS_PKG}"
+
+cd "${GFLAGS_DIR}"
+mkdir -p build
+rm -rf build/*
 cd build
 cmake -DCMAKE_INSTALL_PREFIX="${SHARE_HOME}/gflags" -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=ON ..
 make -j "${NCORES}"
@@ -108,12 +113,37 @@ export CMAKE_LIBRARY_PATH="\${GFLAGS_ROOT}/lib:\${CMAKE_LIBRARY_PATH}"
 
 EndOfMsg
 
+cd "${TEMP_DIR}" && sudo rm -rf "${GFLAGS_DIR}" && rm "${GFLAGS_PKG}"
+
+# Protocol Buffers
+readonly PROTOBUF_PKG="v${PROTOBUF_VER}.tar.gz"
+readonly PROTOBUF_DIR="protobuf-${PROTOBUF_VER}"
+
 cd "${TEMP_DIR}"
-sudo rm -rf "gflags-${GFLAGS_VER}"
-rm "v${GFLAGS_VER}.tar.gz"
+wget "https://github.com/protocolbuffers/protobuf/archive/${PROTOBUF_PKG}"
+tar xzf "${PROTOBUF_PKG}"
+
+cd "${PROTOBUF_DIR}"
+./autogen.sh
+./configure --prefix="${SHARE_HOME}/protobuf"
+make -j "${NCORES}"
+sudo make install
+
+cat >> "${BASH_PROFILE}" <<- EndOfMsg
+# Protocol Buffers
+export PROTOBUF_ROOT="\${SHARE_HOME}/protobuf"
+export PATH="\${PROTOBUF_ROOT}/bin:\${PATH}"
+export CPATH="\${PROTOBUF_ROOT}/include:\${CPATH}"
+export LD_LIBRARY_PATH="\${PROTOBUF_ROOT}/lib:\${LD_LIBRARY_PATH}"
+export LIBRARY_PATH="\${PROTOBUF_ROOT}/lib:\${LIBRARY_PATH}"
+export CMAKE_INCLUDE_PATH="\${PROTOBUF_ROOT}/include:\${CMAKE_INCLUDE_PATH}"
+export CMAKE_LIBRARY_PATH="\${PROTOBUF_ROOT}/lib:\${CMAKE_LIBRARY_PATH}"
+
+EndOfMsg
+
+cd "${TEMP_DIR}" && sudo rm -rf "${PROTOBUF_DIR}" && rm "${PROTOBUF_PKG}"
 
 # End of script
 cd "${WORK_DIR}"
 sudo rm -rf "${TEMP_DIR}"
 exit 0
-
