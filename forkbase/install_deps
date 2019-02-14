@@ -198,6 +198,34 @@ source "${BASH_PROFILE}"
 
 cd "${TEMP_DIR}" && sudo rm -rf "${ZMQ_DIR}" && rm "${ZMQ_PKG}"
 
+# CZMQ
+readonly CZMQ_VER="4.2.0"
+readonly CZMQ_PKG="v${CZMQ_VER}.tar.gz"
+readonly CZMQ_DIR="czmq-${CZMQ_VER}"
+
+cd "${TEMP_DIR}"
+wget "https://github.com/zeromq/czmq/archive/${CZMQ_PKG}"
+tar xzf "${CZMQ_PKG}"
+
+cd "${CZMQ_DIR}"
+./autogen.sh
+./configure --prefix="${SHARE_HOME}/czmq"
+make -j "${NCORES}"
+sudo make install
+
+cat >> "${BASH_PROFILE}" <<- EndOfMsg
+# CZMQ
+export CZMQ_ROOT="\${SHARE_HOME}/czmq"
+export CPATH="\${CZMQ_ROOT}/include:\${CPATH}"
+export LD_LIBRARY_PATH="\${CZMQ_ROOT}/lib:\${LD_LIBRARY_PATH}"
+export LIBRARY_PATH="\${CZMQ_ROOT}/lib:\${LIBRARY_PATH}"
+export CMAKE_INCLUDE_PATH="\${CZMQ_ROOT}/include:\${CMAKE_INCLUDE_PATH}"
+export CMAKE_LIBRARY_PATH="\${CZMQ_ROOT}/lib:\${CMAKE_LIBRARY_PATH}"
+
+EndOfMsg
+
+cd "${TEMP_DIR}" && sudo rm -rf "${CZMQ_DIR}" && rm "${CZMQ_PKG}"
+
 # End of script
 cd "${WORK_DIR}"
 sudo rm -rf "${TEMP_DIR}"
