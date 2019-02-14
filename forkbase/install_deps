@@ -7,12 +7,20 @@
 set -o errexit
 set -o pipefail
 
+# Include libraries
+readonly SCRIPT_HOME="$(cd "$(dirname "$0")"; pwd -P)"
+source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/output_utils.sh"
+
+# Set variables
 DEPS_DIR="/usr/local/share"
 BASH_PROFILE="${HOME}/.profile"
 TEMP_DIR="$(cd ${HOME}; pwd -P)/deps_install"
 
-# Versions
 CMAKE_VER="3.13.4"
+
+WORK_DIR="$(pwd -P)"
+[[ "${WORK_DIR}" != "${TEMP_DIR}" ]]
+check_err "The temporary directory cannot be the current working directory"
 
 mkdir -p "${TEMP_DIR}"
 
@@ -45,4 +53,8 @@ export PATH="\${CMAKE_HOME}/bin:\${PATH}"
 EndOfMsg
 source "${BASH_PROFILE}"
 
+# End of script
+cd "${WORK_DIR}"
+rm -rf "${TEMP_DIR}"
 exit 0
+
