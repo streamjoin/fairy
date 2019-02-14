@@ -17,6 +17,8 @@ BASH_PROFILE="${HOME}/.profile"
 TEMP_DIR="$(cd ${HOME}; pwd -P)/deps_install"
 
 CMAKE_VER="3.13.4"
+BOOST_VER="1_69_0"
+GFLAGS_VER="2.2.2"
 
 WORK_DIR="$(pwd -P)"
 [[ "${WORK_DIR}" != "${TEMP_DIR}" ]]
@@ -53,8 +55,65 @@ export PATH="\${CMAKE_HOME}/bin:\${PATH}"
 EndOfMsg
 source "${BASH_PROFILE}"
 
+cd "${TEMP_DIR}"
+sudo rm -rf "cmake-${CMAKE_VER}"
+rm "cmake-${CMAKE_VER}.tar.gz"
+
+# OpenSSL
+sudo apt install openssl
+
+# Boost
+cd "${TEMP_DIR}"
+wget "https://dl.bintray.com/boostorg/release/1.69.0/source/boost_${BOOST_VER}.tar.bz2"
+tar xjf "boost_${BOOST_VER}.tar.bz2"
+
+cd "boost_${BOOST_VER}"
+./bootstrap.sh --prefix="${SHARE_HOME}/boost"
+sudo ./b2 install -j "${NCORES}"
+
+cat >> "${BASH_PROFILE}" <<- EndOfMsg
+# Boost
+export BOOST_ROOT="\${SHARE_HOME}/boost"
+export CPATH="\${BOOST_ROOT}/include:\${CPATH}"
+export LD_LIBRARY_PATH="\${BOOST_ROOT}/lib:\${LD_LIBRARY_PATH}"
+export LIBRARY_PATH="\${BOOST_ROOT}/lib:\${LIBRARY_PATH}"
+
+EndOfMsg
+
+cd "${TEMP_DIR}"
+sudo rm -rf "boost_${BOOST_VER}"
+rm "boost_${BOOST_VER}.tar.bz2"
+
+# Gflags
+cd "${TEMP_DIR}"
+wget "https://github.com/gflags/gflags/archive/v${GFLAGS_VER}.tar.gz"
+tar xzf "v${GFLAGS_VER}.tar.gz"
+
+cd "gflags-${GFLAGS_VER}"
+mkdir -p build 
+rm -rf build/* 
+cd build
+cmake -DCMAKE_INSTALL_PREFIX="${SHARE_HOME}/gflags" -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=ON ..
+make -j "${NCORES}"
+sudo make install
+
+cat >> "${BASH_PROFILE}" <<- EndOfMsg
+# gflags
+export GFLAGS_ROOT="\${SHARE_HOME}/gflags"
+export CPATH="\${GFLAGS_ROOT}/include:\${CPATH}"
+export LD_LIBRARY_PATH="\${GFLAGS_ROOT}/lib:\${LD_LIBRARY_PATH}"
+export LIBRARY_PATH="\${GFLAGS_ROOT}/lib:\${LIBRARY_PATH}"
+export CMAKE_INCLUDE_PATH="\${GFLAGS_ROOT}/include:\${CMAKE_INCLUDE_PATH}"
+export CMAKE_LIBRARY_PATH="\${GFLAGS_ROOT}/lib:\${CMAKE_LIBRARY_PATH}"
+
+EndOfMsg
+
+cd "${TEMP_DIR}"
+sudo rm -rf "gflags-${GFLAGS_VER}"
+rm "v${GFLAGS_VER}.tar.gz"
+
 # End of script
 cd "${WORK_DIR}"
-rm -rf "${TEMP_DIR}"
+sudo rm -rf "${TEMP_DIR}"
 exit 0
 
