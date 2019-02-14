@@ -22,17 +22,18 @@ readonly GFLAGS_VER="2.2.2"
 readonly PROTOBUF_VER="3.6.1"
 readonly CRYPTOPP_VER="CRYPTOPP_8_0_0"
 readonly ZMQ_VER="4.3.1"
+readonly CZMQ_VER="4.2.0"
 
 readonly WORK_DIR="$(pwd -P)"
 [[ "${WORK_DIR}" != "${TEMP_DIR}" ]]
 check_err "The temporary directory cannot be the current working directory"
 
 # Prepare
-sudo apt install build-essential autoconf pkg-config libtool git
+sudo apt -y install build-essential autoconf pkg-config libtool git
 
 cat >> "${BASH_PROFILE}" <<- EndOfMsg
 export SHARE_HOME="${DEPS_DIR}"
-export NCORES="$(cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print $NF}')"
+export NCORES="\$(cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print $NF}')"
 
 EndOfMsg
 source "${BASH_PROFILE}"
@@ -63,7 +64,7 @@ source "${BASH_PROFILE}"
 cd "${TEMP_DIR}" && sudo rm -rf "${CMAKE_DIR}" && rm "${CMAKE_PKG}"
 
 # OpenSSL
-sudo apt install openssl
+sudo apt -y install openssl
 
 # Boost
 readonly BOOST_PKG="boost_${BOOST_VER}.tar.bz2"
@@ -199,7 +200,6 @@ source "${BASH_PROFILE}"
 cd "${TEMP_DIR}" && sudo rm -rf "${ZMQ_DIR}" && rm "${ZMQ_PKG}"
 
 # CZMQ
-readonly CZMQ_VER="4.2.0"
 readonly CZMQ_PKG="v${CZMQ_VER}.tar.gz"
 readonly CZMQ_DIR="czmq-${CZMQ_VER}"
 
@@ -226,7 +226,36 @@ EndOfMsg
 
 cd "${TEMP_DIR}" && sudo rm -rf "${CZMQ_DIR}" && rm "${CZMQ_PKG}"
 
+# RocksDB
+readonly ROCKSDB_VER="5.17.2"
+readonly ROCKSDB_PKG="v${ROCKSDB_VER}.tar.gz"
+readonly ROCKSDB_DIR="rocksdb-${ROCKSDB_VER}"
+
+sudo apt -y install libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev
+
+cd "${TEMP_DIR}"
+wget "https://github.com/facebook/rocksdb/archive/${ROCKSDB_PKG}"
+tar xzf "${ROCKSDB_PKG}"
+
+cd "${ROCKSDB_DIR}"
+USE_RTTI=1 DISABLE_WARNING_AS_ERROR=ON bash -c 'make -j "${NCORES}" shared_lib' 
+INSTALL_PATH="${SHARE_HOME}/rocksdb" bash -c 'sudo make install-shared'
+
+cat >> "${BASH_PROFILE}" <<- EndOfMsg
+# RocksDB
+export ROCKSDB_ROOT="\${SHARE_HOME}/rocksdb"
+export CPATH="\${ROCKSDB_ROOT}/include:\${CPATH}"
+export LD_LIBRARY_PATH="\${ROCKSDB_ROOT}/lib:\${LD_LIBRARY_PATH}"
+export LIBRARY_PATH="\${ROCKSDB_ROOT}/lib:\${LIBRARY_PATH}"
+export CMAKE_INCLUDE_PATH="\${ROCKSDB_ROOT}/include:\${CMAKE_INCLUDE_PATH}"
+export CMAKE_LIBRARY_PATH="\${ROCKSDB_ROOT}/lib:\${CMAKE_LIBRARY_PATH}"
+
+EndOfMsg
+
+cd "${TEMP_DIR}" && sudo rm -rf "${ROCKSDB_DIR}" && rm "${ROCKSDB_PKG}"
+
 # End of script
 cd "${WORK_DIR}"
 sudo rm -rf "${TEMP_DIR}"
+info "UStore dependencies are installed successfully"
 exit 0
