@@ -11,11 +11,29 @@ set -o pipefail
 readonly SCRIPT_HOME="$(cd "$(dirname "$0")"; pwd -P)"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/output_utils.sh"
 
-# Set variables
-readonly DEPS_DIR="/usr/local/share"
-readonly BASH_PROFILE="${HOME}/.profile"
-readonly TEMP_DIR="$(cd ${HOME}; pwd -P)/deps_install"
+# Check sudo privilege
+sudo id
+check_err "No sudo privilege for current account '${USER}'"
 
+# Set variables
+readonly BASH_PROFILE="${USTORE_BASH_PROFILE:-"${HOME}/.bash_profile"}"
+
+DEPS_DIR="${USTORE_DEPS_DIR:-"/usr/local/share"}"
+mkdir -p "${DEPS_DIR}"
+readonly DEPS_DIR="$(cd "${DEPS_DIR}"; pwd -P)"
+
+TEMP_DIR="${USTORE_TEMP_DIR:-"$(cd ${HOME}; pwd -P)/deps_install"}"
+mkdir -p "${TEMP_DIR}"
+readonly TEMP_DIR="$(cd "${TEMP_DIR}"; pwd -P)"
+
+[[ "${DEPS_DIR}" != "${TEMP_DIR}" ]]
+check_err "The dependency directory cannot be the same as the temporary directory"
+
+readonly WORK_DIR="$(pwd -P)"
+[[ "${WORK_DIR}" != "${TEMP_DIR}" ]]
+check_err "The temporary directory cannot be the current working directory"
+
+# Set versions
 readonly CMAKE_VER="3.13.4"
 readonly BOOST_VER="1_69_0"
 readonly GFLAGS_VER="2.2.2"
@@ -23,22 +41,23 @@ readonly PROTOBUF_VER="3.6.1"
 readonly CRYPTOPP_VER="CRYPTOPP_8_0_0"
 readonly ZMQ_VER="4.3.1"
 readonly CZMQ_VER="4.2.0"
-
-readonly WORK_DIR="$(pwd -P)"
-[[ "${WORK_DIR}" != "${TEMP_DIR}" ]]
-check_err "The temporary directory cannot be the current working directory"
+readonly ROCKSDB_VER="5.17.2"
+readonly GTEST_VER="release-1.8.1"
+readonly PYTHON3_VER="3.7.2"
+readonly PYTHON_VER="2.7.15"
+readonly CCACHE_VER="3.6"
 
 # Prepare
 sudo apt -y install build-essential autoconf pkg-config libtool git
 
+readonly DEPS_DIR_FULL="$(cd ${DEPS_DIR}; pwd -P)"
+
 cat >> "${BASH_PROFILE}" <<- EndOfMsg
-export SHARE_HOME="${DEPS_DIR}"
-export NCORES="\$(cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print $NF}')"
+export SHARE_HOME="$(cd ${DEPS_DIR}; pwd -P)"
+export NCORES="\$(cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print \$NF}')"
 
 EndOfMsg
 source "${BASH_PROFILE}"
-
-mkdir -p "${TEMP_DIR}"
 
 # CMake
 readonly CMAKE_PKG="cmake-${CMAKE_VER}.tar.gz"
@@ -227,7 +246,6 @@ EndOfMsg
 cd "${TEMP_DIR}" && sudo rm -rf "${CZMQ_DIR}" && rm "${CZMQ_PKG}"
 
 # RocksDB
-readonly ROCKSDB_VER="5.17.2"
 readonly ROCKSDB_PKG="v${ROCKSDB_VER}.tar.gz"
 readonly ROCKSDB_DIR="rocksdb-${ROCKSDB_VER}"
 
@@ -238,8 +256,8 @@ wget "https://github.com/facebook/rocksdb/archive/${ROCKSDB_PKG}"
 tar xzf "${ROCKSDB_PKG}"
 
 cd "${ROCKSDB_DIR}"
-USE_RTTI=1 DISABLE_WARNING_AS_ERROR=ON bash -c 'make -j "${NCORES}" shared_lib' 
-INSTALL_PATH="${SHARE_HOME}/rocksdb" bash -c 'sudo make install-shared'
+make shared_lib -j "${NCORES}" USE_RTTI=1 DISABLE_WARNING_AS_ERROR=ON
+sudo make install-shared INSTALL_PATH="${SHARE_HOME}/rocksdb"
 
 cat >> "${BASH_PROFILE}" <<- EndOfMsg
 # RocksDB
@@ -253,6 +271,114 @@ export CMAKE_LIBRARY_PATH="\${ROCKSDB_ROOT}/lib:\${CMAKE_LIBRARY_PATH}"
 EndOfMsg
 
 cd "${TEMP_DIR}" && sudo rm -rf "${ROCKSDB_DIR}" && rm "${ROCKSDB_PKG}"
+
+# Gtest
+readonly GTEST_PKG="${GTEST_VER}.tar.gz"
+readonly GTEST_DIR="googletest-${GTEST_VER}"
+
+cd "${TEMP_DIR}"
+wget "https://github.com/google/googletest/archive/${GTEST_PKG}"
+tar xzf "${GTEST_PKG}"
+
+cd "${GTEST_DIR}"
+mkdir -p build
+rm -rf build/*
+cd build
+cmake -DCMAKE_INSTALL_PREFIX="${SHARE_HOME}/gtest" -DBUILD_SHARED_LIBS=ON ..
+make -j "${NCORES}"
+sudo make install
+
+cat >> "${BASH_PROFILE}" <<- EndOfMsg
+# gtest
+export GTEST_ROOT="\${SHARE_HOME}/gtest"
+export CPATH="\${GTEST_ROOT}/include:\${CPATH}"
+export LD_LIBRARY_PATH="\${GTEST_ROOT}/lib:\${LD_LIBRARY_PATH}"
+export LIBRARY_PATH="\${GTEST_ROOT}/lib:\${LIBRARY_PATH}"
+export CMAKE_INCLUDE_PATH="\${GTEST_ROOT}/include:\${CMAKE_INCLUDE_PATH}"
+export CMAKE_LIBRARY_PATH="\${GTEST_ROOT}/lib:\${CMAKE_LIBRARY_PATH}"
+
+EndOfMsg
+
+cd "${TEMP_DIR}" && sudo rm -rf "${GTEST_DIR}" && rm "${GTEST_PKG}"
+
+# Python 3
+readonly PYTHON3_PKG="Python-${PYTHON3_VER}.tgz"
+readonly PYTHON3_DIR="Python-${PYTHON3_VER}"
+
+sudo apt -y install libffi-dev
+
+cd "${TEMP_DIR}"
+wget "https://www.python.org/ftp/python/${PYTHON3_VER}/${PYTHON3_PKG}"
+tar xzf "${PYTHON3_PKG}"
+
+cd "${PYTHON3_DIR}"
+./configure --prefix="${SHARE_HOME}/python3"
+make -j "${NCORES}"
+sudo make install
+
+cat >> "${BASH_PROFILE}" <<- EndOfMsg
+# Python 3
+export PYTHON3_ROOT="\${SHARE_HOME}/python3"
+export PATH="\${PYTHON3_ROOT}/bin:\${PATH}"
+
+EndOfMsg
+
+cd "${TEMP_DIR}" && sudo rm -rf "${PYTHON3_DIR}" && rm "${PYTHON3_PKG}"
+
+# Python 2
+readonly PYTHON_PKG="Python-${PYTHON_VER}.tgz"
+readonly PYTHON_DIR="Python-${PYTHON_VER}"
+
+cd "${TEMP_DIR}"
+wget "https://www.python.org/ftp/python/${PYTHON_VER}/${PYTHON_PKG}"
+tar xzf "${PYTHON_PKG}"
+
+cd "${PYTHON_DIR}"
+./configure --prefix="${SHARE_HOME}/python"
+make -j "${NCORES}"
+sudo make install
+
+cat >> "${BASH_PROFILE}" <<- EndOfMsg
+# Python 2
+export PYTHON_ROOT="\${SHARE_HOME}/python"
+export PATH="\${PYTHON_ROOT}/bin:\${PATH}"
+
+EndOfMsg
+
+cd "${TEMP_DIR}" && sudo rm -rf "${PYTHON_DIR}" && rm "${PYTHON_PKG}"
+
+# Ccache
+readonly CCACHE_PKG="ccache-${CCACHE_VER}.tar.bz2"
+readonly CCACHE_DIR="ccache-${CCACHE_VER}"
+
+cd "${TEMP_DIR}"
+wget "https://www.samba.org/ftp/ccache/${CCACHE_PKG}"
+tar xjf "${CCACHE_PKG}"
+
+cd "${CCACHE_DIR}"
+./configure --prefix="${SHARE_HOME}/ccache"
+make -j "${NCORES}"
+sudo make install
+
+cd "${SHARE_HOME}/ccache/bin"
+sudo ln -s ccache gcc
+sudo ln -s ccache g++
+sudo ln -s ccache cc
+sudo ln -s ccache c++
+
+cat >> "${BASH_PROFILE}" <<- EndOfMsg
+# ccache
+export CCACHE_HOME="\${SHARE_HOME}/ccache"
+export PATH="\${CCACHE_HOME}/bin:\${PATH}"
+export MANPATH="\${CCACHE_HOME}/share/man:\${MANPATH}"
+
+EndOfMsg
+source "${BASH_PROFILE}"
+
+ccache -F 0
+ccache -M 1G
+
+cd "${TEMP_DIR}" && sudo rm -rf "${CCACHE_DIR}" && rm "${CCACHE_PKG}"
 
 # End of script
 cd "${WORK_DIR}"
