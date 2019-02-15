@@ -12,7 +12,7 @@ readonly SCRIPT_HOME="$(cd "$(dirname "$0")"; pwd -P)"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/output_utils.sh"
 
 # Check sudo privilege
-sudo id
+sudo -v
 check_err "No sudo privilege for current account '${USER}'"
 
 # Set variables
