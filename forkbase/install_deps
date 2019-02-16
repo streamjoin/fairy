@@ -34,7 +34,7 @@ readonly WORK_DIR="$(pwd -P)"
 check_err "The temporary directory cannot be the current working directory"
 
 # Prepare
-sudo apt -y install build-essential autoconf pkg-config libtool git
+sudo apt -y install build-essential autoconf pkg-config libtool git openssl
 
 readonly DEPS_DIR_FULL="$(cd ${DEPS_DIR}; pwd -P)"
 
@@ -51,6 +51,7 @@ readonly CMAKE_PKG="cmake-${CMAKE_VER}.tar.gz"
 readonly CMAKE_DIR="cmake-${CMAKE_VER}"
 
 cd "${TEMP_DIR}"
+[[ -f "${CMAKE_PKG}" ]] ||
 wget "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER}/${CMAKE_PKG}"
 tar xzf "${CMAKE_PKG}"
 
@@ -69,15 +70,13 @@ source "${BASH_PROFILE}"
 
 cd "${TEMP_DIR}" && sudo rm -rf "${CMAKE_DIR}" && rm "${CMAKE_PKG}"
 
-# OpenSSL
-sudo apt -y install openssl
-
 # Boost
 readonly BOOST_VER="${USTORE_BOOST_VER:-"1_69_0"}"
 readonly BOOST_PKG="boost_${BOOST_VER}.tar.bz2"
 readonly BOOST_DIR="boost_${BOOST_VER}"
 
 cd "${TEMP_DIR}"
+[[ -f "${BOOST_PKG}" ]] ||
 wget "https://dl.bintray.com/boostorg/release/1.69.0/source/${BOOST_PKG}"
 tar xjf "${BOOST_PKG}"
 
@@ -102,6 +101,7 @@ readonly GFLAGS_PKG="v${GFLAGS_VER}.tar.gz"
 readonly GFLAGS_DIR="gflags-${GFLAGS_VER}"
 
 cd "${TEMP_DIR}"
+[[ -f "${GFLAGS_PKG}" ]] ||
 wget "https://github.com/gflags/gflags/archive/${GFLAGS_PKG}"
 tar xzf "${GFLAGS_PKG}"
 
@@ -132,6 +132,7 @@ readonly PROTOBUF_PKG="v${PROTOBUF_VER}.tar.gz"
 readonly PROTOBUF_DIR="protobuf-${PROTOBUF_VER}"
 
 cd "${TEMP_DIR}"
+[[ -f "${PROTOBUF_PKG}" ]] ||
 wget "https://github.com/protocolbuffers/protobuf/archive/${PROTOBUF_PKG}"
 tar xzf "${PROTOBUF_PKG}"
 
@@ -161,6 +162,7 @@ readonly CRYPTOPP_PKG="${CRYPTOPP_VER}.tar.gz"
 readonly CRYPTOPP_DIR="cryptopp-${CRYPTOPP_VER}"
 
 cd "${TEMP_DIR}"
+[[ -f "${CRYPTOPP_PKG}" ]] ||
 wget "https://github.com/weidai11/cryptopp/archive/${CRYPTOPP_PKG}"
 tar xzf "${CRYPTOPP_PKG}"
 
@@ -187,6 +189,7 @@ readonly ZMQ_PKG="v${ZMQ_VER}.tar.gz"
 readonly ZMQ_DIR="libzmq-${ZMQ_VER}"
 
 cd "${TEMP_DIR}"
+[[ -f "${ZMQ_PKG}" ]] ||
 wget "https://github.com/zeromq/libzmq/archive/${ZMQ_PKG}"
 tar xzf "${ZMQ_PKG}"
 
@@ -216,6 +219,7 @@ readonly CZMQ_PKG="v${CZMQ_VER}.tar.gz"
 readonly CZMQ_DIR="czmq-${CZMQ_VER}"
 
 cd "${TEMP_DIR}"
+[[ -f "${CZMQ_PKG}" ]] ||
 wget "https://github.com/zeromq/czmq/archive/${CZMQ_PKG}"
 tar xzf "${CZMQ_PKG}"
 
@@ -246,6 +250,7 @@ readonly ROCKSDB_DIR="rocksdb-${ROCKSDB_VER}"
 sudo apt -y install libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev
 
 cd "${TEMP_DIR}"
+[[ -f "${ROCKSDB_PKG}" ]] ||
 wget "https://github.com/facebook/rocksdb/archive/${ROCKSDB_PKG}"
 tar xzf "${ROCKSDB_PKG}"
 
@@ -272,6 +277,7 @@ readonly GTEST_PKG="${GTEST_VER}.tar.gz"
 readonly GTEST_DIR="googletest-${GTEST_VER}"
 
 cd "${TEMP_DIR}"
+[[ -f "${GTEST_PKG}" ]] ||
 wget "https://github.com/google/googletest/archive/${GTEST_PKG}"
 tar xzf "${GTEST_PKG}"
 
@@ -296,6 +302,34 @@ EndOfMsg
 
 cd "${TEMP_DIR}" && sudo rm -rf "${GTEST_DIR}" && rm "${GTEST_PKG}"
 
+# JDK
+sudo apt -y install default-jdk
+
+readonly JDK_VER="$(javac -version | awk '{ print $2 }')"
+
+# Maven
+readonly MAVEN_VER="${USTORE_MAVEN_VER:-"3.6.0"}"
+readonly MAVEN_PKG="apache-maven-${MAVEN_VER}-bin.tar.gz"
+readonly MAVEN_DIR="apache-maven-${MAVEN_VER}"
+
+cd "${TEMP_DIR}"
+[[ -f "${MAVEN_PKG}" ]] ||
+wget "https://www-us.apache.org/dist/maven/maven-${MAVEN_VER:0:1}/${MAVEN_VER}/binaries/${MAVEN_PKG}"
+tar xzf "${MAVEN_PKG}"
+
+sudo mkdir -p "${SHARE_HOME}/maven"
+sudo rm -rf "${SHARE_HOME}/maven/${MAVEN_DIR}"
+sudo mv "${MAVEN_DIR}" "${SHARE_HOME}/maven/"
+
+cat >> "${BASH_PROFILE}" <<- EndOfMsg
+# Maven
+export MAVEN_HOME="\${SHARE_HOME}/maven/${MAVEN_DIR}"
+export PATH="\${MAVEN_HOME}/bin:\${PATH}"
+
+EndOfMsg
+
+cd "${TEMP_DIR}" && sudo rm -rf "${MAVEN_DIR}" && rm "${MAVEN_PKG}"
+
 # Python 3
 readonly PYTHON3_VER="${USTORE_PYTHON3_VER:-"3.7.2"}"
 readonly PYTHON3_PKG="Python-${PYTHON3_VER}.tgz"
@@ -304,6 +338,7 @@ readonly PYTHON3_DIR="Python-${PYTHON3_VER}"
 sudo apt -y install libffi-dev
 
 cd "${TEMP_DIR}"
+[[ -f "${PYTHON3_PKG}" ]] ||
 wget "https://www.python.org/ftp/python/${PYTHON3_VER}/${PYTHON3_PKG}"
 tar xzf "${PYTHON3_PKG}"
 
@@ -327,6 +362,7 @@ readonly PYTHON_PKG="Python-${PYTHON_VER}.tgz"
 readonly PYTHON_DIR="Python-${PYTHON_VER}"
 
 cd "${TEMP_DIR}"
+[[ -f "${PYTHON_PKG}" ]] ||
 wget "https://www.python.org/ftp/python/${PYTHON_VER}/${PYTHON_PKG}"
 tar xzf "${PYTHON_PKG}"
 
@@ -350,6 +386,7 @@ readonly CCACHE_PKG="ccache-${CCACHE_VER}.tar.bz2"
 readonly CCACHE_DIR="ccache-${CCACHE_VER}"
 
 cd "${TEMP_DIR}"
+[[ -f "${CCACHE_PKG}" ]] ||
 wget "https://www.samba.org/ftp/ccache/${CCACHE_PKG}"
 tar xjf "${CCACHE_PKG}"
 
