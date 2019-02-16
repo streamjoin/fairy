@@ -10,10 +10,13 @@ set -o pipefail
 # Include libraries
 readonly SCRIPT_HOME="$(cd "$(dirname "$0")"; pwd -P)"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/output_utils.sh"
+source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/system.sh"
 
 # Check sudo privilege
 sudo -v
 check_err "No sudo privilege for current account '${USER}'"
+
+readonly START_TIME="$(timer)"
 
 # Set variables
 readonly BASH_PROFILE="${USTORE_BASH_PROFILE:-"${HOME}/.bash_profile"}"
@@ -418,5 +421,29 @@ cd "${TEMP_DIR}" && sudo rm -rf "${CCACHE_DIR}" && rm "${CCACHE_PKG}"
 # End of script
 cd "${WORK_DIR}"
 sudo rm -rf "${TEMP_DIR}"
-info "UStore dependencies are installed successfully"
+
+info "------------------------------------------------------------------------"
+info_bold_green "INSTALLATION SUCCESSFUL"
+info "------------------------------------------------------------------------"
+info "Package versions:"
+info "  - CMake: ${CMAKE_VER}"
+info "  - Boost: ${BOOST_VER}"
+info "  - gflags: ${GFLAGS_VER}"
+info "  - Protocol Buffers: ${PROTOBUF_VER}"
+info "  - Crypto++: ${CRYPTOPP_VER}"
+info "  - ZeroMQ: ${ZMQ_VER}"
+info "  - CZMQ: ${CZMQ_VER}"
+info "  - RocksDB: ${ROCKSDB_VER}"
+info "  - Google Test: ${GTEST_VER}"
+info "  - OpenJDK: ${JDK_VER}"
+info "  - Maven: ${MAVEN_VER}"
+info "  - Python 2: ${PYTHON_VER}"
+info "  - Python 3: ${PYTHON3_VER}"
+info "  - CCache: ${CCACHE_VER}"
+info "Installed in: ${DEPS_DIR}"
+info "Updated configuration: ${BASH_PROFILE}"
+info "Finished at: $(date +"%T %Z, %-d %B %Y")"
+info "Total time: $(timer "${START_TIME}")"
+info "------------------------------------------------------------------------"
+
 exit 0
