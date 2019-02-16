@@ -33,20 +33,6 @@ readonly WORK_DIR="$(pwd -P)"
 [[ "${WORK_DIR}" != "${TEMP_DIR}" ]]
 check_err "The temporary directory cannot be the current working directory"
 
-# Set versions
-readonly CMAKE_VER="3.13.4"
-readonly BOOST_VER="1_69_0"
-readonly GFLAGS_VER="2.2.2"
-readonly PROTOBUF_VER="3.6.1"
-readonly CRYPTOPP_VER="CRYPTOPP_8_0_0"
-readonly ZMQ_VER="4.3.1"
-readonly CZMQ_VER="4.2.0"
-readonly ROCKSDB_VER="5.17.2"
-readonly GTEST_VER="release-1.8.1"
-readonly PYTHON3_VER="3.7.2"
-readonly PYTHON_VER="2.7.15"
-readonly CCACHE_VER="3.6"
-
 # Prepare
 sudo apt -y install build-essential autoconf pkg-config libtool git
 
@@ -60,6 +46,7 @@ EndOfMsg
 source "${BASH_PROFILE}"
 
 # CMake
+readonly CMAKE_VER="${USTORE_CMAKE_VER:-"3.13.4"}"
 readonly CMAKE_PKG="cmake-${CMAKE_VER}.tar.gz"
 readonly CMAKE_DIR="cmake-${CMAKE_VER}"
 
@@ -86,6 +73,7 @@ cd "${TEMP_DIR}" && sudo rm -rf "${CMAKE_DIR}" && rm "${CMAKE_PKG}"
 sudo apt -y install openssl
 
 # Boost
+readonly BOOST_VER="${USTORE_BOOST_VER:-"1_69_0"}"
 readonly BOOST_PKG="boost_${BOOST_VER}.tar.bz2"
 readonly BOOST_DIR="boost_${BOOST_VER}"
 
@@ -109,6 +97,7 @@ EndOfMsg
 cd "${TEMP_DIR}" && sudo rm -rf "${BOOST_DIR}" && rm "${BOOST_PKG}"
 
 # Gflags
+readonly GFLAGS_VER="${USTORE_GFLAGS_VER:-"2.2.2"}"
 readonly GFLAGS_PKG="v${GFLAGS_VER}.tar.gz"
 readonly GFLAGS_DIR="gflags-${GFLAGS_VER}"
 
@@ -138,6 +127,7 @@ EndOfMsg
 cd "${TEMP_DIR}" && sudo rm -rf "${GFLAGS_DIR}" && rm "${GFLAGS_PKG}"
 
 # Protocol Buffers
+readonly PROTOBUF_VER="${USTORE_PROTOBUF_VER:-"3.6.1"}"
 readonly PROTOBUF_PKG="v${PROTOBUF_VER}.tar.gz"
 readonly PROTOBUF_DIR="protobuf-${PROTOBUF_VER}"
 
@@ -166,6 +156,7 @@ EndOfMsg
 cd "${TEMP_DIR}" && sudo rm -rf "${PROTOBUF_DIR}" && rm "${PROTOBUF_PKG}"
 
 # Crypto++
+readonly CRYPTOPP_VER="${USTORE_CRYPTOPP_VER:-"CRYPTOPP_8_0_0"}"
 readonly CRYPTOPP_PKG="${CRYPTOPP_VER}.tar.gz"
 readonly CRYPTOPP_DIR="cryptopp-${CRYPTOPP_VER}"
 
@@ -191,6 +182,7 @@ EndOfMsg
 cd "${TEMP_DIR}" && sudo rm -rf "${CRYPTOPP_DIR}" && rm "${CRYPTOPP_PKG}"
 
 # ZMQ
+readonly ZMQ_VER="${USTORE_ZMQ_VER:-"4.3.1"}"
 readonly ZMQ_PKG="v${ZMQ_VER}.tar.gz"
 readonly ZMQ_DIR="libzmq-${ZMQ_VER}"
 
@@ -219,6 +211,7 @@ source "${BASH_PROFILE}"
 cd "${TEMP_DIR}" && sudo rm -rf "${ZMQ_DIR}" && rm "${ZMQ_PKG}"
 
 # CZMQ
+readonly CZMQ_VER="${USTORE_CZMQ_VER:-"4.2.0"}"
 readonly CZMQ_PKG="v${CZMQ_VER}.tar.gz"
 readonly CZMQ_DIR="czmq-${CZMQ_VER}"
 
@@ -246,6 +239,7 @@ EndOfMsg
 cd "${TEMP_DIR}" && sudo rm -rf "${CZMQ_DIR}" && rm "${CZMQ_PKG}"
 
 # RocksDB
+readonly ROCKSDB_VER="${USTORE_ROCKSDB_VER:-"5.17.2"}"
 readonly ROCKSDB_PKG="v${ROCKSDB_VER}.tar.gz"
 readonly ROCKSDB_DIR="rocksdb-${ROCKSDB_VER}"
 
@@ -273,6 +267,7 @@ EndOfMsg
 cd "${TEMP_DIR}" && sudo rm -rf "${ROCKSDB_DIR}" && rm "${ROCKSDB_PKG}"
 
 # Gtest
+readonly GTEST_VER="${USTORE_GTEST_VER:-"release-1.8.1"}"
 readonly GTEST_PKG="${GTEST_VER}.tar.gz"
 readonly GTEST_DIR="googletest-${GTEST_VER}"
 
@@ -302,6 +297,7 @@ EndOfMsg
 cd "${TEMP_DIR}" && sudo rm -rf "${GTEST_DIR}" && rm "${GTEST_PKG}"
 
 # Python 3
+readonly PYTHON3_VER="${USTORE_PYTHON3_VER:-"3.7.2"}"
 readonly PYTHON3_PKG="Python-${PYTHON3_VER}.tgz"
 readonly PYTHON3_DIR="Python-${PYTHON3_VER}"
 
@@ -326,6 +322,7 @@ EndOfMsg
 cd "${TEMP_DIR}" && sudo rm -rf "${PYTHON3_DIR}" && rm "${PYTHON3_PKG}"
 
 # Python 2
+readonly PYTHON_VER="${USTORE_PYTHON_VER:-"2.7.15"}"
 readonly PYTHON_PKG="Python-${PYTHON_VER}.tgz"
 readonly PYTHON_DIR="Python-${PYTHON_VER}"
 
@@ -348,6 +345,7 @@ EndOfMsg
 cd "${TEMP_DIR}" && sudo rm -rf "${PYTHON_DIR}" && rm "${PYTHON_PKG}"
 
 # Ccache
+readonly CCACHE_VER="${USTORE_CCACHE_VER:-"3.6"}"
 readonly CCACHE_PKG="ccache-${CCACHE_VER}.tar.bz2"
 readonly CCACHE_DIR="ccache-${CCACHE_VER}"
 
