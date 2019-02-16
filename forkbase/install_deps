@@ -25,7 +25,7 @@ DEPS_DIR="${USTORE_DEPS_DIR:-"/usr/local/share"}"
 mkdir -p "${DEPS_DIR}"
 readonly DEPS_DIR="$(cd "${DEPS_DIR}"; pwd -P)"
 
-TEMP_DIR="${USTORE_TEMP_DIR:-"$(cd ${HOME}; pwd -P)/deps_install"}"
+TEMP_DIR="${USTORE_TEMP_DIR:-"${HOME}/deps_install"}"
 mkdir -p "${TEMP_DIR}"
 readonly TEMP_DIR="$(cd "${TEMP_DIR}"; pwd -P)"
 
