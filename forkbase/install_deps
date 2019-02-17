@@ -13,7 +13,7 @@ source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/output_utils.sh"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/system.sh"
 
 # Check sudo privilege
-sudo -v
+sudo -v ||
 check_err "No sudo privilege for current account '${USER}'"
 
 readonly START_TIME="$(timer)"
@@ -29,11 +29,11 @@ TEMP_DIR="${USTORE_TEMP_DIR:-"${HOME}/deps_install"}"
 mkdir -p "${TEMP_DIR}"
 readonly TEMP_DIR="$(cd "${TEMP_DIR}"; pwd -P)"
 
-[[ "${DEPS_DIR}" != "${TEMP_DIR}" ]]
+[[ "${DEPS_DIR}" != "${TEMP_DIR}" ]] ||
 check_err "The dependency directory cannot be the same as the temporary directory"
 
 readonly WORK_DIR="$(pwd -P)"
-[[ "${WORK_DIR}" != "${TEMP_DIR}" ]]
+[[ "${WORK_DIR}" != "${TEMP_DIR}" ]] ||
 check_err "The temporary directory cannot be the current working directory"
 
 # Prepare
