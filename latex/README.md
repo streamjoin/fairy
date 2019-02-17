@@ -14,7 +14,7 @@ Moreover, the following line must be placed at the end of the driver script.
 
 Here is a minimum example: 
 
-    #!/bin/sh
+    #!/usr/bin/env bash
     
     # Name of the main .tex file
     export TEX_NAME="main"
