@@ -63,7 +63,7 @@ find_and_link_subdirs() {
   local -r to_dir="$2"
   mkdir -p "${to_dir}"
   
-  find "${from_dir}/." -maxdepth 1 -type d -exec basename {} \; |
+  find "${from_dir}/." -maxdepth 1 -type d -exec basename -- {} \; |
   fd="${from_dir}" td="${to_dir}" xargs -n 1 \
   sh -c '[[ "$0" != "." ]] && ln -s "${fd}/$0" "${td}"'
 }

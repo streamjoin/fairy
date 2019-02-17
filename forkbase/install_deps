@@ -8,7 +8,7 @@ set -o errexit
 set -o pipefail
 
 # Include libraries
-readonly SCRIPT_HOME="$(cd "$(dirname "$0")"; pwd -P)"
+readonly SCRIPT_HOME="$(cd "$(dirname -- "${BASH_SOURCE}")"; pwd -P)"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/output_utils.sh"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/system.sh"
 
@@ -39,9 +39,7 @@ check_err "The temporary directory cannot be the current working directory"
 # Prepare
 sudo apt -y install build-essential autoconf pkg-config libtool git openssl
 
-readonly DEPS_DIR_FULL="$(cd ${DEPS_DIR}; pwd -P)"
-
-cat >> "${BASH_PROFILE}" <<- EndOfMsg
+cat >> "${BASH_PROFILE}" <<-EndOfMsg
 export SHARE_HOME="$(cd ${DEPS_DIR}; pwd -P)"
 export NCORES="\$(cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print \$NF}')"
 
@@ -63,10 +61,10 @@ cd "${CMAKE_DIR}"
 make -j "${NCORES}"
 sudo make install
 
-cat >> "${BASH_PROFILE}" <<- EndOfMsg
+cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # CMake
-export CMAKE_HOME="\${SHARE_HOME}/cmake"
-export PATH="\${CMAKE_HOME}/bin:\${PATH}"
+export CMAKE_HOME="${SHARE_HOME}/cmake"
+export PATH="${CMAKE_HOME}/bin:${PATH}"
 
 EndOfMsg
 source "${BASH_PROFILE}"
@@ -87,12 +85,12 @@ cd "${BOOST_DIR}"
 ./bootstrap.sh --prefix="${SHARE_HOME}/boost"
 sudo ./b2 install -j "${NCORES}"
 
-cat >> "${BASH_PROFILE}" <<- EndOfMsg
+cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # Boost
-export BOOST_ROOT="\${SHARE_HOME}/boost"
-export CPATH="\${BOOST_ROOT}/include:\${CPATH}"
-export LD_LIBRARY_PATH="\${BOOST_ROOT}/lib:\${LD_LIBRARY_PATH}"
-export LIBRARY_PATH="\${BOOST_ROOT}/lib:\${LIBRARY_PATH}"
+export BOOST_ROOT="${SHARE_HOME}/boost"
+export CPATH="${BOOST_ROOT}/include:${CPATH}"
+export LD_LIBRARY_PATH="${BOOST_ROOT}/lib:${LD_LIBRARY_PATH}"
+export LIBRARY_PATH="${BOOST_ROOT}/lib:${LIBRARY_PATH}"
 
 EndOfMsg
 
@@ -116,14 +114,14 @@ cmake -DCMAKE_INSTALL_PREFIX="${SHARE_HOME}/gflags" -DBUILD_SHARED_LIBS=ON -DBUI
 make -j "${NCORES}"
 sudo make install
 
-cat >> "${BASH_PROFILE}" <<- EndOfMsg
+cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # gflags
-export GFLAGS_ROOT="\${SHARE_HOME}/gflags"
-export CPATH="\${GFLAGS_ROOT}/include:\${CPATH}"
-export LD_LIBRARY_PATH="\${GFLAGS_ROOT}/lib:\${LD_LIBRARY_PATH}"
-export LIBRARY_PATH="\${GFLAGS_ROOT}/lib:\${LIBRARY_PATH}"
-export CMAKE_INCLUDE_PATH="\${GFLAGS_ROOT}/include:\${CMAKE_INCLUDE_PATH}"
-export CMAKE_LIBRARY_PATH="\${GFLAGS_ROOT}/lib:\${CMAKE_LIBRARY_PATH}"
+export GFLAGS_ROOT="${SHARE_HOME}/gflags"
+export CPATH="${GFLAGS_ROOT}/include:${CPATH}"
+export LD_LIBRARY_PATH="${GFLAGS_ROOT}/lib:${LD_LIBRARY_PATH}"
+export LIBRARY_PATH="${GFLAGS_ROOT}/lib:${LIBRARY_PATH}"
+export CMAKE_INCLUDE_PATH="${GFLAGS_ROOT}/include:${CMAKE_INCLUDE_PATH}"
+export CMAKE_LIBRARY_PATH="${GFLAGS_ROOT}/lib:${CMAKE_LIBRARY_PATH}"
 
 EndOfMsg
 
@@ -145,15 +143,15 @@ cd "${PROTOBUF_DIR}"
 make -j "${NCORES}"
 sudo make install
 
-cat >> "${BASH_PROFILE}" <<- EndOfMsg
+cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # Protocol Buffers
-export PROTOBUF_ROOT="\${SHARE_HOME}/protobuf"
-export PATH="\${PROTOBUF_ROOT}/bin:\${PATH}"
-export CPATH="\${PROTOBUF_ROOT}/include:\${CPATH}"
-export LD_LIBRARY_PATH="\${PROTOBUF_ROOT}/lib:\${LD_LIBRARY_PATH}"
-export LIBRARY_PATH="\${PROTOBUF_ROOT}/lib:\${LIBRARY_PATH}"
-export CMAKE_INCLUDE_PATH="\${PROTOBUF_ROOT}/include:\${CMAKE_INCLUDE_PATH}"
-export CMAKE_LIBRARY_PATH="\${PROTOBUF_ROOT}/lib:\${CMAKE_LIBRARY_PATH}"
+export PROTOBUF_ROOT="${SHARE_HOME}/protobuf"
+export PATH="${PROTOBUF_ROOT}/bin:${PATH}"
+export CPATH="${PROTOBUF_ROOT}/include:${CPATH}"
+export LD_LIBRARY_PATH="${PROTOBUF_ROOT}/lib:${LD_LIBRARY_PATH}"
+export LIBRARY_PATH="${PROTOBUF_ROOT}/lib:${LIBRARY_PATH}"
+export CMAKE_INCLUDE_PATH="${PROTOBUF_ROOT}/include:${CMAKE_INCLUDE_PATH}"
+export CMAKE_LIBRARY_PATH="${PROTOBUF_ROOT}/lib:${CMAKE_LIBRARY_PATH}"
 
 EndOfMsg
 
@@ -173,14 +171,14 @@ cd "${CRYPTOPP_DIR}"
 make -j "${NCORES}" libcryptopp.a libcryptopp.so
 sudo make install PREFIX="${SHARE_HOME}/cryptopp"
 
-cat >> "${BASH_PROFILE}" <<- EndOfMsg
+cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # Crypto++
-export CRYPTOPP_ROOT="\${SHARE_HOME}/cryptopp"
-export CPATH="\${CRYPTOPP_ROOT}/include:\${CPATH}"
-export LD_LIBRARY_PATH="\${CRYPTOPP_ROOT}/lib:\${LD_LIBRARY_PATH}"
-export LIBRARY_PATH="\${CRYPTOPP_ROOT}/lib:\${LIBRARY_PATH}"
-export CMAKE_INCLUDE_PATH="\${CRYPTOPP_ROOT}/include:\${CMAKE_INCLUDE_PATH}"
-export CMAKE_LIBRARY_PATH="\${CRYPTOPP_ROOT}/lib:\${CMAKE_LIBRARY_PATH}"
+export CRYPTOPP_ROOT="${SHARE_HOME}/cryptopp"
+export CPATH="${CRYPTOPP_ROOT}/include:${CPATH}"
+export LD_LIBRARY_PATH="${CRYPTOPP_ROOT}/lib:${LD_LIBRARY_PATH}"
+export LIBRARY_PATH="${CRYPTOPP_ROOT}/lib:${LIBRARY_PATH}"
+export CMAKE_INCLUDE_PATH="${CRYPTOPP_ROOT}/include:${CMAKE_INCLUDE_PATH}"
+export CMAKE_LIBRARY_PATH="${CRYPTOPP_ROOT}/lib:${CMAKE_LIBRARY_PATH}"
 
 EndOfMsg
 
@@ -202,14 +200,14 @@ cd "${ZMQ_DIR}"
 make -j "${NCORES}"
 sudo make install
 
-cat >> "${BASH_PROFILE}" <<- EndOfMsg
+cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # ZMQ
-export ZMQ_ROOT="\${SHARE_HOME}/zmq"
-export CPATH="\${ZMQ_ROOT}/include:\${CPATH}"
-export LD_LIBRARY_PATH="\${ZMQ_ROOT}/lib:\${LD_LIBRARY_PATH}"
-export LIBRARY_PATH="\${ZMQ_ROOT}/lib:\${LIBRARY_PATH}"
-export CMAKE_INCLUDE_PATH="\${ZMQ_ROOT}/include:\${CMAKE_INCLUDE_PATH}"
-export CMAKE_LIBRARY_PATH="\${ZMQ_ROOT}/lib:\${CMAKE_LIBRARY_PATH}"
+export ZMQ_ROOT="${SHARE_HOME}/zmq"
+export CPATH="${ZMQ_ROOT}/include:${CPATH}"
+export LD_LIBRARY_PATH="${ZMQ_ROOT}/lib:${LD_LIBRARY_PATH}"
+export LIBRARY_PATH="${ZMQ_ROOT}/lib:${LIBRARY_PATH}"
+export CMAKE_INCLUDE_PATH="${ZMQ_ROOT}/include:${CMAKE_INCLUDE_PATH}"
+export CMAKE_LIBRARY_PATH="${ZMQ_ROOT}/lib:${CMAKE_LIBRARY_PATH}"
 
 EndOfMsg
 source "${BASH_PROFILE}"
@@ -232,14 +230,14 @@ cd "${CZMQ_DIR}"
 make -j "${NCORES}"
 sudo make install
 
-cat >> "${BASH_PROFILE}" <<- EndOfMsg
+cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # CZMQ
-export CZMQ_ROOT="\${SHARE_HOME}/czmq"
-export CPATH="\${CZMQ_ROOT}/include:\${CPATH}"
-export LD_LIBRARY_PATH="\${CZMQ_ROOT}/lib:\${LD_LIBRARY_PATH}"
-export LIBRARY_PATH="\${CZMQ_ROOT}/lib:\${LIBRARY_PATH}"
-export CMAKE_INCLUDE_PATH="\${CZMQ_ROOT}/include:\${CMAKE_INCLUDE_PATH}"
-export CMAKE_LIBRARY_PATH="\${CZMQ_ROOT}/lib:\${CMAKE_LIBRARY_PATH}"
+export CZMQ_ROOT="${SHARE_HOME}/czmq"
+export CPATH="${CZMQ_ROOT}/include:${CPATH}"
+export LD_LIBRARY_PATH="${CZMQ_ROOT}/lib:${LD_LIBRARY_PATH}"
+export LIBRARY_PATH="${CZMQ_ROOT}/lib:${LIBRARY_PATH}"
+export CMAKE_INCLUDE_PATH="${CZMQ_ROOT}/include:${CMAKE_INCLUDE_PATH}"
+export CMAKE_LIBRARY_PATH="${CZMQ_ROOT}/lib:${CMAKE_LIBRARY_PATH}"
 
 EndOfMsg
 
@@ -261,14 +259,14 @@ cd "${ROCKSDB_DIR}"
 make shared_lib -j "${NCORES}" USE_RTTI=1 DISABLE_WARNING_AS_ERROR=ON
 sudo make install-shared INSTALL_PATH="${SHARE_HOME}/rocksdb"
 
-cat >> "${BASH_PROFILE}" <<- EndOfMsg
+cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # RocksDB
-export ROCKSDB_ROOT="\${SHARE_HOME}/rocksdb"
-export CPATH="\${ROCKSDB_ROOT}/include:\${CPATH}"
-export LD_LIBRARY_PATH="\${ROCKSDB_ROOT}/lib:\${LD_LIBRARY_PATH}"
-export LIBRARY_PATH="\${ROCKSDB_ROOT}/lib:\${LIBRARY_PATH}"
-export CMAKE_INCLUDE_PATH="\${ROCKSDB_ROOT}/include:\${CMAKE_INCLUDE_PATH}"
-export CMAKE_LIBRARY_PATH="\${ROCKSDB_ROOT}/lib:\${CMAKE_LIBRARY_PATH}"
+export ROCKSDB_ROOT="${SHARE_HOME}/rocksdb"
+export CPATH="${ROCKSDB_ROOT}/include:${CPATH}"
+export LD_LIBRARY_PATH="${ROCKSDB_ROOT}/lib:${LD_LIBRARY_PATH}"
+export LIBRARY_PATH="${ROCKSDB_ROOT}/lib:${LIBRARY_PATH}"
+export CMAKE_INCLUDE_PATH="${ROCKSDB_ROOT}/include:${CMAKE_INCLUDE_PATH}"
+export CMAKE_LIBRARY_PATH="${ROCKSDB_ROOT}/lib:${CMAKE_LIBRARY_PATH}"
 
 EndOfMsg
 
@@ -292,14 +290,14 @@ cmake -DCMAKE_INSTALL_PREFIX="${SHARE_HOME}/gtest" -DBUILD_SHARED_LIBS=ON ..
 make -j "${NCORES}"
 sudo make install
 
-cat >> "${BASH_PROFILE}" <<- EndOfMsg
+cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # gtest
-export GTEST_ROOT="\${SHARE_HOME}/gtest"
-export CPATH="\${GTEST_ROOT}/include:\${CPATH}"
-export LD_LIBRARY_PATH="\${GTEST_ROOT}/lib:\${LD_LIBRARY_PATH}"
-export LIBRARY_PATH="\${GTEST_ROOT}/lib:\${LIBRARY_PATH}"
-export CMAKE_INCLUDE_PATH="\${GTEST_ROOT}/include:\${CMAKE_INCLUDE_PATH}"
-export CMAKE_LIBRARY_PATH="\${GTEST_ROOT}/lib:\${CMAKE_LIBRARY_PATH}"
+export GTEST_ROOT="${SHARE_HOME}/gtest"
+export CPATH="${GTEST_ROOT}/include:${CPATH}"
+export LD_LIBRARY_PATH="${GTEST_ROOT}/lib:${LD_LIBRARY_PATH}"
+export LIBRARY_PATH="${GTEST_ROOT}/lib:${LIBRARY_PATH}"
+export CMAKE_INCLUDE_PATH="${GTEST_ROOT}/include:${CMAKE_INCLUDE_PATH}"
+export CMAKE_LIBRARY_PATH="${GTEST_ROOT}/lib:${CMAKE_LIBRARY_PATH}"
 
 EndOfMsg
 
@@ -324,10 +322,10 @@ sudo mkdir -p "${SHARE_HOME}/maven"
 sudo rm -rf "${SHARE_HOME}/maven/${MAVEN_DIR}"
 sudo mv "${MAVEN_DIR}" "${SHARE_HOME}/maven/"
 
-cat >> "${BASH_PROFILE}" <<- EndOfMsg
+cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # Maven
-export MAVEN_HOME="\${SHARE_HOME}/maven/${MAVEN_DIR}"
-export PATH="\${MAVEN_HOME}/bin:\${PATH}"
+export MAVEN_HOME="${SHARE_HOME}/maven/${MAVEN_DIR}"
+export PATH="${MAVEN_HOME}/bin:${PATH}"
 
 EndOfMsg
 
@@ -350,10 +348,10 @@ cd "${PYTHON3_DIR}"
 make -j "${NCORES}"
 sudo make install
 
-cat >> "${BASH_PROFILE}" <<- EndOfMsg
+cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # Python 3
-export PYTHON3_ROOT="\${SHARE_HOME}/python3"
-export PATH="\${PYTHON3_ROOT}/bin:\${PATH}"
+export PYTHON3_ROOT="${SHARE_HOME}/python3"
+export PATH="${PYTHON3_ROOT}/bin:${PATH}"
 
 EndOfMsg
 
@@ -374,10 +372,10 @@ cd "${PYTHON_DIR}"
 make -j "${NCORES}"
 sudo make install
 
-cat >> "${BASH_PROFILE}" <<- EndOfMsg
+cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # Python 2
-export PYTHON_ROOT="\${SHARE_HOME}/python"
-export PATH="\${PYTHON_ROOT}/bin:\${PATH}"
+export PYTHON_ROOT="${SHARE_HOME}/python"
+export PATH="${PYTHON_ROOT}/bin:${PATH}"
 
 EndOfMsg
 
@@ -404,11 +402,11 @@ sudo ln -s ccache g++
 sudo ln -s ccache cc
 sudo ln -s ccache c++
 
-cat >> "${BASH_PROFILE}" <<- EndOfMsg
+cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # ccache
-export CCACHE_HOME="\${SHARE_HOME}/ccache"
-export PATH="\${CCACHE_HOME}/bin:\${PATH}"
-export MANPATH="\${CCACHE_HOME}/share/man:\${MANPATH}"
+export CCACHE_HOME="${SHARE_HOME}/ccache"
+export PATH="${CCACHE_HOME}/bin:${PATH}"
+export MANPATH="${CCACHE_HOME}/share/man:${MANPATH}"
 
 EndOfMsg
 source "${BASH_PROFILE}"

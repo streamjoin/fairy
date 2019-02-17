@@ -7,14 +7,14 @@ set -o nounset
 set -o pipefail
 
 # Include libraries
-readonly SCRIPT_HOME="$(cd "$(dirname "$0")"; pwd -P)"
+readonly SCRIPT_HOME="$(cd "$(dirname -- "$0")"; pwd -P)"
 source "${SCRIPT_HOME}/../_common_lib/output_utils.sh"
 
 # Command parameters
 readonly USERNAME="${1:-${USER}}"
 
 # Set variables
-readonly USER_SSH_ROOT="$(dirname "${HOME}")/${USERNAME}/.ssh"
+readonly USER_SSH_ROOT="$(dirname -- "${HOME}")/${USERNAME}/.ssh"
 
 # Validate the existence of user account
 id -u "${USERNAME}" > /dev/null 2>&1

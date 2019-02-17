@@ -7,7 +7,7 @@
 set -o pipefail
 
 # Include libraries
-readonly SCRIPT_HOME="$(cd "$(dirname "$0")"; pwd -P)"
+readonly SCRIPT_HOME="$(cd "$(dirname -- "$0")"; pwd -P)"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/../..}/_common_lib/output_utils.sh"
 
 # Set variables

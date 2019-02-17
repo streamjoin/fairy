@@ -7,7 +7,7 @@
 set -o pipefail
 
 # Include libraries
-readonly SCRIPT_HOME="$(cd "$(dirname "$0")"; pwd -P)"
+readonly SCRIPT_HOME="$(cd "$(dirname -- "$0")"; pwd -P)"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/../..}/_common_lib/output_utils.sh"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/../..}/_common_lib/system.sh"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/../..}/account/lib/load_script_conf.sh"
@@ -23,7 +23,7 @@ readonly USERNAME_INIT="${ACCOUNT_USERNAME_INIT-${DEFAULT_USERNAME_INIT}}"
 readonly USERNAME="${USERNAME_INIT:+"${USERNAME_INIT}-"}${ID}"
 
 readonly USER_HOME_ROOT=\
-"${ACCOUNT_USER_HOME_ROOT:-${DEFAULT_USER_HOME_ROOT:-$(dirname "${HOME}")}}"
+"${ACCOUNT_USER_HOME_ROOT:-${DEFAULT_USER_HOME_ROOT:-$(dirname -- "${HOME}")}}"
 
 readonly PEM_HOME="${ACCOUNT_PEM_HOME-${DEFAULT_PEM_HOME}}"
 

@@ -5,15 +5,19 @@
 set -o pipefail
 
 # Include libraries
-readonly SCRIPT_HOME="$(cd "$(dirname "$0")"; pwd -P)"
+readonly SCRIPT_HOME="$(cd "$(dirname -- "$0")"; pwd -P)"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/output_utils.sh"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/system.sh"
 source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/filesystem.sh"
 
 # Help
-if [[ "$1" = "--help" ]] || [[ "$1" = "-?" ]]; then
+help_wanted() {
+  [ "$#" -ge "1" ] && [ "$1" = '-h' ] || [ "$1" = '--help' ] || [ "$1" = "-?" ]
+}
+
+if help_wanted "$@"; then
   echo_bold_blue "USAGE"
-  echo "  $(basename "$0") [OPTION]"
+  echo "  $(basename -- "$0") [OPTION]"
   echo
   echo_bold_blue "OPTIONS"
   echo "  -c, --clean    delete all generated files and exit"
@@ -39,7 +43,7 @@ fi
 readonly START_TIME="$(timer)"
 
 # Check environment variables
-[[ -n "${WORK_DIR}" ]] || WORK_DIR="$(cd "$(dirname "$0")"; pwd -P)"
+[[ -n "${WORK_DIR}" ]] || WORK_DIR="$(cd "$(dirname -- "$0")"; pwd -P)"
 check_dir_exists "${WORK_DIR}"
 readonly WORK_DIR="$(cd "${WORK_DIR}"; pwd -P)"  # canonical path
 
