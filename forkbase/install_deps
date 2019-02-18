@@ -38,59 +38,45 @@ readonly WGET_FLAGS="--quiet --show-progress"
 
 # The main function
 main() {
-  readonly START_TIME="$(timer)"
+  local -r start_time="$(timer)"
   
 cat >> "${BASH_PROFILE}" <<-EndOfMsg
 export SHARE_HOME="${DEPS_DIR}"
 export NCORES="\$(cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print \$NF}')"
 
 EndOfMsg
-  source "${BASH_PROFILE}"
   
+  source "${BASH_PROFILE}"
   sudo apt-get -y install build-essential autoconf pkg-config libtool git openssl >/dev/null
   
-  info "Installing CMake ..."
   install_cmake
   source "${BASH_PROFILE}"
   
-  info "Installing Boost ..."
   install_boost
   
-  info "Installing gflags ..."
   install_gflags
   
-  info "Installing Protocol Buffers ..."
   install_protobuf
   
-  info "Installing Crypto++ ..."
   install_cryptopp
   
-  info "Installing ZeroMQ ..."
   install_zmq
   source "${BASH_PROFILE}"
   
-  info "Installing CZMQ ..."
   install_czmq
   
-  info "Installing RocksDB ..."
   install_rocksdb
   
-  info "Installing Google Test ..."
   install_gtest
   
-  info "Installing OpenJDK ..."
   install_jdk
   
-  info "Installing Maven ..."
   install_maven
   
-  info "Installing Python 3 ..."
   install_python3
   
-  info "Installing Python 2 ..."
   install_python2
   
-  info "Installing CCache ..."
   install_ccache
   
   cd "${WORK_DIR}"
@@ -117,7 +103,7 @@ EndOfMsg
   info "Installed in: ${DEPS_DIR}"
   info "Updated configuration: ${BASH_PROFILE}"
   info "Finished at: $(date +"%T %Z, %-d %B %Y")"
-  info "Total time: $(timer "${START_TIME}")"
+  info "Total time: $(timer "${start_time}")"
   info "------------------------------------------------------------------------"
 }
 # End of the main function
@@ -128,6 +114,7 @@ install_cmake() {
   local -r cmake_pkg="cmake-${CMAKE_VER}.tar.gz"
   local -r cmake_dir="cmake-${CMAKE_VER}"
   
+  info "Installing CMake ${CMAKE_VER} ..."
   cd "${TEMP_DIR}"
   [[ -f "${cmake_pkg}" ]] ||
   wget ${WGET_FLAGS} "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER}/${cmake_pkg}"
@@ -153,6 +140,7 @@ install_boost() {
   local -r boost_pkg="boost_${BOOST_VER}.tar.bz2"
   local -r boost_dir="boost_${BOOST_VER}"
   
+  info "Installing Boost ${BOOST_VER} ..."
   cd "${TEMP_DIR}"
   [[ -f "${boost_pkg}" ]] ||
   wget ${WGET_FLAGS} "https://dl.bintray.com/boostorg/release/1.69.0/source/${boost_pkg}"
@@ -179,6 +167,7 @@ install_gflags() {
   local -r gflags_pkg="v${GFLAGS_VER}.tar.gz"
   local -r gflags_dir="gflags-${GFLAGS_VER}"
   
+  info "Installing gflags ${GFLAGS_VER} ..."
   cd "${TEMP_DIR}"
   [[ -f "${gflags_pkg}" ]] ||
   wget ${WGET_FLAGS} "https://github.com/gflags/gflags/archive/${gflags_pkg}"
@@ -211,6 +200,7 @@ install_protobuf() {
   local -r protobuf_pkg="v${PROTOBUF_VER}.tar.gz"
   local -r protobuf_dir="protobuf-${PROTOBUF_VER}"
   
+  info "Installing Protocol Buffers ${PROTOBUF_VER} ..."
   cd "${TEMP_DIR}"
   [[ -f "${protobuf_pkg}" ]] ||
   wget ${WGET_FLAGS} "https://github.com/protocolbuffers/protobuf/archive/${protobuf_pkg}"
@@ -243,6 +233,7 @@ install_cryptopp() {
   local -r cryptopp_pkg="${cryptopp_pkg_ver}.tar.gz"
   local -r cryptopp_dir="cryptopp-${cryptopp_pkg_ver}"
   
+  info "Installing Crypto++ ${CRYPTOPP_VER} ..."
   cd "${TEMP_DIR}"
   [[ -f "${cryptopp_pkg}" ]] ||
   wget ${WGET_FLAGS} "https://github.com/weidai11/cryptopp/archive/${cryptopp_pkg}"
@@ -271,6 +262,7 @@ install_zmq() {
   local -r zmq_pkg="v${ZMQ_VER}.tar.gz"
   local -r zmq_dir="libzmq-${ZMQ_VER}"
   
+  info "Installing ZeroMQ ${ZMQ_VER} ..."
   cd "${TEMP_DIR}"
   [[ -f "${zmq_pkg}" ]] ||
   wget ${WGET_FLAGS} "https://github.com/zeromq/libzmq/archive/${zmq_pkg}"
@@ -301,6 +293,7 @@ install_czmq() {
   local -r czmq_pkg="v${CZMQ_VER}.tar.gz"
   local -r czmq_dir="czmq-${CZMQ_VER}"
   
+  info "Installing CZMQ ${CZMQ_VER} ..."
   cd "${TEMP_DIR}"
   [[ -f "${czmq_pkg}" ]] ||
   wget ${WGET_FLAGS} "https://github.com/zeromq/czmq/archive/${czmq_pkg}"
@@ -333,6 +326,7 @@ install_rocksdb() {
   
   sudo apt-get -y install libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev >/dev/null
   
+  info "Installing RocksDB ${ROCKSDB_VER} ..."
   cd "${TEMP_DIR}"
   [[ -f "${rocksdb_pkg}" ]] ||
   wget ${WGET_FLAGS} "https://github.com/facebook/rocksdb/archive/${rocksdb_pkg}"
@@ -362,6 +356,7 @@ install_gtest() {
   local -r gtest_pkg="${gtest_pkg_ver}.tar.gz"
   local -r gtest_dir="googletest-${gtest_pkg_ver}"
   
+  info "Installing Google Test ${GTEST_VER} ..."
   cd "${TEMP_DIR}"
   [[ -f "${gtest_pkg}" ]] ||
   wget ${WGET_FLAGS} "https://github.com/google/googletest/archive/${gtest_pkg}"
@@ -390,6 +385,7 @@ EndOfMsg
 }
 
 install_jdk() {
+  info "Installing OpenJDK (via APT) ..."
   sudo apt-get -y install default-jdk >/dev/null
   readonly JDK_VER="$(javac -version | awk '{ print $2 }')"
 }
@@ -399,6 +395,7 @@ install_maven() {
   local -r maven_pkg="apache-maven-${MAVEN_VER}-bin.tar.gz"
   local -r maven_dir="apache-maven-${MAVEN_VER}"
   
+  info "Installing Maven ${MAVEN_VER} ..."
   cd "${TEMP_DIR}"
   [[ -f "${maven_pkg}" ]] ||
   wget ${WGET_FLAGS} "https://www-us.apache.org/dist/maven/maven-${MAVEN_VER:0:1}/${MAVEN_VER}/binaries/${maven_pkg}"
@@ -423,6 +420,7 @@ install_python3() {
   local -r python3_pkg="Python-${PYTHON3_VER}.tgz"
   local -r python3_dir="Python-${PYTHON3_VER}"
   
+  info "Installing Python ${PYTHON3_VER} ..."
   sudo apt-get -y install libffi-dev >/dev/null
   
   cd "${TEMP_DIR}"
@@ -450,6 +448,7 @@ install_python2() {
   local -r python2_pkg="Python-${PYTHON2_VER}.tgz"
   local -r python2_dir="Python-${PYTHON2_VER}"
   
+  info "Installing Python ${PYTHON2_VER} ..."
   cd "${TEMP_DIR}"
   [[ -f "${python2_pkg}" ]] ||
   wget ${WGET_FLAGS} "https://www.python.org/ftp/python/${PYTHON2_VER}/${python2_pkg}"
@@ -475,6 +474,7 @@ install_ccache() {
   local -r ccache_pkg="ccache-${CCACHE_VER}.tar.bz2"
   local -r ccache_dir="ccache-${CCACHE_VER}"
   
+  info "Installing CCache ${CCACHE_VER} ..."
   cd "${TEMP_DIR}"
   [[ -f "${ccache_pkg}" ]] ||
   wget ${WGET_FLAGS} "https://www.samba.org/ftp/ccache/${ccache_pkg}"
