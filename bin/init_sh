@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+set -o errexit
+set -o errtrace
+set -o nounset
+set -o pipefail
+
+# Global variables
+readonly SCRIPT_DIR="$(cd "$(dirname -- "${BASH_SOURCE}")" && pwd -P)"
+readonly SCRIPT_NAME="$(basename -- "$0")"
+
+# The main function
+main() {
+  check_args "$@"
+  [[ -n "${FILENAME}" ]] || exit_on_filename_missing
+  cat "${SCRIPT_DIR}/template.sh" > "${FILENAME}"
+}
+
+# Helper functions
+check_args() {
+  [[ "$#" -gt 1 ]] || exit_on_filename_missing
+  
+  for arg in "$@"; do
+    case "${arg}" in
+      # Print help message
+      '--help'|'-h'|'-?' )
+        print_help_msg
+        exit 0
+      ;;
+      # Unknown options
+      '-'* )
+        echo "Unknown command argument(s) '${arg}' (see '--help' for usage)"
+        exit 126
+      ;;
+      # Default: assign variable
+      * )
+        assign_var "${arg}"
+      ;;
+    esac
+  done
+}
+
+print_help_msg() {
+cat <<EndOfMsg
+Usage: ${SCRIPT_NAME} [OPTION]... FILE
+Options:
+  -h, -?, --help    display this help and exit
+
+EndOfMsg
+}
+
+assign_var () {
+  [[ -z "${FILENAME}" ]]
+  readonly FILENAME="$1"
+}
+
+exit_on_filename_missing() {
+  echo "Error: missing target filename"
+  print_help_msg
+  exit 126
+}
+
+# Execution (SHOULDN'T EDIT AFTER THIS LINE!)
+main "$@"s
+exit "$?"
