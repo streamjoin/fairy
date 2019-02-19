@@ -14,11 +14,12 @@ main() {
   check_args "$@"
   [[ -n "${FILENAME}" ]] || exit_on_filename_missing
   cat "${SCRIPT_DIR}/template.sh" > "${FILENAME}"
+  chmod +x "${FILENAME}"
 }
 
 # Helper functions
 check_args() {
-  [[ "$#" -gt 1 ]] || exit_on_filename_missing
+  [[ "$#" -ge 1 ]] || exit_on_filename_missing
   
   for arg in "$@"; do
     case "${arg}" in
@@ -43,6 +44,7 @@ check_args() {
 print_help_msg() {
 cat <<EndOfMsg
 Usage: ${SCRIPT_NAME} [OPTION]... FILE
+
 Options:
   -h, -?, --help    display this help and exit
 
@@ -50,16 +52,22 @@ EndOfMsg
 }
 
 assign_var () {
-  [[ -z "${FILENAME}" ]]
+  [[ -z "${FILENAME:-}" ]] || exit_on_multi_filename
   readonly FILENAME="$1"
 }
 
 exit_on_filename_missing() {
-  echo "Error: missing target filename"
+  printf "ERROR: Missing target filename!\n\n"
+  print_help_msg
+  exit 126
+}
+
+exit_on_multi_filename() {
+  printf "ERROR: Too many filenames! Only one should be specified.\n\n"
   print_help_msg
   exit 126
 }
 
 # Execution (SHOULDN'T EDIT AFTER THIS LINE!)
-main "$@"s
+main "$@"
 exit "$?"

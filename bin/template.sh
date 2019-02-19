@@ -50,6 +50,8 @@ check_args() {
 
 print_help_msg() {
 cat <<EndOfMsg
+Usage: ${SCRIPT_NAME} [OPTION]...
+
 Options:
   -h, -?, --help    display this help and exit
 
