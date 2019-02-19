@@ -2,6 +2,10 @@
 
 The scripts I ever programmed are just like little fairies who get jobs done magically. May you feel helpful with them. 
 
+## Facilities ##
+
+You may leverage `bin/template.sh` to bootstrap you Bash script. Moreover, you may call `bin/bootstrap_sh` to further ease bootstrapping. (See the quick two-step setup [here](bin/README-deps.md))
+
 ## Resources ##
 
 - [Google Shell Style Guide](https://google.github.io/styleguide/shell.xml)

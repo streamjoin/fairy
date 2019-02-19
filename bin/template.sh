@@ -18,7 +18,7 @@ readonly SCRIPT_NAME="$(basename -- "$0")"
 # The main function
 main() {
   check_args "$@"
-  # Start your coder here
+  # Start your code here
   
 }
 
