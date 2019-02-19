@@ -4,7 +4,7 @@ The scripts I ever programmed are just like little fairies who get jobs done mag
 
 ## Facilities ##
 
-You may leverage `bin/template.sh` to bootstrap you Bash script. Moreover, you may call `bin/bootstrap_sh` to further ease bootstrapping. (See the quick two-step setup [here](bin/README-deps.md))
+You may leverage `bin/template.sh` to bootstrap you Bash script. Moreover, you may call `bin/bootstrap_sh` to further ease bootstrapping. (See the quick two-step setup [here](bin/README.md))
 
 ## Resources ##
 
