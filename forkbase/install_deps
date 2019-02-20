@@ -9,12 +9,15 @@ set -o errexit
 set -o errtrace
 set -o pipefail
 
-readonly SCRIPT_DIR="$(cd "$(dirname -- "${BASH_SOURCE}")" && pwd -P)"
-readonly SCRIPT_NAME="$(basename -- "$0")"
+[[ -n "${__SCRIPT_DIR+x}" ]] ||
+readonly __SCRIPT_DIR="$(cd "$(dirname -- "${BASH_SOURCE}")" && pwd -P)"
+
+[[ -n "${__SCRIPT_NAME+x}" ]] ||
+readonly __SCRIPT_NAME="$(basename -- "$0")"
 
 # Include libraries
-source "${FAIRY_HOME:-${SCRIPT_DIR}/..}/_common_lib/output_utils.sh"
-source "${FAIRY_HOME:-${SCRIPT_DIR}/..}/_common_lib/system.sh"
+source "${FAIRY_HOME:-${__SCRIPT_DIR}/..}/_common_lib/output_utils.sh"
+source "${FAIRY_HOME:-${__SCRIPT_DIR}/..}/_common_lib/system.sh"
 
 # Global variables
 readonly START_TIME="$(timer)"
@@ -60,7 +63,6 @@ main() {
   install_dep_ccache
   
   cd "${WORK_DIR}"
-  rmdir "${TEMP_DIR}" || true
   
   if [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]]; then
     finish_download
@@ -104,7 +106,7 @@ check_args() {
 
 print_help_msg() {
 cat <<EndOfMsg
-Usage: ${SCRIPT_NAME} [OPTION]... [DIR]
+Usage: ${__SCRIPT_NAME} [OPTION]... [DIR]
 
 Options:
   -h, -?, --help    display this help and exit
@@ -115,6 +117,8 @@ EndOfMsg
 
 deal_with_arg_download() {
   OPT_DOWNLOAD_ONLY="true"
+  rmdir --ignore-fail-on-non-empty "${DEPS_DIR}"
+  rmdir --ignore-fail-on-non-empty "${TEMP_DIR}"
 }
 
 assign_var () {
@@ -134,26 +138,29 @@ check_sudo() {
 }
 
 finish_install() {
-  rmdir "${DOWNLOAD_DIR}" || true
+  rmdir --ignore-fail-on-non-empty "${TEMP_DIR}"
+  
+  [[ ! -d "${DOWNLOAD_DIR}" ]] ||
+  rmdir --ignore-fail-on-non-empty "${DOWNLOAD_DIR}"
   
   info "------------------------------------------------------------------------"
   info_bold_green "INSTALLATION SUCCESSFUL"
   info "------------------------------------------------------------------------"
-  info "Package versions:"
-  info "  - CMake: ${CMAKE_VER}"
-  info "  - Boost: ${BOOST_VER}"
-  info "  - gflags: ${GFLAGS_VER}"
-  info "  - Protocol Buffers: ${PROTOBUF_VER}"
-  info "  - Crypto++: ${CRYPTOPP_VER}"
-  info "  - ZeroMQ: ${ZMQ_VER}"
-  info "  - CZMQ: ${CZMQ_VER}"
-  info "  - RocksDB: ${ROCKSDB_VER}"
-  info "  - Google Test: ${GTEST_VER}"
-  info "  - OpenJDK: ${JDK_VER}"
-  info "  - Maven: ${MAVEN_VER}"
-  info "  - Python 2: ${PYTHON2_VER}"
-  info "  - Python 3: ${PYTHON3_VER}"
-  info "  - CCache: ${CCACHE_VER}"
+  info "Packages:"
+  info "  - CMake ${CMAKE_VER}"
+  info "  - Boost ${BOOST_VER}"
+  info "  - gflags ${GFLAGS_VER}"
+  info "  - Protocol Buffers ${PROTOBUF_VER}"
+  info "  - Crypto++ ${CRYPTOPP_VER}"
+  info "  - ZeroMQ ${ZMQ_VER}"
+  info "  - CZMQ ${CZMQ_VER}"
+  info "  - RocksDB ${ROCKSDB_VER}"
+  info "  - Google Test ${GTEST_VER}"
+  info "  - OpenJDK ${JDK_VER}"
+  info "  - Maven ${MAVEN_VER}"
+  info "  - Python ${PYTHON2_VER}"
+  info "  - Python ${PYTHON3_VER}"
+  info "  - CCache ${CCACHE_VER}"
   info "Installed in: ${DEPS_DIR}"
   info "Updated configuration: ${BASH_PROFILE}"
   info "Finished at: $(date +"%T %Z, %-d %B %Y")"
@@ -162,8 +169,6 @@ finish_install() {
 }
 
 finish_download() {
-  rmdir "${DEPS_DIR}" || true
-  
   info "------------------------------------------------------------------------"
   info_bold_green "DOWNLOAD SUCCESSFUL"
   info "------------------------------------------------------------------------"
@@ -190,16 +195,18 @@ EndOfMsg
 
 install_dep_cmake() {
   readonly CMAKE_VER="${USTORE_CMAKE_VER:-"3.13.4"}"
-  local -r cmake_pkg="cmake-${CMAKE_VER}.tar.gz"
+  local -r cmake_dl_pkg="cmake-${CMAKE_VER}.tar.gz"
+  local -r cmake_pkg="${DOWNLOAD_DIR}/${cmake_dl_pkg}"
   local -r cmake_dir="cmake-${CMAKE_VER}"
   
-  cd "${TEMP_DIR}"
-  [[ -f "${cmake_pkg}" ]] ||
-  wget ${WGET_FLAGS} "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER}/${cmake_pkg}"
+  if [[ ! -f "${cmake_pkg}" ]]; then
+    wget ${WGET_FLAGS} "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER}/${cmake_dl_pkg}"
+  fi
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing CMake ${CMAKE_VER} ..."
-  tar xzf "${DOWNLOAD_DIR}/${cmake_pkg}" && cd "${cmake_dir}"
+  cd "${TEMP_DIR}"
+  tar xzf "${cmake_pkg}" && cd "${cmake_dir}"
   
   ./bootstrap --prefix="${SHARE_HOME}/cmake" --parallel="${NCORES}"
   make -j "${NCORES}"
@@ -218,17 +225,21 @@ EndOfMsg
 }
 
 install_dep_boost() {
-  readonly BOOST_VER="${USTORE_BOOST_VER:-"1_69_0"}"
-  local -r boost_pkg="boost_${BOOST_VER}.tar.bz2"
-  local -r boost_dir="boost_${BOOST_VER}"
+  readonly BOOST_VER="${USTORE_BOOST_VER:-"1.69.0"}"
+  local -r boost_pkg_ver="${BOOST_VER//./_}"
+  local -r boost_dl_pkg="boost_${boost_pkg_ver}.tar.bz2"
+  local -r boost_pkg="${DOWNLOAD_DIR}/boost-${BOOST_VER}.tar.bz2"
+  local -r boost_dir="boost_${boost_pkg_ver}"
   
-  cd "${TEMP_DIR}"
-  [[ -f "${boost_pkg}" ]] ||
-  wget ${WGET_FLAGS} "https://dl.bintray.com/boostorg/release/1.69.0/source/${boost_pkg}"
+  if [[ ! -f "${boost_pkg}" ]]; then
+    wget ${WGET_FLAGS} "https://dl.bintray.com/boostorg/release/${BOOST_VER}/source/${boost_dl_pkg}"
+    mv "${DOWNLOAD_DIR}/${boost_dl_pkg}" "${boost_pkg}"
+  fi
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing Boost ${BOOST_VER} ..."
-  tar xjf "${DOWNLOAD_DIR}/${boost_pkg}" && cd "${boost_dir}"
+  cd "${TEMP_DIR}"
+  tar xjf "${boost_pkg}" && cd "${boost_dir}"
   
   ./bootstrap.sh --prefix="${SHARE_HOME}/boost"
   sudo ./b2 install -j "${NCORES}"
@@ -247,16 +258,19 @@ EndOfMsg
 
 install_dep_gflags() {
   readonly GFLAGS_VER="${USTORE_GFLAGS_VER:-"2.2.2"}"
-  local -r gflags_pkg="v${GFLAGS_VER}.tar.gz"
+  local -r gflags_dl_pkg="v${GFLAGS_VER}.tar.gz"
+  local -r gflags_pkg="${DOWNLOAD_DIR}/gflags-${GFLAGS_VER}.tar.gz"
   local -r gflags_dir="gflags-${GFLAGS_VER}"
   
-  cd "${TEMP_DIR}"
-  [[ -f "${gflags_pkg}" ]] ||
-  wget ${WGET_FLAGS} "https://github.com/gflags/gflags/archive/${gflags_pkg}"
+  if [[ ! -f "${gflags_pkg}" ]]; then
+    wget ${WGET_FLAGS} "https://github.com/gflags/gflags/archive/${gflags_dl_pkg}"
+    mv "${DOWNLOAD_DIR}/${gflags_dl_pkg}" "${gflags_pkg}"
+  fi
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing gflags ${GFLAGS_VER} ..."
-  tar xzf "${DOWNLOAD_DIR}/${gflags_pkg}" && cd "${gflags_dir}"
+  cd "${TEMP_DIR}"
+  tar xzf "${gflags_pkg}" && cd "${gflags_dir}"
   
   mkdir -p build
   rm -rf build/*
@@ -281,16 +295,19 @@ EndOfMsg
 
 install_dep_protobuf() {
   readonly PROTOBUF_VER="${USTORE_PROTOBUF_VER:-"3.6.1"}"
-  local -r protobuf_pkg="v${PROTOBUF_VER}.tar.gz"
+  local -r protobuf_dl_pkg="v${PROTOBUF_VER}.tar.gz"
+  local -r protobuf_pkg="${DOWNLOAD_DIR}/protobuf-${PROTOBUF_VER}.tar.gz"
   local -r protobuf_dir="protobuf-${PROTOBUF_VER}"
   
-  cd "${TEMP_DIR}"
-  [[ -f "${protobuf_pkg}" ]] ||
-  wget ${WGET_FLAGS} "https://github.com/protocolbuffers/protobuf/archive/${protobuf_pkg}"
+  if [[ ! -f "${protobuf_pkg}" ]]; then
+    wget ${WGET_FLAGS} "https://github.com/protocolbuffers/protobuf/archive/${protobuf_dl_pkg}"
+    mv "${DOWNLOAD_DIR}/${protobuf_dl_pkg}" "${protobuf_pkg}"
+  fi
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing Protocol Buffers ${PROTOBUF_VER} ..."
-  tar xzf "${DOWNLOAD_DIR}/${protobuf_pkg}" && cd "${protobuf_dir}"
+  cd "${TEMP_DIR}"
+  tar xzf "${protobuf_pkg}" && cd "${protobuf_dir}"
   
   ./autogen.sh
   ./configure --prefix="${SHARE_HOME}/protobuf"
@@ -314,17 +331,20 @@ EndOfMsg
 
 install_dep_cryptopp() {
   readonly CRYPTOPP_VER="${USTORE_CRYPTOPP_VER:-"8.0.0"}"
-  local -r cryptopp_pkg_ver="CRYPTOPP_${CRYPTOPP_VER//./_}"
-  local -r cryptopp_pkg="${cryptopp_pkg_ver}.tar.gz"
-  local -r cryptopp_dir="cryptopp-${cryptopp_pkg_ver}"
+  local -r cryptopp_pkg_ver="${CRYPTOPP_VER//./_}"
+  local -r cryptopp_dl_pkg="CRYPTOPP_${cryptopp_pkg_ver}.tar.gz"
+  local -r cryptopp_pkg="${DOWNLOAD_DIR}/cryptopp-${CRYPTOPP_VER}.tar.gz"
+  local -r cryptopp_dir="cryptopp-CRYPTOPP_${cryptopp_pkg_ver}"
   
-  cd "${TEMP_DIR}"
-  [[ -f "${cryptopp_pkg}" ]] ||
-  wget ${WGET_FLAGS} "https://github.com/weidai11/cryptopp/archive/${cryptopp_pkg}"
+  if [[ ! -f "${cryptopp_pkg}" ]]; then
+    wget ${WGET_FLAGS} "https://github.com/weidai11/cryptopp/archive/${cryptopp_dl_pkg}"
+    mv "${DOWNLOAD_DIR}/${cryptopp_dl_pkg}" "${cryptopp_pkg}"
+  fi
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing Crypto++ ${CRYPTOPP_VER} ..."
-  tar xzf "${DOWNLOAD_DIR}/${cryptopp_pkg}" && cd "${cryptopp_dir}"
+  cd "${TEMP_DIR}"
+  tar xzf "${cryptopp_pkg}" && cd "${cryptopp_dir}"
   
   make -j "${NCORES}" libcryptopp.a libcryptopp.so
   sudo make install PREFIX="${SHARE_HOME}/cryptopp"
@@ -345,16 +365,19 @@ EndOfMsg
 
 install_dep_zmq() {
   readonly ZMQ_VER="${USTORE_ZMQ_VER:-"4.3.1"}"
-  local -r zmq_pkg="v${ZMQ_VER}.tar.gz"
+  local -r zmq_dl_pkg="v${ZMQ_VER}.tar.gz"
+  local -r zmq_pkg="${DOWNLOAD_DIR}/zmq-${ZMQ_VER}.tar.gz"
   local -r zmq_dir="libzmq-${ZMQ_VER}"
   
-  cd "${TEMP_DIR}"
-  [[ -f "${zmq_pkg}" ]] ||
-  wget ${WGET_FLAGS} "https://github.com/zeromq/libzmq/archive/${zmq_pkg}"
+  if [[ ! -f "${zmq_pkg}" ]]; then
+    wget ${WGET_FLAGS} "https://github.com/zeromq/libzmq/archive/${zmq_dl_pkg}"
+    mv "${DOWNLOAD_DIR}/${zmq_dl_pkg}" "${zmq_pkg}"
+  fi
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing ZeroMQ ${ZMQ_VER} ..."
-  tar xzf "${DOWNLOAD_DIR}/${zmq_pkg}" && cd "${zmq_dir}"
+  cd "${TEMP_DIR}"
+  tar xzf "${zmq_pkg}" && cd "${zmq_dir}"
   
   ./autogen.sh
   ./configure --prefix="${SHARE_HOME}/zmq"
@@ -379,16 +402,19 @@ EndOfMsg
 
 install_dep_czmq() {
   readonly CZMQ_VER="${USTORE_CZMQ_VER:-"4.2.0"}"
-  local -r czmq_pkg="v${CZMQ_VER}.tar.gz"
+  local -r czmq_dl_pkg="v${CZMQ_VER}.tar.gz"
+  local -r czmq_pkg="${DOWNLOAD_DIR}/czmq-${CZMQ_VER}.tar.gz"
   local -r czmq_dir="czmq-${CZMQ_VER}"
   
-  cd "${TEMP_DIR}"
-  [[ -f "${czmq_pkg}" ]] ||
-  wget ${WGET_FLAGS} "https://github.com/zeromq/czmq/archive/${czmq_pkg}"
+  if [[ ! -f "${czmq_pkg}" ]]; then
+    wget ${WGET_FLAGS} "https://github.com/zeromq/czmq/archive/${czmq_dl_pkg}"
+    mv "${DOWNLOAD_DIR}/${czmq_dl_pkg}" "${czmq_pkg}"
+  fi
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing CZMQ ${CZMQ_VER} ..."
-  tar xzf "${DOWNLOAD_DIR}/${czmq_pkg}" && cd "${czmq_dir}"
+  cd "${TEMP_DIR}"
+  tar xzf "${czmq_pkg}" && cd "${czmq_dir}"
   
   ./autogen.sh
   ./configure --prefix="${SHARE_HOME}/czmq"
@@ -411,16 +437,19 @@ EndOfMsg
 
 install_dep_rocksdb() {
   readonly ROCKSDB_VER="${USTORE_ROCKSDB_VER:-"5.17.2"}"
-  local -r rocksdb_pkg="v${ROCKSDB_VER}.tar.gz"
+  local -r rocksdb_dl_pkg="v${ROCKSDB_VER}.tar.gz"
+  local -r rocksdb_pkg="${DOWNLOAD_DIR}/rocksdb-${ROCKSDB_VER}.tar.gz"
   local -r rocksdb_dir="rocksdb-${ROCKSDB_VER}"
   
-  cd "${TEMP_DIR}"
-  [[ -f "${rocksdb_pkg}" ]] ||
-  wget ${WGET_FLAGS} "https://github.com/facebook/rocksdb/archive/${rocksdb_pkg}"
+  if [[ ! -f "${rocksdb_pkg}" ]]; then
+    wget ${WGET_FLAGS} "https://github.com/facebook/rocksdb/archive/${rocksdb_dl_pkg}"
+    mv "${DOWNLOAD_DIR}/${rocksdb_dl_pkg}" "${rocksdb_pkg}"
+  fi
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing RocksDB ${ROCKSDB_VER} ..."
-  tar xzf "${DOWNLOAD_DIR}/${rocksdb_pkg}" && cd "${rocksdb_dir}"
+  cd "${TEMP_DIR}"
+  tar xzf "${rocksdb_pkg}" && cd "${rocksdb_dir}"
   
   sudo apt-get -y install libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev >/dev/null
   make shared_lib -j "${NCORES}" USE_RTTI=1 DISABLE_WARNING_AS_ERROR=ON
@@ -443,16 +472,19 @@ EndOfMsg
 install_dep_gtest() {
   readonly GTEST_VER="${USTORE_GTEST_VER:-"1.8.1"}"
   local -r gtest_pkg_ver="release-${GTEST_VER}"
-  local -r gtest_pkg="${gtest_pkg_ver}.tar.gz"
+  local -r gtest_dl_pkg="${gtest_pkg_ver}.tar.gz"
+  local -r gtest_pkg="${DOWNLOAD_DIR}/gtest-${GTEST_VER}.tar.gz"
   local -r gtest_dir="googletest-${gtest_pkg_ver}"
   
-  cd "${TEMP_DIR}"
-  [[ -f "${gtest_pkg}" ]] ||
-  wget ${WGET_FLAGS} "https://github.com/google/googletest/archive/${gtest_pkg}"
+  if [[ ! -f "${gtest_pkg}" ]]; then
+    wget ${WGET_FLAGS} "https://github.com/google/googletest/archive/${gtest_dl_pkg}"
+    mv "${DOWNLOAD_DIR}/${gtest_dl_pkg}" "${gtest_pkg}"
+  fi
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing Google Test ${GTEST_VER} ..."
-  tar xzf "${DOWNLOAD_DIR}/${gtest_pkg}" && cd "${gtest_dir}"
+  cd "${TEMP_DIR}"
+  tar xzf "${gtest_pkg}" && cd "${gtest_dir}"
   
   mkdir -p build
   rm -rf build/*
@@ -485,16 +517,19 @@ install_dep_jdk() {
 
 install_dep_maven() {
   readonly MAVEN_VER="${USTORE_MAVEN_VER:-"3.6.0"}"
-  local -r maven_pkg="apache-maven-${MAVEN_VER}-bin.tar.gz"
+  local -r maven_dl_pkg="apache-maven-${MAVEN_VER}-bin.tar.gz"
+  local -r maven_pkg="${DOWNLOAD_DIR}/maven-${MAVEN_VER}.tar.gz"
   local -r maven_dir="apache-maven-${MAVEN_VER}"
   
-  cd "${TEMP_DIR}"
-  [[ -f "${maven_pkg}" ]] ||
-  wget ${WGET_FLAGS} "https://www-us.apache.org/dist/maven/maven-${MAVEN_VER:0:1}/${MAVEN_VER}/binaries/${maven_pkg}"
+  if [[ ! -f "${maven_pkg}" ]]; then
+    wget ${WGET_FLAGS} "https://www-us.apache.org/dist/maven/maven-${MAVEN_VER:0:1}/${MAVEN_VER}/binaries/${maven_dl_pkg}"
+    mv "${DOWNLOAD_DIR}/${maven_dl_pkg}" "${maven_pkg}"
+  fi
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing Maven ${MAVEN_VER} ..."
-  tar xzf "${DOWNLOAD_DIR}/${maven_pkg}"
+  cd "${TEMP_DIR}"
+  tar xzf "${maven_pkg}"
   sudo mkdir -p "${SHARE_HOME}/maven"
   sudo rm -rf "${SHARE_HOME}/maven/${maven_dir}"
   sudo mv "${maven_dir}" "${SHARE_HOME}/maven/"
@@ -511,16 +546,19 @@ EndOfMsg
 
 install_dep_python3() {
   readonly PYTHON3_VER="${USTORE_PYTHON3_VER:-"3.7.2"}"
-  local -r python3_pkg="Python-${PYTHON3_VER}.tgz"
+  local -r python3_dl_pkg="Python-${PYTHON3_VER}.tgz"
+  local -r python3_pkg="${DOWNLOAD_DIR}/python-${PYTHON3_VER}.tgz"
   local -r python3_dir="Python-${PYTHON3_VER}"
   
-  cd "${TEMP_DIR}"
-  [[ -f "${python3_pkg}" ]] ||
-  wget ${WGET_FLAGS} "https://www.python.org/ftp/python/${PYTHON3_VER}/${python3_pkg}"
+  if [[ ! -f "${python3_pkg}" ]]; then
+    wget ${WGET_FLAGS} "https://www.python.org/ftp/python/${PYTHON3_VER}/${python3_dl_pkg}"
+    mv "${DOWNLOAD_DIR}/${python3_dl_pkg}" "${python3_pkg}"
+  fi
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing Python ${PYTHON3_VER} ..."
-  tar xzf "${DOWNLOAD_DIR}/${python3_pkg}" && cd "${python3_dir}"
+  cd "${TEMP_DIR}"
+  tar xzf "${python3_pkg}" && cd "${python3_dir}"
   
   sudo apt-get -y install libffi-dev >/dev/null
   ./configure --prefix="${SHARE_HOME}/python3"
@@ -539,16 +577,19 @@ EndOfMsg
 
 install_dep_python2() {
   readonly PYTHON2_VER="${USTORE_PYTHON_VER:-"2.7.15"}"
-  local -r python2_pkg="Python-${PYTHON2_VER}.tgz"
+  local -r python2_dl_pkg="Python-${PYTHON2_VER}.tgz"
+  local -r python2_pkg="${DOWNLOAD_DIR}/python-${PYTHON2_VER}.tgz"
   local -r python2_dir="Python-${PYTHON2_VER}"
   
-  cd "${TEMP_DIR}"
-  [[ -f "${python2_pkg}" ]] ||
-  wget ${WGET_FLAGS} "https://www.python.org/ftp/python/${PYTHON2_VER}/${python2_pkg}"
+  if [[ ! -f "${python2_pkg}" ]]; then
+    wget ${WGET_FLAGS} "https://www.python.org/ftp/python/${PYTHON2_VER}/${python2_dl_pkg}"
+    mv "${DOWNLOAD_DIR}/${python2_dl_pkg}" "${python2_pkg}"
+  fi
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing Python ${PYTHON2_VER} ..."
-  tar xzf "${DOWNLOAD_DIR}/${python2_pkg}" && cd "${python2_dir}"
+  cd "${TEMP_DIR}"
+  tar xzf "${python2_pkg}" && cd "${python2_dir}"
   
   ./configure --prefix="${SHARE_HOME}/python"
   make -j "${NCORES}"
@@ -566,16 +607,18 @@ EndOfMsg
 
 install_dep_ccache() {
   readonly CCACHE_VER="${USTORE_CCACHE_VER:-"3.6"}"
-  local -r ccache_pkg="ccache-${CCACHE_VER}.tar.bz2"
+  local -r ccache_dl_pkg="ccache-${CCACHE_VER}.tar.bz2"
+  local -r ccache_pkg="${DOWNLOAD_DIR}/${ccache_dl_pkg}"
   local -r ccache_dir="ccache-${CCACHE_VER}"
   
-  cd "${TEMP_DIR}"
-  [[ -f "${ccache_pkg}" ]] ||
-  wget ${WGET_FLAGS} "https://www.samba.org/ftp/ccache/${ccache_pkg}"
+  if [[ ! -f "${ccache_pkg}" ]]; then
+    wget ${WGET_FLAGS} "https://www.samba.org/ftp/ccache/${ccache_dl_pkg}"
+  fi
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing CCache ${CCACHE_VER} ..."
-  tar xjf "${DOWNLOAD_DIR}/${ccache_pkg}" && cd "${ccache_dir}"
+  cd "${TEMP_DIR}"
+  tar xjf "${ccache_pkg}" && cd "${ccache_dir}"
   
   ./configure --prefix="${SHARE_HOME}/ccache"
   make -j "${NCORES}"

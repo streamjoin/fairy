@@ -12,8 +12,11 @@ set -o pipefail
 # set -o xtrace
 
 # Global variables
-readonly SCRIPT_DIR="$(cd "$(dirname -- "${BASH_SOURCE}")" && pwd -P)"
-readonly SCRIPT_NAME="$(basename -- "$0")"
+[[ -n "${__SCRIPT_DIR+x}" ]] ||
+readonly __SCRIPT_DIR="$(cd "$(dirname -- "${BASH_SOURCE}")" && pwd -P)"
+
+[[ -n "${__SCRIPT_NAME+x}" ]] ||
+readonly __SCRIPT_NAME="$(basename -- "$0")"
 
 # The main function
 main() {
@@ -50,7 +53,7 @@ check_args() {
 
 print_help_msg() {
 cat <<EndOfMsg
-Usage: ${SCRIPT_NAME} [OPTION]...
+Usage: ${__SCRIPT_NAME} [OPTION]...
 
 Options:
   -h, -?, --help    display this help and exit

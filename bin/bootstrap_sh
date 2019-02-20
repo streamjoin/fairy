@@ -6,15 +6,18 @@ set -o errtrace
 set -o pipefail
 
 # Global variables
-readonly SCRIPT_DIR="$(cd "$(dirname -- "${BASH_SOURCE}")" && pwd -P)"
-readonly SCRIPT_NAME="$(basename -- "$0")"
+[[ -n "${__SCRIPT_DIR+x}" ]] ||
+readonly __SCRIPT_DIR="$(cd "$(dirname -- "${BASH_SOURCE}")" && pwd -P)"
+
+[[ -n "${__SCRIPT_NAME+x}" ]] ||
+readonly __SCRIPT_NAME="$(basename -- "$0")"
 
 # The main function
 main() {
   check_args "$@"
   [[ -n "${FILENAME}" ]] || error_on_filename_missing
   [[ ! -f "${FILENAME}" ]] || error_on_file_exists
-  cat "${SCRIPT_DIR}/template.sh" > "${FILENAME}"
+  cat "${__SCRIPT_DIR}/template.sh" > "${FILENAME}"
   chmod +x "${FILENAME}"
 }
 
@@ -44,7 +47,7 @@ check_args() {
 
 print_help_msg() {
 cat <<EndOfMsg
-Usage: ${SCRIPT_NAME} [OPTION]... FILE
+Usage: ${__SCRIPT_NAME} [OPTION]... FILE
 
 Options:
   -h, -?, --help    display this help and exit
