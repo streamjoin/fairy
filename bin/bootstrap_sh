@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
+set -o nounset
 set -o errexit
 set -o errtrace
-set -o nounset
 set -o pipefail
 
 # Global variables
@@ -12,15 +12,15 @@ readonly SCRIPT_NAME="$(basename -- "$0")"
 # The main function
 main() {
   check_args "$@"
-  [[ -n "${FILENAME}" ]] || exit_on_filename_missing
-  [[ ! -f "${FILENAME}" ]] || exit_on_file_exists
+  [[ -n "${FILENAME}" ]] || error_on_filename_missing
+  [[ ! -f "${FILENAME}" ]] || error_on_file_exists
   cat "${SCRIPT_DIR}/template.sh" > "${FILENAME}"
   chmod +x "${FILENAME}"
 }
 
 # Helper functions
 check_args() {
-  [[ "$#" -ge 1 ]] || exit_on_filename_missing
+  [[ "$#" -ge 1 ]] || error_on_filename_missing
   
   for arg in "$@"; do
     case "${arg}" in
@@ -53,23 +53,23 @@ EndOfMsg
 }
 
 assign_var () {
-  [[ -z "${FILENAME:-}" ]] || exit_on_multi_filename
+  [[ -z "${FILENAME:-}" ]] || error_on_multi_filename
   readonly FILENAME="$1"
 }
 
-exit_on_filename_missing() {
+error_on_filename_missing() {
   printf "ERROR: Missing target filename!\n\n"
   print_help_msg
   exit 126
 }
 
-exit_on_multi_filename() {
+error_on_multi_filename() {
   printf "ERROR: Too many filenames! Only one should be specified.\n\n"
   print_help_msg
   exit 3
 }
 
-exit_on_file_exists() {
+error_on_file_exists() {
   printf "ERROR: File '${FILENAME}' already exists! (Not overwriting)\n\n"
   exit 4
 }

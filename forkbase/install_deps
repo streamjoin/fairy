@@ -4,19 +4,21 @@
 #
 # https://github.com/streamjoin/forkbase-doc/blob/master/installation/install-deps.md
 
+set -o nounset
 set -o errexit
+set -o errtrace
 set -o pipefail
 
+readonly SCRIPT_DIR="$(cd "$(dirname -- "${BASH_SOURCE}")" && pwd -P)"
+readonly SCRIPT_NAME="$(basename -- "$0")"
+
 # Include libraries
-readonly SCRIPT_HOME="$(cd "$(dirname -- "${BASH_SOURCE}")"; pwd -P)"
-source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/output_utils.sh"
-source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/system.sh"
+source "${FAIRY_HOME:-${SCRIPT_DIR}/..}/_common_lib/output_utils.sh"
+source "${FAIRY_HOME:-${SCRIPT_DIR}/..}/_common_lib/system.sh"
 
-# Check sudo privilege
-sudo -v ||
-check_err "No sudo privilege for current account '${USER}'"
+# Global variables
+readonly START_TIME="$(timer)"
 
-# Set global variables
 readonly BASH_PROFILE="${USTORE_BASH_PROFILE:-"${HOME}/.bash_profile"}"
 
 DEPS_DIR="${USTORE_DEPS_DIR:-"/usr/local/share"}"
@@ -34,53 +36,105 @@ readonly WORK_DIR="$(pwd -P)"
 [[ "${WORK_DIR}" != "${TEMP_DIR}" ]] ||
 check_err "The temporary directory cannot be the current working directory"
 
-readonly WGET_FLAGS="--quiet --show-progress"
-
 # The main function
 main() {
-  local -r start_time="$(timer)"
+  check_args "$@"
+  check_sudo
   
-cat >> "${BASH_PROFILE}" <<-EndOfMsg
-export SHARE_HOME="${DEPS_DIR}"
-export NCORES="\$(cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print \$NF}')"
-
-EndOfMsg
+  readonly WGET_FLAGS="--quiet --show-progress -P ${DOWNLOAD_DIR}"
   
-  source "${BASH_PROFILE}"
-  sudo apt-get -y install build-essential autoconf pkg-config libtool git openssl >/dev/null
-  
-  install_cmake
-  source "${BASH_PROFILE}"
-  
-  install_boost
-  
-  install_gflags
-  
-  install_protobuf
-  
-  install_cryptopp
-  
-  install_zmq
-  source "${BASH_PROFILE}"
-  
-  install_czmq
-  
-  install_rocksdb
-  
-  install_gtest
-  
-  install_jdk
-  
-  install_maven
-  
-  install_python3
-  
-  install_python2
-  
-  install_ccache
+  install_essentials
+  install_dep_cmake
+  install_dep_boost
+  install_dep_gflags
+  install_dep_protobuf
+  install_dep_cryptopp
+  install_dep_zmq
+  install_dep_czmq
+  install_dep_rocksdb
+  install_dep_gtest
+  install_dep_jdk
+  install_dep_maven
+  install_dep_python3
+  install_dep_python2
+  install_dep_ccache
   
   cd "${WORK_DIR}"
-  sudo rm -rf "${TEMP_DIR}"
+  rmdir "${TEMP_DIR}" || true
+  
+  if [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]]; then
+    finish_download
+  else
+    finish_install
+  fi
+}
+# End of the main function
+
+# Helper functions
+check_args() {
+  OPT_DOWNLOAD_ONLY="false"
+  
+  for arg in "$@"; do
+    case "${arg}" in
+      # Print help message
+      '--help'|'-h'|'-?' )
+        print_help_msg
+        exit 0
+      ;;
+      # Option: download packages only
+      '--download'|'-D' )
+        deal_with_arg_download
+      ;;
+      # Unknown options
+      '-'* )
+        echo "Unknown command argument(s) '${arg}' (see '--help' for usage)"
+        exit 126
+      ;;
+      # Default: assign variable
+      * )
+        assign_var "${arg}"
+      ;;
+    esac
+  done
+  
+  DOWNLOAD_DIR="${DOWNLOAD_DIR:-${TEMP_DIR}}"
+  mkdir -p "${DOWNLOAD_DIR}"
+  readonly DOWNLOAD_DIR="$(cd "${DOWNLOAD_DIR}"; pwd -P)"
+}
+
+print_help_msg() {
+cat <<EndOfMsg
+Usage: ${SCRIPT_NAME} [OPTION]... [DIR]
+
+Options:
+  -h, -?, --help    display this help and exit
+  -D, --download    download dependency packages only
+
+EndOfMsg
+}
+
+deal_with_arg_download() {
+  OPT_DOWNLOAD_ONLY="true"
+}
+
+assign_var () {
+  [[ -z "${DOWNLOAD_DIR:-}" ]] || error_on_multi_download_dir
+  DOWNLOAD_DIR="$1"
+}
+
+error_on_multi_download_dir() {
+  err "Too many download directories! One or none should be specified.\n\n"
+  print_help_msg
+  exit 3
+}
+
+check_sudo() {
+  [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] || sudo -v ||
+  check_err "No sudo privilege for current account '${USER}'"
+}
+
+finish_install() {
+  rmdir "${DOWNLOAD_DIR}" || true
   
   info "------------------------------------------------------------------------"
   info_bold_green "INSTALLATION SUCCESSFUL"
@@ -103,24 +157,50 @@ EndOfMsg
   info "Installed in: ${DEPS_DIR}"
   info "Updated configuration: ${BASH_PROFILE}"
   info "Finished at: $(date +"%T %Z, %-d %B %Y")"
-  info "Total time: $(timer "${start_time}")"
+  info "Total time: $(timer "${START_TIME}")"
   info "------------------------------------------------------------------------"
 }
-# End of the main function
 
-# Installation of dependencies
-install_cmake() {
+finish_download() {
+  rmdir "${DEPS_DIR}" || true
+  
+  info "------------------------------------------------------------------------"
+  info_bold_green "DOWNLOAD SUCCESSFUL"
+  info "------------------------------------------------------------------------"
+  info "Downloaded to: ${DOWNLOAD_DIR}"
+  info "Finished at: $(date +"%T %Z, %-d %B %Y")"
+  info "Total time: $(timer "${START_TIME}")"
+  info "------------------------------------------------------------------------"
+}
+
+# Installation
+install_essentials() {
+  [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
+  
+  sudo apt-get -y install build-essential autoconf pkg-config libtool git openssl >/dev/null
+  
+cat >> "${BASH_PROFILE}" <<-EndOfMsg
+export SHARE_HOME="${DEPS_DIR}"
+export NCORES="\$(cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print \$NF}')"
+
+EndOfMsg
+  
+  source "${BASH_PROFILE}"
+}
+
+install_dep_cmake() {
   readonly CMAKE_VER="${USTORE_CMAKE_VER:-"3.13.4"}"
   local -r cmake_pkg="cmake-${CMAKE_VER}.tar.gz"
   local -r cmake_dir="cmake-${CMAKE_VER}"
   
-  info "Installing CMake ${CMAKE_VER} ..."
   cd "${TEMP_DIR}"
   [[ -f "${cmake_pkg}" ]] ||
   wget ${WGET_FLAGS} "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER}/${cmake_pkg}"
-  tar xzf "${cmake_pkg}"
+  [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
-  cd "${cmake_dir}"
+  info "Installing CMake ${CMAKE_VER} ..."
+  tar xzf "${DOWNLOAD_DIR}/${cmake_pkg}" && cd "${cmake_dir}"
+  
   ./bootstrap --prefix="${SHARE_HOME}/cmake" --parallel="${NCORES}"
   make -j "${NCORES}"
   sudo make install
@@ -130,23 +210,26 @@ install_cmake() {
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # CMake
 export CMAKE_HOME="${SHARE_HOME}/cmake"
-export PATH="${CMAKE_HOME}/bin:${PATH}"
+export PATH="${CMAKE_HOME}/bin:${PATH:-}"
 
 EndOfMsg
+  
+  source "${BASH_PROFILE}"
 }
 
-install_boost() {
+install_dep_boost() {
   readonly BOOST_VER="${USTORE_BOOST_VER:-"1_69_0"}"
   local -r boost_pkg="boost_${BOOST_VER}.tar.bz2"
   local -r boost_dir="boost_${BOOST_VER}"
   
-  info "Installing Boost ${BOOST_VER} ..."
   cd "${TEMP_DIR}"
   [[ -f "${boost_pkg}" ]] ||
   wget ${WGET_FLAGS} "https://dl.bintray.com/boostorg/release/1.69.0/source/${boost_pkg}"
-  tar xjf "${boost_pkg}"
+  [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
-  cd "${boost_dir}"
+  info "Installing Boost ${BOOST_VER} ..."
+  tar xjf "${DOWNLOAD_DIR}/${boost_pkg}" && cd "${boost_dir}"
+  
   ./bootstrap.sh --prefix="${SHARE_HOME}/boost"
   sudo ./b2 install -j "${NCORES}"
   
@@ -155,25 +238,26 @@ install_boost() {
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # Boost
 export BOOST_ROOT="${SHARE_HOME}/boost"
-export CPATH="${BOOST_ROOT}/include:${CPATH}"
-export LD_LIBRARY_PATH="${BOOST_ROOT}/lib:${LD_LIBRARY_PATH}"
-export LIBRARY_PATH="${BOOST_ROOT}/lib:${LIBRARY_PATH}"
+export CPATH="${BOOST_ROOT}/include:${CPATH:-}"
+export LD_LIBRARY_PATH="${BOOST_ROOT}/lib:${LD_LIBRARY_PATH:-}"
+export LIBRARY_PATH="${BOOST_ROOT}/lib:${LIBRARY_PATH:-}"
 
 EndOfMsg
 }
 
-install_gflags() {
+install_dep_gflags() {
   readonly GFLAGS_VER="${USTORE_GFLAGS_VER:-"2.2.2"}"
   local -r gflags_pkg="v${GFLAGS_VER}.tar.gz"
   local -r gflags_dir="gflags-${GFLAGS_VER}"
   
-  info "Installing gflags ${GFLAGS_VER} ..."
   cd "${TEMP_DIR}"
   [[ -f "${gflags_pkg}" ]] ||
   wget ${WGET_FLAGS} "https://github.com/gflags/gflags/archive/${gflags_pkg}"
-  tar xzf "${gflags_pkg}"
+  [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
-  cd "${gflags_dir}"
+  info "Installing gflags ${GFLAGS_VER} ..."
+  tar xzf "${DOWNLOAD_DIR}/${gflags_pkg}" && cd "${gflags_dir}"
+  
   mkdir -p build
   rm -rf build/*
   cd build
@@ -186,27 +270,28 @@ install_gflags() {
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # gflags
 export GFLAGS_ROOT="${SHARE_HOME}/gflags"
-export CPATH="${GFLAGS_ROOT}/include:${CPATH}"
-export LD_LIBRARY_PATH="${GFLAGS_ROOT}/lib:${LD_LIBRARY_PATH}"
-export LIBRARY_PATH="${GFLAGS_ROOT}/lib:${LIBRARY_PATH}"
-export CMAKE_INCLUDE_PATH="${GFLAGS_ROOT}/include:${CMAKE_INCLUDE_PATH}"
-export CMAKE_LIBRARY_PATH="${GFLAGS_ROOT}/lib:${CMAKE_LIBRARY_PATH}"
+export CPATH="${GFLAGS_ROOT}/include:${CPATH:-}"
+export LD_LIBRARY_PATH="${GFLAGS_ROOT}/lib:${LD_LIBRARY_PATH:-}"
+export LIBRARY_PATH="${GFLAGS_ROOT}/lib:${LIBRARY_PATH:-}"
+export CMAKE_INCLUDE_PATH="${GFLAGS_ROOT}/include:${CMAKE_INCLUDE_PATH:-}"
+export CMAKE_LIBRARY_PATH="${GFLAGS_ROOT}/lib:${CMAKE_LIBRARY_PATH:-}"
 
 EndOfMsg
 }
 
-install_protobuf() {
+install_dep_protobuf() {
   readonly PROTOBUF_VER="${USTORE_PROTOBUF_VER:-"3.6.1"}"
   local -r protobuf_pkg="v${PROTOBUF_VER}.tar.gz"
   local -r protobuf_dir="protobuf-${PROTOBUF_VER}"
   
-  info "Installing Protocol Buffers ${PROTOBUF_VER} ..."
   cd "${TEMP_DIR}"
   [[ -f "${protobuf_pkg}" ]] ||
   wget ${WGET_FLAGS} "https://github.com/protocolbuffers/protobuf/archive/${protobuf_pkg}"
-  tar xzf "${protobuf_pkg}"
+  [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
-  cd "${protobuf_dir}"
+  info "Installing Protocol Buffers ${PROTOBUF_VER} ..."
+  tar xzf "${DOWNLOAD_DIR}/${protobuf_pkg}" && cd "${protobuf_dir}"
+  
   ./autogen.sh
   ./configure --prefix="${SHARE_HOME}/protobuf"
   make -j "${NCORES}"
@@ -217,29 +302,30 @@ install_protobuf() {
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # Protocol Buffers
 export PROTOBUF_ROOT="${SHARE_HOME}/protobuf"
-export PATH="${PROTOBUF_ROOT}/bin:${PATH}"
-export CPATH="${PROTOBUF_ROOT}/include:${CPATH}"
-export LD_LIBRARY_PATH="${PROTOBUF_ROOT}/lib:${LD_LIBRARY_PATH}"
-export LIBRARY_PATH="${PROTOBUF_ROOT}/lib:${LIBRARY_PATH}"
-export CMAKE_INCLUDE_PATH="${PROTOBUF_ROOT}/include:${CMAKE_INCLUDE_PATH}"
-export CMAKE_LIBRARY_PATH="${PROTOBUF_ROOT}/lib:${CMAKE_LIBRARY_PATH}"
+export PATH="${PROTOBUF_ROOT}/bin:${PATH:-}"
+export CPATH="${PROTOBUF_ROOT}/include:${CPATH:-}"
+export LD_LIBRARY_PATH="${PROTOBUF_ROOT}/lib:${LD_LIBRARY_PATH:-}"
+export LIBRARY_PATH="${PROTOBUF_ROOT}/lib:${LIBRARY_PATH:-}"
+export CMAKE_INCLUDE_PATH="${PROTOBUF_ROOT}/include:${CMAKE_INCLUDE_PATH:-}"
+export CMAKE_LIBRARY_PATH="${PROTOBUF_ROOT}/lib:${CMAKE_LIBRARY_PATH:-}"
 
 EndOfMsg
 }
 
-install_cryptopp() {
+install_dep_cryptopp() {
   readonly CRYPTOPP_VER="${USTORE_CRYPTOPP_VER:-"8.0.0"}"
   local -r cryptopp_pkg_ver="CRYPTOPP_${CRYPTOPP_VER//./_}"
   local -r cryptopp_pkg="${cryptopp_pkg_ver}.tar.gz"
   local -r cryptopp_dir="cryptopp-${cryptopp_pkg_ver}"
   
-  info "Installing Crypto++ ${CRYPTOPP_VER} ..."
   cd "${TEMP_DIR}"
   [[ -f "${cryptopp_pkg}" ]] ||
   wget ${WGET_FLAGS} "https://github.com/weidai11/cryptopp/archive/${cryptopp_pkg}"
-  tar xzf "${cryptopp_pkg}"
+  [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
-  cd "${cryptopp_dir}"
+  info "Installing Crypto++ ${CRYPTOPP_VER} ..."
+  tar xzf "${DOWNLOAD_DIR}/${cryptopp_pkg}" && cd "${cryptopp_dir}"
+  
   make -j "${NCORES}" libcryptopp.a libcryptopp.so
   sudo make install PREFIX="${SHARE_HOME}/cryptopp"
   
@@ -248,27 +334,28 @@ install_cryptopp() {
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # Crypto++
 export CRYPTOPP_ROOT="${SHARE_HOME}/cryptopp"
-export CPATH="${CRYPTOPP_ROOT}/include:${CPATH}"
-export LD_LIBRARY_PATH="${CRYPTOPP_ROOT}/lib:${LD_LIBRARY_PATH}"
-export LIBRARY_PATH="${CRYPTOPP_ROOT}/lib:${LIBRARY_PATH}"
-export CMAKE_INCLUDE_PATH="${CRYPTOPP_ROOT}/include:${CMAKE_INCLUDE_PATH}"
-export CMAKE_LIBRARY_PATH="${CRYPTOPP_ROOT}/lib:${CMAKE_LIBRARY_PATH}"
+export CPATH="${CRYPTOPP_ROOT}/include:${CPATH:-}"
+export LD_LIBRARY_PATH="${CRYPTOPP_ROOT}/lib:${LD_LIBRARY_PATH:-}"
+export LIBRARY_PATH="${CRYPTOPP_ROOT}/lib:${LIBRARY_PATH:-}"
+export CMAKE_INCLUDE_PATH="${CRYPTOPP_ROOT}/include:${CMAKE_INCLUDE_PATH:-}"
+export CMAKE_LIBRARY_PATH="${CRYPTOPP_ROOT}/lib:${CMAKE_LIBRARY_PATH:-}"
 
 EndOfMsg
 }
 
-install_zmq() {
+install_dep_zmq() {
   readonly ZMQ_VER="${USTORE_ZMQ_VER:-"4.3.1"}"
   local -r zmq_pkg="v${ZMQ_VER}.tar.gz"
   local -r zmq_dir="libzmq-${ZMQ_VER}"
   
-  info "Installing ZeroMQ ${ZMQ_VER} ..."
   cd "${TEMP_DIR}"
   [[ -f "${zmq_pkg}" ]] ||
   wget ${WGET_FLAGS} "https://github.com/zeromq/libzmq/archive/${zmq_pkg}"
-  tar xzf "${zmq_pkg}"
+  [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
-  cd "${zmq_dir}"
+  info "Installing ZeroMQ ${ZMQ_VER} ..."
+  tar xzf "${DOWNLOAD_DIR}/${zmq_pkg}" && cd "${zmq_dir}"
+  
   ./autogen.sh
   ./configure --prefix="${SHARE_HOME}/zmq"
   make -j "${NCORES}"
@@ -279,27 +366,30 @@ install_zmq() {
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # ZMQ
 export ZMQ_ROOT="${SHARE_HOME}/zmq"
-export CPATH="${ZMQ_ROOT}/include:${CPATH}"
-export LD_LIBRARY_PATH="${ZMQ_ROOT}/lib:${LD_LIBRARY_PATH}"
-export LIBRARY_PATH="${ZMQ_ROOT}/lib:${LIBRARY_PATH}"
-export CMAKE_INCLUDE_PATH="${ZMQ_ROOT}/include:${CMAKE_INCLUDE_PATH}"
-export CMAKE_LIBRARY_PATH="${ZMQ_ROOT}/lib:${CMAKE_LIBRARY_PATH}"
+export CPATH="${ZMQ_ROOT}/include:${CPATH:-}"
+export LD_LIBRARY_PATH="${ZMQ_ROOT}/lib:${LD_LIBRARY_PATH:-}"
+export LIBRARY_PATH="${ZMQ_ROOT}/lib:${LIBRARY_PATH:-}"
+export CMAKE_INCLUDE_PATH="${ZMQ_ROOT}/include:${CMAKE_INCLUDE_PATH:-}"
+export CMAKE_LIBRARY_PATH="${ZMQ_ROOT}/lib:${CMAKE_LIBRARY_PATH:-}"
 
 EndOfMsg
+  
+  source "${BASH_PROFILE}"
 }
 
-install_czmq() {
+install_dep_czmq() {
   readonly CZMQ_VER="${USTORE_CZMQ_VER:-"4.2.0"}"
   local -r czmq_pkg="v${CZMQ_VER}.tar.gz"
   local -r czmq_dir="czmq-${CZMQ_VER}"
   
-  info "Installing CZMQ ${CZMQ_VER} ..."
   cd "${TEMP_DIR}"
   [[ -f "${czmq_pkg}" ]] ||
   wget ${WGET_FLAGS} "https://github.com/zeromq/czmq/archive/${czmq_pkg}"
-  tar xzf "${czmq_pkg}"
+  [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
-  cd "${czmq_dir}"
+  info "Installing CZMQ ${CZMQ_VER} ..."
+  tar xzf "${DOWNLOAD_DIR}/${czmq_pkg}" && cd "${czmq_dir}"
+  
   ./autogen.sh
   ./configure --prefix="${SHARE_HOME}/czmq"
   make -j "${NCORES}"
@@ -310,29 +400,29 @@ install_czmq() {
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # CZMQ
 export CZMQ_ROOT="${SHARE_HOME}/czmq"
-export CPATH="${CZMQ_ROOT}/include:${CPATH}"
-export LD_LIBRARY_PATH="${CZMQ_ROOT}/lib:${LD_LIBRARY_PATH}"
-export LIBRARY_PATH="${CZMQ_ROOT}/lib:${LIBRARY_PATH}"
-export CMAKE_INCLUDE_PATH="${CZMQ_ROOT}/include:${CMAKE_INCLUDE_PATH}"
-export CMAKE_LIBRARY_PATH="${CZMQ_ROOT}/lib:${CMAKE_LIBRARY_PATH}"
+export CPATH="${CZMQ_ROOT}/include:${CPATH:-}"
+export LD_LIBRARY_PATH="${CZMQ_ROOT}/lib:${LD_LIBRARY_PATH:-}"
+export LIBRARY_PATH="${CZMQ_ROOT}/lib:${LIBRARY_PATH:-}"
+export CMAKE_INCLUDE_PATH="${CZMQ_ROOT}/include:${CMAKE_INCLUDE_PATH:-}"
+export CMAKE_LIBRARY_PATH="${CZMQ_ROOT}/lib:${CMAKE_LIBRARY_PATH:-}"
 
 EndOfMsg
 }
 
-install_rocksdb() {
+install_dep_rocksdb() {
   readonly ROCKSDB_VER="${USTORE_ROCKSDB_VER:-"5.17.2"}"
   local -r rocksdb_pkg="v${ROCKSDB_VER}.tar.gz"
   local -r rocksdb_dir="rocksdb-${ROCKSDB_VER}"
   
-  sudo apt-get -y install libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev >/dev/null
-  
-  info "Installing RocksDB ${ROCKSDB_VER} ..."
   cd "${TEMP_DIR}"
   [[ -f "${rocksdb_pkg}" ]] ||
   wget ${WGET_FLAGS} "https://github.com/facebook/rocksdb/archive/${rocksdb_pkg}"
-  tar xzf "${rocksdb_pkg}"
+  [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
-  cd "${rocksdb_dir}"
+  info "Installing RocksDB ${ROCKSDB_VER} ..."
+  tar xzf "${DOWNLOAD_DIR}/${rocksdb_pkg}" && cd "${rocksdb_dir}"
+  
+  sudo apt-get -y install libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev >/dev/null
   make shared_lib -j "${NCORES}" USE_RTTI=1 DISABLE_WARNING_AS_ERROR=ON
   sudo make install-shared INSTALL_PATH="${SHARE_HOME}/rocksdb"
   
@@ -341,28 +431,29 @@ install_rocksdb() {
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # RocksDB
 export ROCKSDB_ROOT="${SHARE_HOME}/rocksdb"
-export CPATH="${ROCKSDB_ROOT}/include:${CPATH}"
-export LD_LIBRARY_PATH="${ROCKSDB_ROOT}/lib:${LD_LIBRARY_PATH}"
-export LIBRARY_PATH="${ROCKSDB_ROOT}/lib:${LIBRARY_PATH}"
-export CMAKE_INCLUDE_PATH="${ROCKSDB_ROOT}/include:${CMAKE_INCLUDE_PATH}"
-export CMAKE_LIBRARY_PATH="${ROCKSDB_ROOT}/lib:${CMAKE_LIBRARY_PATH}"
+export CPATH="${ROCKSDB_ROOT}/include:${CPATH:-}"
+export LD_LIBRARY_PATH="${ROCKSDB_ROOT}/lib:${LD_LIBRARY_PATH:-}"
+export LIBRARY_PATH="${ROCKSDB_ROOT}/lib:${LIBRARY_PATH:-}"
+export CMAKE_INCLUDE_PATH="${ROCKSDB_ROOT}/include:${CMAKE_INCLUDE_PATH:-}"
+export CMAKE_LIBRARY_PATH="${ROCKSDB_ROOT}/lib:${CMAKE_LIBRARY_PATH:-}"
 
 EndOfMsg
 }
 
-install_gtest() {
+install_dep_gtest() {
   readonly GTEST_VER="${USTORE_GTEST_VER:-"1.8.1"}"
   local -r gtest_pkg_ver="release-${GTEST_VER}"
   local -r gtest_pkg="${gtest_pkg_ver}.tar.gz"
   local -r gtest_dir="googletest-${gtest_pkg_ver}"
   
-  info "Installing Google Test ${GTEST_VER} ..."
   cd "${TEMP_DIR}"
   [[ -f "${gtest_pkg}" ]] ||
   wget ${WGET_FLAGS} "https://github.com/google/googletest/archive/${gtest_pkg}"
-  tar xzf "${gtest_pkg}"
+  [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
-  cd "${gtest_dir}"
+  info "Installing Google Test ${GTEST_VER} ..."
+  tar xzf "${DOWNLOAD_DIR}/${gtest_pkg}" && cd "${gtest_dir}"
+  
   mkdir -p build
   rm -rf build/*
   cd build
@@ -375,32 +466,35 @@ install_gtest() {
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # gtest
 export GTEST_ROOT="${SHARE_HOME}/gtest"
-export CPATH="${GTEST_ROOT}/include:${CPATH}"
-export LD_LIBRARY_PATH="${GTEST_ROOT}/lib:${LD_LIBRARY_PATH}"
-export LIBRARY_PATH="${GTEST_ROOT}/lib:${LIBRARY_PATH}"
-export CMAKE_INCLUDE_PATH="${GTEST_ROOT}/include:${CMAKE_INCLUDE_PATH}"
-export CMAKE_LIBRARY_PATH="${GTEST_ROOT}/lib:${CMAKE_LIBRARY_PATH}"
+export CPATH="${GTEST_ROOT}/include:${CPATH:-}"
+export LD_LIBRARY_PATH="${GTEST_ROOT}/lib:${LD_LIBRARY_PATH:-}"
+export LIBRARY_PATH="${GTEST_ROOT}/lib:${LIBRARY_PATH:-}"
+export CMAKE_INCLUDE_PATH="${GTEST_ROOT}/include:${CMAKE_INCLUDE_PATH:-}"
+export CMAKE_LIBRARY_PATH="${GTEST_ROOT}/lib:${CMAKE_LIBRARY_PATH:-}"
 
 EndOfMsg
 }
 
-install_jdk() {
+install_dep_jdk() {
+  [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
+  
   info "Installing OpenJDK (via APT) ..."
   sudo apt-get -y install default-jdk >/dev/null
   readonly JDK_VER="$(javac -version | awk '{ print $2 }')"
 }
 
-install_maven() {
+install_dep_maven() {
   readonly MAVEN_VER="${USTORE_MAVEN_VER:-"3.6.0"}"
   local -r maven_pkg="apache-maven-${MAVEN_VER}-bin.tar.gz"
   local -r maven_dir="apache-maven-${MAVEN_VER}"
   
-  info "Installing Maven ${MAVEN_VER} ..."
   cd "${TEMP_DIR}"
   [[ -f "${maven_pkg}" ]] ||
   wget ${WGET_FLAGS} "https://www-us.apache.org/dist/maven/maven-${MAVEN_VER:0:1}/${MAVEN_VER}/binaries/${maven_pkg}"
-  tar xzf "${maven_pkg}"
+  [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
+  info "Installing Maven ${MAVEN_VER} ..."
+  tar xzf "${DOWNLOAD_DIR}/${maven_pkg}"
   sudo mkdir -p "${SHARE_HOME}/maven"
   sudo rm -rf "${SHARE_HOME}/maven/${maven_dir}"
   sudo mv "${maven_dir}" "${SHARE_HOME}/maven/"
@@ -410,25 +504,25 @@ install_maven() {
 cat >> "${BASH_PROFILE}" <<-EndOfMsg
 # Maven
 export MAVEN_HOME="\${SHARE_HOME}/maven/${maven_dir}"
-export PATH="\${MAVEN_HOME}/bin:\${PATH}"
+export PATH="\${MAVEN_HOME}/bin:\${PATH:-}"
 
 EndOfMsg
 }
 
-install_python3() {
+install_dep_python3() {
   readonly PYTHON3_VER="${USTORE_PYTHON3_VER:-"3.7.2"}"
   local -r python3_pkg="Python-${PYTHON3_VER}.tgz"
   local -r python3_dir="Python-${PYTHON3_VER}"
   
-  info "Installing Python ${PYTHON3_VER} ..."
-  sudo apt-get -y install libffi-dev >/dev/null
-  
   cd "${TEMP_DIR}"
   [[ -f "${python3_pkg}" ]] ||
   wget ${WGET_FLAGS} "https://www.python.org/ftp/python/${PYTHON3_VER}/${python3_pkg}"
-  tar xzf "${python3_pkg}"
+  [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
-  cd "${python3_dir}"
+  info "Installing Python ${PYTHON3_VER} ..."
+  tar xzf "${DOWNLOAD_DIR}/${python3_pkg}" && cd "${python3_dir}"
+  
+  sudo apt-get -y install libffi-dev >/dev/null
   ./configure --prefix="${SHARE_HOME}/python3"
   make -j "${NCORES}"
   sudo make install
@@ -438,23 +532,24 @@ install_python3() {
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # Python 3
 export PYTHON3_ROOT="${SHARE_HOME}/python3"
-export PATH="${PYTHON3_ROOT}/bin:${PATH}"
+export PATH="${PYTHON3_ROOT}/bin:${PATH:-}"
 
 EndOfMsg
 }
 
-install_python2() {
+install_dep_python2() {
   readonly PYTHON2_VER="${USTORE_PYTHON_VER:-"2.7.15"}"
   local -r python2_pkg="Python-${PYTHON2_VER}.tgz"
   local -r python2_dir="Python-${PYTHON2_VER}"
   
-  info "Installing Python ${PYTHON2_VER} ..."
   cd "${TEMP_DIR}"
   [[ -f "${python2_pkg}" ]] ||
   wget ${WGET_FLAGS} "https://www.python.org/ftp/python/${PYTHON2_VER}/${python2_pkg}"
-  tar xzf "${python2_pkg}"
+  [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
-  cd "${python2_dir}"
+  info "Installing Python ${PYTHON2_VER} ..."
+  tar xzf "${DOWNLOAD_DIR}/${python2_pkg}" && cd "${python2_dir}"
+  
   ./configure --prefix="${SHARE_HOME}/python"
   make -j "${NCORES}"
   sudo make install
@@ -464,23 +559,24 @@ install_python2() {
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # Python 2
 export PYTHON_ROOT="${SHARE_HOME}/python"
-export PATH="${PYTHON_ROOT}/bin:${PATH}"
+export PATH="${PYTHON_ROOT}/bin:${PATH:-}"
 
 EndOfMsg
 }
 
-install_ccache() {
+install_dep_ccache() {
   readonly CCACHE_VER="${USTORE_CCACHE_VER:-"3.6"}"
   local -r ccache_pkg="ccache-${CCACHE_VER}.tar.bz2"
   local -r ccache_dir="ccache-${CCACHE_VER}"
   
-  info "Installing CCache ${CCACHE_VER} ..."
   cd "${TEMP_DIR}"
   [[ -f "${ccache_pkg}" ]] ||
   wget ${WGET_FLAGS} "https://www.samba.org/ftp/ccache/${ccache_pkg}"
-  tar xjf "${ccache_pkg}"
+  [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
-  cd "${ccache_dir}"
+  info "Installing CCache ${CCACHE_VER} ..."
+  tar xjf "${DOWNLOAD_DIR}/${ccache_pkg}" && cd "${ccache_dir}"
+  
   ./configure --prefix="${SHARE_HOME}/ccache"
   make -j "${NCORES}"
   sudo make install
@@ -497,8 +593,8 @@ install_ccache() {
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # ccache
 export CCACHE_HOME="${SHARE_HOME}/ccache"
-export PATH="${CCACHE_HOME}/bin:${PATH}"
-export MANPATH="${CCACHE_HOME}/share/man:${MANPATH}"
+export PATH="${CCACHE_HOME}/bin:${PATH:-}"
+export MANPATH="${CCACHE_HOME}/share/man:${MANPATH:-}"
 
 EndOfMsg
   
