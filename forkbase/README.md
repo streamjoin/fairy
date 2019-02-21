@@ -12,8 +12,6 @@ The `install_deps` script will download, compile and install the dependencies of
 For example, save the following script as `my_install_deps.sh` and run it. 
 
     #!/usr/bin/env bash
-    set -o errexit
-    set -o pipefail
 
     export FAIRY_HOME="${HOME}/fairy"
     export USTORE_BASH_PROFILE="${HOME}/.profile"

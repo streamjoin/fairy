@@ -10,7 +10,7 @@ set -o errtrace
 set -o pipefail
 
 [[ -n "${__SCRIPT_DIR+x}" ]] ||
-readonly __SCRIPT_DIR="$(cd "$(dirname -- "${BASH_SOURCE}")" && pwd -P)"
+readonly __SCRIPT_DIR="$(cd "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 
 [[ -n "${__SCRIPT_NAME+x}" ]] ||
 readonly __SCRIPT_NAME="$(basename -- "$0")"
@@ -44,7 +44,7 @@ main() {
   check_args "$@"
   check_sudo
   
-  readonly WGET_FLAGS="--quiet --show-progress -P ${DOWNLOAD_DIR}"
+  readonly WGET=(wget --quiet --show-progress -P "${DOWNLOAD_DIR}")
   
   install_essentials
   install_dep_cmake
@@ -200,7 +200,7 @@ install_dep_cmake() {
   local -r cmake_dir="cmake-${CMAKE_VER}"
   
   if [[ ! -f "${cmake_pkg}" ]]; then
-    wget ${WGET_FLAGS} "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER}/${cmake_dl_pkg}"
+    "${WGET[@]}" "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER}/${cmake_dl_pkg}"
   fi
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
@@ -232,7 +232,7 @@ install_dep_boost() {
   local -r boost_dir="boost_${boost_pkg_ver}"
   
   if [[ ! -f "${boost_pkg}" ]]; then
-    wget ${WGET_FLAGS} "https://dl.bintray.com/boostorg/release/${BOOST_VER}/source/${boost_dl_pkg}"
+    "${WGET[@]}" "https://dl.bintray.com/boostorg/release/${BOOST_VER}/source/${boost_dl_pkg}"
     mv "${DOWNLOAD_DIR}/${boost_dl_pkg}" "${boost_pkg}"
   fi
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
@@ -263,7 +263,7 @@ install_dep_gflags() {
   local -r gflags_dir="gflags-${GFLAGS_VER}"
   
   if [[ ! -f "${gflags_pkg}" ]]; then
-    wget ${WGET_FLAGS} "https://github.com/gflags/gflags/archive/${gflags_dl_pkg}"
+    "${WGET[@]}" "https://github.com/gflags/gflags/archive/${gflags_dl_pkg}"
     mv "${DOWNLOAD_DIR}/${gflags_dl_pkg}" "${gflags_pkg}"
   fi
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
@@ -300,7 +300,7 @@ install_dep_protobuf() {
   local -r protobuf_dir="protobuf-${PROTOBUF_VER}"
   
   if [[ ! -f "${protobuf_pkg}" ]]; then
-    wget ${WGET_FLAGS} "https://github.com/protocolbuffers/protobuf/archive/${protobuf_dl_pkg}"
+    "${WGET[@]}" "https://github.com/protocolbuffers/protobuf/archive/${protobuf_dl_pkg}"
     mv "${DOWNLOAD_DIR}/${protobuf_dl_pkg}" "${protobuf_pkg}"
   fi
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
@@ -337,7 +337,7 @@ install_dep_cryptopp() {
   local -r cryptopp_dir="cryptopp-CRYPTOPP_${cryptopp_pkg_ver}"
   
   if [[ ! -f "${cryptopp_pkg}" ]]; then
-    wget ${WGET_FLAGS} "https://github.com/weidai11/cryptopp/archive/${cryptopp_dl_pkg}"
+    "${WGET[@]}" "https://github.com/weidai11/cryptopp/archive/${cryptopp_dl_pkg}"
     mv "${DOWNLOAD_DIR}/${cryptopp_dl_pkg}" "${cryptopp_pkg}"
   fi
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
@@ -370,7 +370,7 @@ install_dep_zmq() {
   local -r zmq_dir="libzmq-${ZMQ_VER}"
   
   if [[ ! -f "${zmq_pkg}" ]]; then
-    wget ${WGET_FLAGS} "https://github.com/zeromq/libzmq/archive/${zmq_dl_pkg}"
+    "${WGET[@]}" "https://github.com/zeromq/libzmq/archive/${zmq_dl_pkg}"
     mv "${DOWNLOAD_DIR}/${zmq_dl_pkg}" "${zmq_pkg}"
   fi
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
@@ -407,7 +407,7 @@ install_dep_czmq() {
   local -r czmq_dir="czmq-${CZMQ_VER}"
   
   if [[ ! -f "${czmq_pkg}" ]]; then
-    wget ${WGET_FLAGS} "https://github.com/zeromq/czmq/archive/${czmq_dl_pkg}"
+    "${WGET[@]}" "https://github.com/zeromq/czmq/archive/${czmq_dl_pkg}"
     mv "${DOWNLOAD_DIR}/${czmq_dl_pkg}" "${czmq_pkg}"
   fi
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
@@ -442,7 +442,7 @@ install_dep_rocksdb() {
   local -r rocksdb_dir="rocksdb-${ROCKSDB_VER}"
   
   if [[ ! -f "${rocksdb_pkg}" ]]; then
-    wget ${WGET_FLAGS} "https://github.com/facebook/rocksdb/archive/${rocksdb_dl_pkg}"
+    "${WGET[@]}" "https://github.com/facebook/rocksdb/archive/${rocksdb_dl_pkg}"
     mv "${DOWNLOAD_DIR}/${rocksdb_dl_pkg}" "${rocksdb_pkg}"
   fi
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
@@ -477,7 +477,7 @@ install_dep_gtest() {
   local -r gtest_dir="googletest-${gtest_pkg_ver}"
   
   if [[ ! -f "${gtest_pkg}" ]]; then
-    wget ${WGET_FLAGS} "https://github.com/google/googletest/archive/${gtest_dl_pkg}"
+    "${WGET[@]}" "https://github.com/google/googletest/archive/${gtest_dl_pkg}"
     mv "${DOWNLOAD_DIR}/${gtest_dl_pkg}" "${gtest_pkg}"
   fi
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
@@ -522,7 +522,7 @@ install_dep_maven() {
   local -r maven_dir="apache-maven-${MAVEN_VER}"
   
   if [[ ! -f "${maven_pkg}" ]]; then
-    wget ${WGET_FLAGS} "https://www-us.apache.org/dist/maven/maven-${MAVEN_VER:0:1}/${MAVEN_VER}/binaries/${maven_dl_pkg}"
+    "${WGET[@]}" "https://www-us.apache.org/dist/maven/maven-${MAVEN_VER:0:1}/${MAVEN_VER}/binaries/${maven_dl_pkg}"
     mv "${DOWNLOAD_DIR}/${maven_dl_pkg}" "${maven_pkg}"
   fi
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
@@ -551,7 +551,7 @@ install_dep_python3() {
   local -r python3_dir="Python-${PYTHON3_VER}"
   
   if [[ ! -f "${python3_pkg}" ]]; then
-    wget ${WGET_FLAGS} "https://www.python.org/ftp/python/${PYTHON3_VER}/${python3_dl_pkg}"
+    "${WGET[@]}" "https://www.python.org/ftp/python/${PYTHON3_VER}/${python3_dl_pkg}"
     mv "${DOWNLOAD_DIR}/${python3_dl_pkg}" "${python3_pkg}"
   fi
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
@@ -582,7 +582,7 @@ install_dep_python2() {
   local -r python2_dir="Python-${PYTHON2_VER}"
   
   if [[ ! -f "${python2_pkg}" ]]; then
-    wget ${WGET_FLAGS} "https://www.python.org/ftp/python/${PYTHON2_VER}/${python2_dl_pkg}"
+    "${WGET[@]}" "https://www.python.org/ftp/python/${PYTHON2_VER}/${python2_dl_pkg}"
     mv "${DOWNLOAD_DIR}/${python2_dl_pkg}" "${python2_pkg}"
   fi
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
@@ -612,7 +612,7 @@ install_dep_ccache() {
   local -r ccache_dir="ccache-${CCACHE_VER}"
   
   if [[ ! -f "${ccache_pkg}" ]]; then
-    wget ${WGET_FLAGS} "https://www.samba.org/ftp/ccache/${ccache_dl_pkg}"
+    "${WGET[@]}" "https://www.samba.org/ftp/ccache/${ccache_dl_pkg}"
   fi
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
@@ -648,4 +648,4 @@ EndOfMsg
 
 # Execution
 main "$@"
-exit "$?"
+[[ "$0" != "${BASH_SOURCE[0]}" ]] || exit 0

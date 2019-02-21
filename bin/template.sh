@@ -13,7 +13,7 @@ set -o pipefail
 
 # Global variables
 [[ -n "${__SCRIPT_DIR+x}" ]] ||
-readonly __SCRIPT_DIR="$(cd "$(dirname -- "${BASH_SOURCE}")" && pwd -P)"
+readonly __SCRIPT_DIR="$(cd "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 
 [[ -n "${__SCRIPT_NAME+x}" ]] ||
 readonly __SCRIPT_NAME="$(basename -- "$0")"
@@ -66,9 +66,9 @@ deal_with_arg1() {
 }
 
 assign_var () {
-  ARG_VAR="$1"
+  export ARG_VAR="$1"
 }
 
 # Execution (SHOULDN'T EDIT AFTER THIS LINE!)
 main "$@"
-exit "$?"
+[[ "$0" != "${BASH_SOURCE[0]}" ]] || exit 0

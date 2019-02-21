@@ -7,7 +7,7 @@ set -o pipefail
 
 # Global variables
 [[ -n "${__SCRIPT_DIR+x}" ]] ||
-readonly __SCRIPT_DIR="$(cd "$(dirname -- "${BASH_SOURCE}")" && pwd -P)"
+readonly __SCRIPT_DIR="$(cd "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 
 [[ -n "${__SCRIPT_NAME+x}" ]] ||
 readonly __SCRIPT_NAME="$(basename -- "$0")"
@@ -73,10 +73,10 @@ error_on_multi_filename() {
 }
 
 error_on_file_exists() {
-  printf "ERROR: File '${FILENAME}' already exists! (Not overwriting)\n\n"
+  printf "ERROR: File '%s' already exists! (Not overwriting)\n\n" "${FILENAME}"
   exit 4
 }
 
 # Execution (SHOULDN'T EDIT AFTER THIS LINE!)
 main "$@"
-exit "$?"
+[[ "$0" != "${BASH_SOURCE[0]}" ]] || exit 0
