@@ -23,7 +23,7 @@ For example, save the following script as `my_install_deps.sh` and run it.
 
 This will install all the dependencies to the `${HOME}/forkbase_deps` folder and append the corresponding configurations to the `${HOME}/.profile` file.  
 
-Note that `sudo` permission is required for running `install_deps`. You don't need to specify `sudo` in front of the script invocation, as `sudo` has been encoded into the script. 
+Note that `sudo` permission is required for running `install_deps` unless the `--download` option is used (see [below](#downloading-dependency-packages)). You don't need to specify `sudo` in front of the script invocation, as `sudo` has been encoded into the script. 
 
 ### Downloading Dependency Packages ###
 
