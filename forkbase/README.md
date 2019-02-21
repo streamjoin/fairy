@@ -24,3 +24,21 @@ For example, save the following script as `my_install_deps.sh` and run it.
 This will install all the dependencies to the `${HOME}/forkbase_deps` folder and append the corresponding configurations to the `${HOME}/.profile` file.  
 
 Note that `sudo` permission is required for running `install_deps`. You don't need to specify `sudo` in front of the script invocation, as `sudo` has been encoded into the script. 
+
+### Downloading Dependency Packages ###
+
+The `install_deps` script also supports the option of downloading the dependency packages only, i.e., without immediate installation. This could be useful for preparing the required packages when doing on-site setup with limited internet access. To that end, you just invoke the above `my_install_deps.sh` with the `--download` option (or `-D` for short). For example, 
+
+    $ ./my_install_deps.sh --download
+
+This will download all the dependency packages to the `${HOME}/deps_install` folder (according to the default setting of `USTORE_TEMP_DIR`). Then by invoking `my_install_deps.sh` again (e.g., on the target machine) without specifying any option, the installation will proceed with the downloaded packages. 
+
+At times, you may want to specify the on-demand path to store the packages. You can achieve this purpose by simply providing the path in the above commands. For example, 
+
+	# For downloading packages
+    $ ./my_install_deps.sh -D /path/to/package/store
+    
+    # For installing package
+    $ ./my_install_deps.sh /path/to/package/store
+
+Note that once a dependency is successfully installed, the corresponding package will be deleted automatically. 
