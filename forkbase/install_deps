@@ -35,8 +35,7 @@ readonly TEMP_DIR="$(cd "${TEMP_DIR}"; pwd -P)"
 [[ "${DEPS_DIR}" != "${TEMP_DIR}" ]] ||
 check_err "The dependency directory cannot be the same as the temporary directory"
 
-readonly WORK_DIR="$(pwd -P)"
-[[ "${WORK_DIR}" != "${TEMP_DIR}" ]] ||
+[[ "$(pwd -P)" != "${TEMP_DIR}" ]] ||
 check_err "The temporary directory cannot be the current working directory"
 
 # The main function
@@ -44,6 +43,7 @@ main() {
   check_args "$@"
   check_sudo
   
+  pushd "${TEMP_DIR}" >/dev/null
   install_essentials
   install_dep_cmake
   install_dep_boost
@@ -59,8 +59,7 @@ main() {
   install_dep_python3
   install_dep_python2
   install_dep_ccache
-  
-  cd "${WORK_DIR}"
+  popd >/dev/null
   
   if [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]]; then
     finish_download
@@ -177,6 +176,18 @@ finish_download() {
 }
 
 # Installation
+apt_install() {
+  sudo apt-get -y install "$@" >/dev/null
+}
+
+download_pkg() {
+  declare pkg="$1" url="$2"
+  
+  [[ -f "${pkg}" ]] && return 0
+  wget --quiet --show-progress --directory-prefix "${DOWNLOAD_DIR}" "${url}"
+  [[ -f "${pkg}" ]] || mv "${DOWNLOAD_DIR}/$(basename -- "${url}")" "${pkg}"
+}
+
 install_essentials() {
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
@@ -201,14 +212,14 @@ install_dep_cmake() {
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing CMake ${CMAKE_VER} ..."
-  cd "${TEMP_DIR}"
-  tar xzf "${cmake_pkg}" && cd "${cmake_dir}"
-  
-  ./bootstrap --prefix="${SHARE_HOME}/cmake" --parallel="${NCORES}"
-  make -j "${NCORES}"
-  sudo make install
-  
-  cd "${TEMP_DIR}" && sudo rm -rf "${cmake_dir}" && rm "${cmake_pkg}"
+  tar xzf "${cmake_pkg}"
+  (
+    cd "${cmake_dir}"
+    ./bootstrap --prefix="${SHARE_HOME}/cmake" --parallel="${NCORES}"
+    make -j "${NCORES}"
+    sudo make install
+  )
+  sudo rm -rf "${cmake_dir}" "${cmake_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # CMake
@@ -231,13 +242,13 @@ install_dep_boost() {
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing Boost ${BOOST_VER} ..."
-  cd "${TEMP_DIR}"
-  tar xjf "${boost_pkg}" && cd "${boost_dir}"
-  
-  ./bootstrap.sh --prefix="${SHARE_HOME}/boost"
-  sudo ./b2 install -j "${NCORES}"
-  
-  cd "${TEMP_DIR}" && sudo rm -rf "${boost_dir}" && rm "${boost_pkg}"
+  tar xjf "${boost_pkg}"
+  (
+    cd "${boost_dir}"
+    ./bootstrap.sh --prefix="${SHARE_HOME}/boost"
+    sudo ./b2 install -j "${NCORES}"
+  )
+  sudo rm -rf "${boost_dir}" "${boost_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # Boost
@@ -259,17 +270,17 @@ install_dep_gflags() {
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing gflags ${GFLAGS_VER} ..."
-  cd "${TEMP_DIR}"
-  tar xzf "${gflags_pkg}" && cd "${gflags_dir}"
-  
-  mkdir -p build
-  rm -rf build/*
-  cd build
-  cmake -DCMAKE_INSTALL_PREFIX="${SHARE_HOME}/gflags" -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=ON ..
-  make -j "${NCORES}"
-  sudo make install
-  
-  cd "${TEMP_DIR}" && sudo rm -rf "${gflags_dir}" && rm "${gflags_pkg}"
+  tar xzf "${gflags_pkg}"
+  (
+    cd "${gflags_dir}"
+    mkdir -p build
+    rm -rf build/*
+    cd build
+    cmake -DCMAKE_INSTALL_PREFIX="${SHARE_HOME}/gflags" -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=ON ..
+    make -j "${NCORES}"
+    sudo make install
+  )
+  sudo rm -rf "${gflags_dir}" "${gflags_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # gflags
@@ -293,15 +304,15 @@ install_dep_protobuf() {
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing Protocol Buffers ${PROTOBUF_VER} ..."
-  cd "${TEMP_DIR}"
-  tar xzf "${protobuf_pkg}" && cd "${protobuf_dir}"
-  
-  ./autogen.sh
-  ./configure --prefix="${SHARE_HOME}/protobuf"
-  make -j "${NCORES}"
-  sudo make install
-  
-  cd "${TEMP_DIR}" && sudo rm -rf "${protobuf_dir}" && rm "${protobuf_pkg}"
+  tar xzf "${protobuf_pkg}"
+  (
+    cd "${protobuf_dir}"
+    ./autogen.sh
+    ./configure --prefix="${SHARE_HOME}/protobuf"
+    make -j "${NCORES}"
+    sudo make install
+  )
+  sudo rm -rf "${protobuf_dir}" "${protobuf_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # Protocol Buffers
@@ -327,13 +338,13 @@ install_dep_cryptopp() {
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing Crypto++ ${CRYPTOPP_VER} ..."
-  cd "${TEMP_DIR}"
-  tar xzf "${cryptopp_pkg}" && cd "${cryptopp_dir}"
-  
-  make -j "${NCORES}" libcryptopp.a libcryptopp.so
-  sudo make install PREFIX="${SHARE_HOME}/cryptopp"
-  
-  cd "${TEMP_DIR}" && sudo rm -rf "${cryptopp_dir}" && rm "${cryptopp_pkg}"
+  tar xzf "${cryptopp_pkg}"
+  (
+    cd "${cryptopp_dir}"
+    make -j "${NCORES}" libcryptopp.a libcryptopp.so
+    sudo make install PREFIX="${SHARE_HOME}/cryptopp"
+  )
+  sudo rm -rf "${cryptopp_dir}" "${cryptopp_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # Crypto++
@@ -357,15 +368,15 @@ install_dep_zmq() {
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing ZeroMQ ${ZMQ_VER} ..."
-  cd "${TEMP_DIR}"
-  tar xzf "${zmq_pkg}" && cd "${zmq_dir}"
-  
-  ./autogen.sh
-  ./configure --prefix="${SHARE_HOME}/zmq"
-  make -j "${NCORES}"
-  sudo make install
-  
-  cd "${TEMP_DIR}" && sudo rm -rf "${zmq_dir}" && rm "${zmq_pkg}"
+  tar xzf "${zmq_pkg}"
+  (
+    cd "${zmq_dir}"
+    ./autogen.sh
+    ./configure --prefix="${SHARE_HOME}/zmq"
+    make -j "${NCORES}"
+    sudo make install
+  )
+  sudo rm -rf "${zmq_dir}" "${zmq_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # ZMQ
@@ -391,15 +402,15 @@ install_dep_czmq() {
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing CZMQ ${CZMQ_VER} ..."
-  cd "${TEMP_DIR}"
-  tar xzf "${czmq_pkg}" && cd "${czmq_dir}"
-  
-  ./autogen.sh
-  ./configure --prefix="${SHARE_HOME}/czmq"
-  make -j "${NCORES}"
-  sudo make install
-  
-  cd "${TEMP_DIR}" && sudo rm -rf "${czmq_dir}" && rm "${czmq_pkg}"
+  tar xzf "${czmq_pkg}"
+  (
+    cd "${czmq_dir}"
+    ./autogen.sh
+    ./configure --prefix="${SHARE_HOME}/czmq"
+    make -j "${NCORES}"
+    sudo make install
+  )
+  sudo rm -rf "${czmq_dir}" "${czmq_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # CZMQ
@@ -423,14 +434,14 @@ install_dep_rocksdb() {
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing RocksDB ${ROCKSDB_VER} ..."
-  cd "${TEMP_DIR}"
-  tar xzf "${rocksdb_pkg}" && cd "${rocksdb_dir}"
-  
-  apt_install libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev
-  make shared_lib -j "${NCORES}" USE_RTTI=1 DISABLE_WARNING_AS_ERROR=ON
-  sudo make install-shared INSTALL_PATH="${SHARE_HOME}/rocksdb"
-  
-  cd "${TEMP_DIR}" && sudo rm -rf "${rocksdb_dir}" && rm "${rocksdb_pkg}"
+  tar xzf "${rocksdb_pkg}"
+  (
+    cd "${rocksdb_dir}"
+    apt_install libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev
+    make shared_lib -j "${NCORES}" USE_RTTI=1 DISABLE_WARNING_AS_ERROR=ON
+    sudo make install-shared INSTALL_PATH="${SHARE_HOME}/rocksdb"
+  )
+  sudo rm -rf "${rocksdb_dir}" "${rocksdb_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # RocksDB
@@ -455,17 +466,17 @@ install_dep_gtest() {
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing Google Test ${GTEST_VER} ..."
-  cd "${TEMP_DIR}"
-  tar xzf "${gtest_pkg}" && cd "${gtest_dir}"
-  
-  mkdir -p build
-  rm -rf build/*
-  cd build
-  cmake -DCMAKE_INSTALL_PREFIX="${SHARE_HOME}/gtest" -DBUILD_SHARED_LIBS=ON ..
-  make -j "${NCORES}"
-  sudo make install
-  
-  cd "${TEMP_DIR}" && sudo rm -rf "${gtest_dir}" && rm "${gtest_pkg}"
+  tar xzf "${gtest_pkg}"
+  (
+    cd "${gtest_dir}"
+    mkdir -p build
+    rm -rf build/*
+    cd build
+    cmake -DCMAKE_INSTALL_PREFIX="${SHARE_HOME}/gtest" -DBUILD_SHARED_LIBS=ON ..
+    make -j "${NCORES}"
+    sudo make install
+  )
+  sudo rm -rf "${gtest_dir}" "${gtest_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # gtest
@@ -497,13 +508,13 @@ install_dep_maven() {
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing Maven ${MAVEN_VER} ..."
-  cd "${TEMP_DIR}"
   tar xzf "${maven_pkg}"
-  sudo mkdir -p "${SHARE_HOME}/maven"
-  sudo rm -rf "${SHARE_HOME}/maven/${maven_dir}"
-  sudo mv "${maven_dir}" "${SHARE_HOME}/maven/"
-  
-  cd "${TEMP_DIR}" && sudo rm -rf "${maven_dir}" && rm "${maven_pkg}"
+  (
+    sudo mkdir -p "${SHARE_HOME}/maven"
+    sudo rm -rf "${SHARE_HOME}/maven/${maven_dir}"
+    sudo mv "${maven_dir}" "${SHARE_HOME}/maven/"
+  )
+  sudo rm "${maven_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-EndOfMsg
 # Maven
@@ -523,15 +534,15 @@ install_dep_python3() {
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing Python ${PYTHON3_VER} ..."
-  cd "${TEMP_DIR}"
-  tar xzf "${python3_pkg}" && cd "${python3_dir}"
-  
-  apt_install libffi-dev
-  ./configure --prefix="${SHARE_HOME}/python3"
-  make -j "${NCORES}"
-  sudo make install
-  
-  cd "${TEMP_DIR}" && sudo rm -rf "${python3_dir}" && rm "${python3_pkg}"
+  tar xzf "${python3_pkg}"
+  (
+    cd "${python3_dir}"
+    apt_install libffi-dev
+    ./configure --prefix="${SHARE_HOME}/python3"
+    make -j "${NCORES}"
+    sudo make install
+  )
+  sudo rm -rf "${python3_dir}" "${python3_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # Python 3
@@ -551,14 +562,14 @@ install_dep_python2() {
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing Python ${PYTHON2_VER} ..."
-  cd "${TEMP_DIR}"
-  tar xzf "${python2_pkg}" && cd "${python2_dir}"
-  
-  ./configure --prefix="${SHARE_HOME}/python"
-  make -j "${NCORES}"
-  sudo make install
-  
-  cd "${TEMP_DIR}" && sudo rm -rf "${python2_dir}" && rm "${python2_pkg}"
+  tar xzf "${python2_pkg}"
+  (
+    cd "${python2_dir}"
+    ./configure --prefix="${SHARE_HOME}/python"
+    make -j "${NCORES}"
+    sudo make install
+  )
+  sudo rm -rf "${python2_dir}" "${python2_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # Python 2
@@ -578,21 +589,21 @@ install_dep_ccache() {
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing CCache ${CCACHE_VER} ..."
-  cd "${TEMP_DIR}"
-  tar xjf "${ccache_pkg}" && cd "${ccache_dir}"
-  
-  ./configure --prefix="${SHARE_HOME}/ccache"
-  make -j "${NCORES}"
-  sudo make install
-  
-  cd "${SHARE_HOME}/ccache/bin"
-  sudo rm -f gcc g++ cc c++
-  sudo ln -s ccache gcc
-  sudo ln -s ccache g++
-  sudo ln -s ccache cc
-  sudo ln -s ccache c++
-  
-  cd "${TEMP_DIR}" && sudo rm -rf "${ccache_dir}" && rm "${ccache_pkg}"
+  tar xjf "${ccache_pkg}"
+  (
+    cd "${ccache_dir}"
+    ./configure --prefix="${SHARE_HOME}/ccache"
+    make -j "${NCORES}"
+    sudo make install
+    
+    cd "${SHARE_HOME}/ccache/bin"
+    sudo rm -f gcc g++ cc c++
+    sudo ln -s ccache gcc
+    sudo ln -s ccache g++
+    sudo ln -s ccache cc
+    sudo ln -s ccache c++
+  )
+  sudo rm -rf "${ccache_dir}" "${ccache_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # ccache
@@ -605,18 +616,6 @@ EndOfMsg
   source "${BASH_PROFILE}"
   ccache -F 0
   ccache -M 1G
-}
-
-apt_install() {
-  sudo apt-get -y "$@" >/dev/null
-}
-
-download_pkg() {
-  declare pkg="$1" url="$2"
-  
-  [[ -f "${pkg}" ]] && return 0
-  wget --quiet --show-progress -P "${DOWNLOAD_DIR}" "${url}"
-  [[ -f "${pkg}" ]] || mv "${DOWNLOAD_DIR}/$(basename -- "${url}")" "${pkg}"
 }
 
 # Execution
