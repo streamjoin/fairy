@@ -44,8 +44,6 @@ main() {
   check_args "$@"
   check_sudo
   
-  readonly WGET=(wget --quiet --show-progress -P "${DOWNLOAD_DIR}")
-  
   install_essentials
   install_dep_cmake
   install_dep_boost
@@ -179,10 +177,6 @@ finish_download() {
 }
 
 # Installation
-apt_install() {
-  sudo apt-get -y "$@" >/dev/null
-}
-
 install_essentials() {
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
@@ -203,9 +197,7 @@ install_dep_cmake() {
   local -r cmake_pkg="${DOWNLOAD_DIR}/${cmake_dl_pkg}"
   local -r cmake_dir="cmake-${CMAKE_VER}"
   
-  if [[ ! -f "${cmake_pkg}" ]]; then
-    "${WGET[@]}" "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER}/${cmake_dl_pkg}"
-  fi
+  download_pkg "${cmake_pkg}" "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER}/${cmake_dl_pkg}"
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing CMake ${CMAKE_VER} ..."
@@ -235,10 +227,7 @@ install_dep_boost() {
   local -r boost_pkg="${DOWNLOAD_DIR}/boost-${BOOST_VER}.tar.bz2"
   local -r boost_dir="boost_${boost_pkg_ver}"
   
-  if [[ ! -f "${boost_pkg}" ]]; then
-    "${WGET[@]}" "https://dl.bintray.com/boostorg/release/${BOOST_VER}/source/${boost_dl_pkg}"
-    mv "${DOWNLOAD_DIR}/${boost_dl_pkg}" "${boost_pkg}"
-  fi
+  download_pkg "${boost_pkg}" "https://dl.bintray.com/boostorg/release/${BOOST_VER}/source/${boost_dl_pkg}"
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing Boost ${BOOST_VER} ..."
@@ -266,10 +255,7 @@ install_dep_gflags() {
   local -r gflags_pkg="${DOWNLOAD_DIR}/gflags-${GFLAGS_VER}.tar.gz"
   local -r gflags_dir="gflags-${GFLAGS_VER}"
   
-  if [[ ! -f "${gflags_pkg}" ]]; then
-    "${WGET[@]}" "https://github.com/gflags/gflags/archive/${gflags_dl_pkg}"
-    mv "${DOWNLOAD_DIR}/${gflags_dl_pkg}" "${gflags_pkg}"
-  fi
+  download_pkg "${gflags_pkg}" "https://github.com/gflags/gflags/archive/${gflags_dl_pkg}"
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing gflags ${GFLAGS_VER} ..."
@@ -303,10 +289,7 @@ install_dep_protobuf() {
   local -r protobuf_pkg="${DOWNLOAD_DIR}/protobuf-${PROTOBUF_VER}.tar.gz"
   local -r protobuf_dir="protobuf-${PROTOBUF_VER}"
   
-  if [[ ! -f "${protobuf_pkg}" ]]; then
-    "${WGET[@]}" "https://github.com/protocolbuffers/protobuf/archive/${protobuf_dl_pkg}"
-    mv "${DOWNLOAD_DIR}/${protobuf_dl_pkg}" "${protobuf_pkg}"
-  fi
+  download_pkg "${protobuf_pkg}" "https://github.com/protocolbuffers/protobuf/archive/${protobuf_dl_pkg}"
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing Protocol Buffers ${PROTOBUF_VER} ..."
@@ -340,10 +323,7 @@ install_dep_cryptopp() {
   local -r cryptopp_pkg="${DOWNLOAD_DIR}/cryptopp-${CRYPTOPP_VER}.tar.gz"
   local -r cryptopp_dir="cryptopp-CRYPTOPP_${cryptopp_pkg_ver}"
   
-  if [[ ! -f "${cryptopp_pkg}" ]]; then
-    "${WGET[@]}" "https://github.com/weidai11/cryptopp/archive/${cryptopp_dl_pkg}"
-    mv "${DOWNLOAD_DIR}/${cryptopp_dl_pkg}" "${cryptopp_pkg}"
-  fi
+  download_pkg "${cryptopp_pkg}" "https://github.com/weidai11/cryptopp/archive/${cryptopp_dl_pkg}"
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing Crypto++ ${CRYPTOPP_VER} ..."
@@ -373,10 +353,7 @@ install_dep_zmq() {
   local -r zmq_pkg="${DOWNLOAD_DIR}/zmq-${ZMQ_VER}.tar.gz"
   local -r zmq_dir="libzmq-${ZMQ_VER}"
   
-  if [[ ! -f "${zmq_pkg}" ]]; then
-    "${WGET[@]}" "https://github.com/zeromq/libzmq/archive/${zmq_dl_pkg}"
-    mv "${DOWNLOAD_DIR}/${zmq_dl_pkg}" "${zmq_pkg}"
-  fi
+  download_pkg "${zmq_pkg}" "https://github.com/zeromq/libzmq/archive/${zmq_dl_pkg}"
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing ZeroMQ ${ZMQ_VER} ..."
@@ -410,10 +387,7 @@ install_dep_czmq() {
   local -r czmq_pkg="${DOWNLOAD_DIR}/czmq-${CZMQ_VER}.tar.gz"
   local -r czmq_dir="czmq-${CZMQ_VER}"
   
-  if [[ ! -f "${czmq_pkg}" ]]; then
-    "${WGET[@]}" "https://github.com/zeromq/czmq/archive/${czmq_dl_pkg}"
-    mv "${DOWNLOAD_DIR}/${czmq_dl_pkg}" "${czmq_pkg}"
-  fi
+  download_pkg "${czmq_pkg}" "https://github.com/zeromq/czmq/archive/${czmq_dl_pkg}"
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing CZMQ ${CZMQ_VER} ..."
@@ -445,10 +419,7 @@ install_dep_rocksdb() {
   local -r rocksdb_pkg="${DOWNLOAD_DIR}/rocksdb-${ROCKSDB_VER}.tar.gz"
   local -r rocksdb_dir="rocksdb-${ROCKSDB_VER}"
   
-  if [[ ! -f "${rocksdb_pkg}" ]]; then
-    "${WGET[@]}" "https://github.com/facebook/rocksdb/archive/${rocksdb_dl_pkg}"
-    mv "${DOWNLOAD_DIR}/${rocksdb_dl_pkg}" "${rocksdb_pkg}"
-  fi
+  download_pkg "${rocksdb_pkg}" "https://github.com/facebook/rocksdb/archive/${rocksdb_dl_pkg}"
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing RocksDB ${ROCKSDB_VER} ..."
@@ -480,10 +451,7 @@ install_dep_gtest() {
   local -r gtest_pkg="${DOWNLOAD_DIR}/gtest-${GTEST_VER}.tar.gz"
   local -r gtest_dir="googletest-${gtest_pkg_ver}"
   
-  if [[ ! -f "${gtest_pkg}" ]]; then
-    "${WGET[@]}" "https://github.com/google/googletest/archive/${gtest_dl_pkg}"
-    mv "${DOWNLOAD_DIR}/${gtest_dl_pkg}" "${gtest_pkg}"
-  fi
+  download_pkg "${gtest_pkg}" "https://github.com/google/googletest/archive/${gtest_dl_pkg}"
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing Google Test ${GTEST_VER} ..."
@@ -525,10 +493,7 @@ install_dep_maven() {
   local -r maven_pkg="${DOWNLOAD_DIR}/maven-${MAVEN_VER}.tar.gz"
   local -r maven_dir="apache-maven-${MAVEN_VER}"
   
-  if [[ ! -f "${maven_pkg}" ]]; then
-    "${WGET[@]}" "https://www-us.apache.org/dist/maven/maven-${MAVEN_VER:0:1}/${MAVEN_VER}/binaries/${maven_dl_pkg}"
-    mv "${DOWNLOAD_DIR}/${maven_dl_pkg}" "${maven_pkg}"
-  fi
+  download_pkg "${maven_pkg}" "https://www-us.apache.org/dist/maven/maven-${MAVEN_VER:0:1}/${MAVEN_VER}/binaries/${maven_dl_pkg}"
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing Maven ${MAVEN_VER} ..."
@@ -554,10 +519,7 @@ install_dep_python3() {
   local -r python3_pkg="${DOWNLOAD_DIR}/python-${PYTHON3_VER}.tgz"
   local -r python3_dir="Python-${PYTHON3_VER}"
   
-  if [[ ! -f "${python3_pkg}" ]]; then
-    "${WGET[@]}" "https://www.python.org/ftp/python/${PYTHON3_VER}/${python3_dl_pkg}"
-    mv "${DOWNLOAD_DIR}/${python3_dl_pkg}" "${python3_pkg}"
-  fi
+  download_pkg "${python3_pkg}" "https://www.python.org/ftp/python/${PYTHON3_VER}/${python3_dl_pkg}"
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing Python ${PYTHON3_VER} ..."
@@ -585,10 +547,7 @@ install_dep_python2() {
   local -r python2_pkg="${DOWNLOAD_DIR}/python-${PYTHON2_VER}.tgz"
   local -r python2_dir="Python-${PYTHON2_VER}"
   
-  if [[ ! -f "${python2_pkg}" ]]; then
-    "${WGET[@]}" "https://www.python.org/ftp/python/${PYTHON2_VER}/${python2_dl_pkg}"
-    mv "${DOWNLOAD_DIR}/${python2_dl_pkg}" "${python2_pkg}"
-  fi
+  download_pkg "${python2_pkg}" "https://www.python.org/ftp/python/${PYTHON2_VER}/${python2_dl_pkg}"
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing Python ${PYTHON2_VER} ..."
@@ -615,9 +574,7 @@ install_dep_ccache() {
   local -r ccache_pkg="${DOWNLOAD_DIR}/${ccache_dl_pkg}"
   local -r ccache_dir="ccache-${CCACHE_VER}"
   
-  if [[ ! -f "${ccache_pkg}" ]]; then
-    "${WGET[@]}" "https://www.samba.org/ftp/ccache/${ccache_dl_pkg}"
-  fi
+  download_pkg "${ccache_pkg}" "https://www.samba.org/ftp/ccache/${ccache_dl_pkg}"
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing CCache ${CCACHE_VER} ..."
@@ -648,6 +605,18 @@ EndOfMsg
   source "${BASH_PROFILE}"
   ccache -F 0
   ccache -M 1G
+}
+
+apt_install() {
+  sudo apt-get -y "$@" >/dev/null
+}
+
+download_pkg() {
+  declare pkg="$1" url="$2"
+  
+  [[ -f "${pkg}" ]] && return 0
+  wget --quiet --show-progress -P "${DOWNLOAD_DIR}" "${url}"
+  [[ -f "${pkg}" ]] || mv "${DOWNLOAD_DIR}/$(basename -- "${url}")" "${pkg}"
 }
 
 # Execution
