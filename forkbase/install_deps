@@ -179,10 +179,14 @@ finish_download() {
 }
 
 # Installation
+apt_install() {
+  sudo apt-get -y "$@" >/dev/null
+}
+
 install_essentials() {
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
-  sudo apt-get -y install build-essential autoconf pkg-config libtool git openssl >/dev/null
+  apt_install build-essential autoconf pkg-config libtool git openssl
   
 cat >> "${BASH_PROFILE}" <<-EndOfMsg
 export SHARE_HOME="${DEPS_DIR}"
@@ -451,7 +455,7 @@ install_dep_rocksdb() {
   cd "${TEMP_DIR}"
   tar xzf "${rocksdb_pkg}" && cd "${rocksdb_dir}"
   
-  sudo apt-get -y install libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev >/dev/null
+  apt_install libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev
   make shared_lib -j "${NCORES}" USE_RTTI=1 DISABLE_WARNING_AS_ERROR=ON
   sudo make install-shared INSTALL_PATH="${SHARE_HOME}/rocksdb"
   
@@ -511,7 +515,7 @@ install_dep_jdk() {
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing OpenJDK (via APT) ..."
-  sudo apt-get -y install default-jdk >/dev/null
+  apt_install default-jdk
   readonly JDK_VER="$(javac -version | awk '{ print $2 }')"
 }
 
@@ -560,7 +564,7 @@ install_dep_python3() {
   cd "${TEMP_DIR}"
   tar xzf "${python3_pkg}" && cd "${python3_dir}"
   
-  sudo apt-get -y install libffi-dev >/dev/null
+  apt_install libffi-dev
   ./configure --prefix="${SHARE_HOME}/python3"
   make -j "${NCORES}"
   sudo make install
