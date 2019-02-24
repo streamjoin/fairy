@@ -29,7 +29,7 @@ check_args() {
     case "${arg}" in
       # Print help message
       '--help'|'-h'|'-?' )
-        print_help_msg
+        print_usage
         exit 0
       ;;
       # Unknown options
@@ -45,7 +45,7 @@ check_args() {
   done
 }
 
-print_help_msg() {
+print_usage() {
 cat <<EndOfMsg
 Usage: ${__SCRIPT_NAME} [OPTION]... FILE
 
@@ -62,13 +62,13 @@ assign_var () {
 
 error_on_filename_missing() {
   printf "ERROR: Missing target filename!\n\n"
-  print_help_msg
+  print_usage
   exit 126
 }
 
 error_on_multi_filename() {
   printf "ERROR: Too many filenames! Only one should be specified.\n\n"
-  print_help_msg
+  print_usage
   exit 3
 }
 

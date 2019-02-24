@@ -16,8 +16,11 @@ readonly __SCRIPT_DIR="$(cd "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 readonly __SCRIPT_NAME="$(basename -- "$0")"
 
 # Include libraries
-source "${FAIRY_HOME:-${__SCRIPT_DIR}/..}/_common_lib/output_utils.sh"
-source "${FAIRY_HOME:-${__SCRIPT_DIR}/..}/_common_lib/system.sh"
+readonly FAIRY_HOME="${FAIRY_HOME:-${__SCRIPT_DIR}/..}"
+# shellcheck disable=SC1090
+source "${FAIRY_HOME}/_common_lib/output_utils.sh"
+# shellcheck disable=SC1090
+source "${FAIRY_HOME}/_common_lib/system.sh"
 
 # Global variables
 readonly START_TIME="$(timer)"
@@ -77,7 +80,7 @@ check_args() {
     case "${arg}" in
       # Print help message
       '--help'|'-h'|'-?' )
-        print_help_msg
+        print_usage
         exit 0
       ;;
       # Option: download packages only
@@ -101,7 +104,7 @@ check_args() {
   readonly DOWNLOAD_DIR="$(cd "${DOWNLOAD_DIR}"; pwd -P)"
 }
 
-print_help_msg() {
+print_usage() {
 cat <<EndOfMsg
 Usage: ${__SCRIPT_NAME} [OPTION]... [DIR]
 
@@ -125,7 +128,7 @@ assign_var () {
 
 error_on_multi_download_dir() {
   err "Too many download directories! One or none should be specified.\n\n"
-  print_help_msg
+  print_usage
   exit 3
 }
 
@@ -199,6 +202,7 @@ export NCORES="\$(cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print \$NF
 
 EndOfMsg
   
+  # shellcheck disable=SC1090
   source "${BASH_PROFILE}"
 }
 
@@ -228,6 +232,7 @@ export PATH="${CMAKE_HOME}/bin:${PATH:-}"
 
 EndOfMsg
   
+  # shellcheck disable=SC1090
   source "${BASH_PROFILE}"
 }
 
@@ -389,6 +394,7 @@ export CMAKE_LIBRARY_PATH="${ZMQ_ROOT}/lib:${CMAKE_LIBRARY_PATH:-}"
 
 EndOfMsg
   
+  # shellcheck disable=SC1090
   source "${BASH_PROFILE}"
 }
 
@@ -613,7 +619,9 @@ export MANPATH="${CCACHE_HOME}/share/man:${MANPATH:-}"
 
 EndOfMsg
   
+  # shellcheck disable=SC1090
   source "${BASH_PROFILE}"
+  
   ccache -F 0
   ccache -M 1G
 }

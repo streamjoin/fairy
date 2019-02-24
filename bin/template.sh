@@ -11,6 +11,8 @@ set -o pipefail
 # Turn on traces, useful while debugging but commented out by default
 # set -o xtrace
 
+IFS=$'\t\n'    # Split on newlines and tabs (but not on spaces)
+
 # Global variables
 [[ -n "${__SCRIPT_DIR+x}" ]] ||
 readonly __SCRIPT_DIR="$(cd "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
@@ -31,7 +33,7 @@ check_args() {
     case "${arg}" in
       # Print help message
       '--help'|'-h'|'-?' )
-        print_help_msg
+        print_usage
         exit 0
       ;;
       # Handler of some option
@@ -51,7 +53,7 @@ check_args() {
   done
 }
 
-print_help_msg() {
+print_usage() {
 cat <<EndOfMsg
 Usage: ${__SCRIPT_NAME} [OPTION]...
 
