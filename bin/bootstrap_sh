@@ -17,7 +17,7 @@ main() {
   check_args "$@"
   [[ -n "${FILENAME}" ]] || error_on_filename_missing
   [[ ! -f "${FILENAME}" ]] || error_on_file_exists
-  cat "${__SCRIPT_DIR}/template.sh" > "${FILENAME}"
+  cat "${__SCRIPT_DIR}/../_template/${TEMPLATE}" > "${FILENAME}"
   chmod +x "${FILENAME}"
 }
 
@@ -32,6 +32,10 @@ check_args() {
         print_usage
         exit 0
       ;;
+      # Option: template for suing build_latex.sh
+      '--latex'|'--tex' )
+        TEMPLATE="use_build_latex.sh"
+      ;;
       # Unknown options
       '-'* )
         echo "Unknown command argument(s) '${arg}' (see '--help' for usage)"
@@ -43,6 +47,8 @@ check_args() {
       ;;
     esac
   done
+  
+  readonly TEMPLATE="${TEMPLATE-"bash_bootstrap.sh"}"
 }
 
 print_usage() {
@@ -51,6 +57,7 @@ Usage: ${__SCRIPT_NAME} [OPTION]... FILE
 
 Options:
   -h, -?, --help    display this help and exit
+  --tex, --latex    template for using build_latex.sh
 
 EndOfMsg
 }

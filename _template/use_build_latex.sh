@@ -37,8 +37,9 @@ export TRIMBIB_ARGS="--pages --booktitle --max-authors 6"
 export TRIMBIB_LOG="trimbib_log.txt"
 
 # Folders
-export WORK_DIR="$(cd "$(dirname -- "$0")"; pwd -P)"
+export WORK_DIR="."
 export BUILD_DIR="${WORK_DIR}/pdfbuild"
 
 # Run build_latex.sh with the above settings
+# shellcheck disable=SC1090
 source "${FAIRY_HOME}/latex/build_latex.sh"
