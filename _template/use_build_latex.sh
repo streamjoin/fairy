@@ -31,7 +31,7 @@ export CMD_BIBTEX="bibtex"
 export TRIMBIB_HOME="/path/to/trimbib"
 
 # Configuration of trimbib
-export TRIMBIB_ARGS="--pages --booktitle --max-authors 6"
+export TRIMBIB_ARGS=("--pages" "--booktitle" "--max-authors" "6")
 
 # Log file of trimbib
 export TRIMBIB_LOG="trimbib_log.txt"

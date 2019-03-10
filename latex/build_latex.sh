@@ -4,11 +4,20 @@
 
 set -o pipefail
 
+[[ -n "${__SCRIPT_DIR+x}" ]] ||
+readonly __SCRIPT_DIR="$(cd "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+
+[[ -n "${__SCRIPT_NAME+x}" ]] ||
+readonly __SCRIPT_NAME="$(basename -- "$0")"
+
 # Include libraries
-readonly SCRIPT_HOME="$(cd "$(dirname -- "$0")"; pwd -P)"
-source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/output_utils.sh"
-source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/system.sh"
-source "${FAIRY_HOME:-${SCRIPT_HOME}/..}/_common_lib/filesystem.sh"
+readonly FAIRY_HOME="${FAIRY_HOME:-${__SCRIPT_DIR}/..}"
+# shellcheck disable=SC1090
+source "${FAIRY_HOME}/_common_lib/output_utils.sh"
+# shellcheck disable=SC1090
+source "${FAIRY_HOME}/_common_lib/system.sh"
+# shellcheck disable=SC1090
+source "${FAIRY_HOME}/_common_lib/filesystem.sh"
 
 # Help
 help_wanted() {
@@ -123,14 +132,14 @@ compile_bib() {
 }
 
 # Command parameters (other than '--help')
-if [[ "$#" > 0 ]]; then
+if [[ "$#" -gt 0 ]]; then
   case "$1" in
     --clean|-c)
       clean_all
       exit 0
     ;;
     *)
-      err "unknown command argument(s) '$@' (see '--help' for usage)"
+      err "Unknown command argument(s) '$@' (see '--help' for usage)"
       exit 126
     ;;
   esac
@@ -150,11 +159,11 @@ if [[ -n "${CMD_BIBTEX}" ]]; then
     
     readonly TGT_BIB="${TGT_BIB_NAME}.bib"
     
-    printf "Formatting ${WORK_DIR}/${SRC_BIB} ... "
+    printf "Formatting %s ... " "${WORK_DIR}/${SRC_BIB}"
     
     check_cmd_exists "java"
     java -jar "${JAR_TRIMBIB}" -i "${WORK_DIR}/${SRC_BIB}" -d "${WORK_DIR}" \
-    -o "${TGT_BIB}" --overwrite "${TRIMBIB_ARGS}" \
+    -o "${TGT_BIB}" --overwrite "${TRIMBIB_ARGS[@]}" \
     > "${WORK_DIR}/${TRIMBIB_LOG}" 2>&1
     check_err "failed to format '${WORK_DIR}/${SRC_BIB}'"
     
