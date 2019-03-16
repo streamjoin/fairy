@@ -25,6 +25,6 @@ readonly USERNAME="${USERNAME_INIT:+"${USERNAME_INIT}-"}${ID}"
 
 # Validate the existence of account
 id -u "${USERNAME}" > /dev/null 2>&1
-check_failed "account '${USERNAME}' does not exist"
+check_err "account '${USERNAME}' does not exist"
 
 EXT="$()"

@@ -33,12 +33,13 @@ BUILD_DIR="${BUILD_DIR:-"${WORK_DIR}/pdfbuild"}"
 mkdir -p "${BUILD_DIR}"
 readonly BUILD_DIR="$(cd "${BUILD_DIR}"; pwd -P)"  # canonical path
 
-if [[ -z "${TEX_NAME}" ]]; then
-  if [[ -f "${WORK_DIR}/main.tex" ]]; then
-    TEX_NAME="main"
-  elif [[ -f "${WORK_DIR}/ms.tex" ]]; then
-    TEX_NAME="ms"
-  fi
+TEX_NAME="${TEX_NAME:-}"
+if [[ -n "${TEX_NAME}" ]]; then
+  check_file_exists "${WORK_DIR}/${TEX_NAME}.tex"
+elif [[ -f "${WORK_DIR}/main.tex" ]]; then
+  TEX_NAME="main"
+elif [[ -f "${WORK_DIR}/ms.tex" ]]; then
+  TEX_NAME="ms"
 fi
 check_err "'TEX_NAME' undefined: name of the main .tex file"
 readonly TEX_NAME
@@ -133,10 +134,10 @@ compile() {
   [[ -n "${CMD_BIBTEX}" ]] && compile_bib && compile_tex && compile_tex
   
   if [[ "${CMD_LATEX}" = "latex" ]]; then
-    find_and_link_subdirs "${WORK_DIR}" "${BUILD_DIR}"
+    find_and_link_subdirs "${WORK_DIR}" "${BUILD_DIR}" || true
     
     find_and_link_files_by_regex ".*\.(eps|ps|pdf|jpg|jpeg|png|bmp)$" \
-    "${WORK_DIR}" "${BUILD_DIR}"
+    "${WORK_DIR}" "${BUILD_DIR}" || true
     
     (
       cd "${BUILD_DIR}"

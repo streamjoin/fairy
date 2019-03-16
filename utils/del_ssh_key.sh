@@ -18,7 +18,7 @@ readonly USER_SSH_ROOT="$(dirname -- "${HOME}")/${USERNAME}/.ssh"
 
 # Validate the existence of user account
 id -u "${USERNAME}" > /dev/null 2>&1
-check_failed "account '${USERNAME}' does not exist"
+check_err "account '${USERNAME}' does not exist"
 
 # TODO
 head -n1 id_rsa.pub | cut -d ' ' -f2

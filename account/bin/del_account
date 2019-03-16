@@ -31,7 +31,7 @@ readonly PEM_HOME="${ACCOUNT_PEM_HOME-${DEFAULT_PEM_HOME}}"
 sudo rm -rf "${USER_HOME_ROOT}/${USERNAME}" &&
 sudo rm -f "/var/spool/mail/${USERNAME}" &&
 sudo userdel "${USERNAME}"
-check_failed "failed to delete account '${USERNAME}'"
+check_err "failed to delete account '${USERNAME}'"
 
 # Delete the associated private key
 if [[ -n "${PEM_HOME}" ]]; then

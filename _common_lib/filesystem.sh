@@ -29,7 +29,8 @@ find_and_link_files_by_ext() {
   local -r to_dir="$3"
   mkdir -p "${to_dir}"
   
-  find "${from_dir}" -maxdepth 1 -type f -iname "*.${ext}" |
+  # shellcheck disable=SC2016
+  find "${from_dir}" -print0 -maxdepth 1 -type f -iname "*.${ext}" |
   td="${to_dir}" xargs -n 1 sh -c '[[ -f "$0" ]] && ln -s "$0" ${td}'
 }
 
@@ -48,7 +49,8 @@ find_and_link_files_by_regex() {
   local -r to_dir="$3"
   mkdir -p "${to_dir}"
   
-  find $(arg_find_e) "${from_dir}" -maxdepth 1 -type f -iregex "${regex}" |
+  # shellcheck disable=SC2016,SC2046
+  find $(arg_find_e) "${from_dir}" -print0 -maxdepth 1 -type f -iregex "${regex}" |
   td="${to_dir}" xargs -n 1 sh -c '[[ -f "$0" ]] && ln -s "$0" ${td}'
 }
 
@@ -63,7 +65,8 @@ find_and_link_subdirs() {
   local -r to_dir="$2"
   mkdir -p "${to_dir}"
   
-  find "${from_dir}/." -maxdepth 1 -type d -exec basename -- {} \; |
+  # shellcheck disable=SC2016
+  find "${from_dir}/." -print0 -maxdepth 1 -type d -exec basename -- {} \; |
   fd="${from_dir}" td="${to_dir}" xargs -n 1 \
   sh -c '[[ "$0" != "." ]] && ln -s "${fd}/$0" "${td}"'
 }
@@ -90,5 +93,6 @@ file_size_bytes() {
   
   check_file_exists "$1"
   
+  # shellcheck disable=SC2012
   ls -l "$1" | awk '{ print $5 }'
 }

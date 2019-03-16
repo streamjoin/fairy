@@ -8,8 +8,8 @@ check_cmd_exists() {
   [[ "$#" -gt 0 ]] && [[ "$#" -le 2 ]]
   check_err "wrong number of parameters to 'check_cmd_exists()'"
   
-  [[ "$(command -v "$1")" ]]
-  check_err "command ${1:+'$1'} not found${2:+: $2}"
+  command -v "$1" >/dev/null ||
+  check_err "command ${1:+"'$1'"} not found${2:+": $2"}"
 }
 
 check_cmd_args() {
@@ -55,7 +55,7 @@ cmd_md5sum() {
 function timer()
 {
   if [[ "$#" -eq 0 ]]; then
-    echo "$(date '+%s')"
+    date '+%s'
   else
     local stime=$1
     local -r etime="$(date '+%s')"

@@ -41,18 +41,18 @@ readonly ADD_ON_GROUPS="${ACCOUNT_ADD_ON_GROUPS-${DEFAULT_ADD_ON_GROUPS}}"
 # Create groups, if necessary
 for group in ${GROUP} ${ADD_ON_GROUPS}; do
   [[ -n "$(getent group "${group}")" ]] || (sudo groupadd "${group}")
-  check_failed "failed to create non-existing group '${group}'"
+  check_err "failed to create non-existing group '${group}'"
 done
 
 # Delete the group named after the account
 [[ -z "$(getent group "${USERNAME}")" ]] || (sudo groupdel "${USERNAME}")
-check_failed "failed to delete existing group '${USERNAME}'"
+check_err "failed to delete existing group '${USERNAME}'"
 
 # Create account
 sudo useradd "${USERNAME}" ${GROUP:+-G ${GROUP}} \
 -m -d "${USER_HOME}" -s /bin/bash
 
-check_failed "failed to create account '${USERNAME}'"
+check_err "failed to create account '${USERNAME}'"
 
 for group in ${ADD_ON_GROUPS}; do
   sudo usermod -a -G "${group}" "${USERNAME}"
@@ -60,7 +60,7 @@ done
 
 # Configure account password
 echo -e "${PASSWORD}\n${PASSWORD}" | sudo passwd "${USERNAME}" > /dev/null 2>&1
-check_failed "failed to set password for account '${USERNAME}'"
+check_err "failed to set password for account '${USERNAME}'"
 
 # Confiugre enviornment
 sudo chmod 777 "${USER_HOME}"
@@ -83,7 +83,7 @@ fi
 readonly USER_SSH_ROOT="${USER_HOME}/.ssh"
 sudo mkdir -p "${USER_SSH_ROOT}"
 sudo ssh-keygen -t rsa -f "${USER_SSH_ROOT}/id_rsa" -P '' -q
-check_failed "failed to generate SSH key pair for account '${USERNAME}'"
+check_err "failed to generate SSH key pair for account '${USERNAME}'"
 
 # Authorize the public key for the user account
 sudo touch "${USER_SSH_ROOT}/authorized_keys"

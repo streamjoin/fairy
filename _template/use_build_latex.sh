@@ -2,6 +2,9 @@
 #
 # Compile LaTeX project.
 
+set -o nounset
+set -o errexit
+set -o errtrace
 set -o pipefail
 
 # Name of the main .tex file

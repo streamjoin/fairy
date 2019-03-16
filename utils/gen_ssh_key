@@ -18,7 +18,7 @@ readonly USER_SSH_ROOT="$(getent passwd "${USERNAME}" | cut -d: -f6)/.ssh"
 
 # Validate the existence of user account
 id -u "${USERNAME}" > /dev/null 2>&1
-check_failed "account '${USERNAME}' does not exist"
+check_err "account '${USERNAME}' does not exist"
 
 # Generate SSH keys (private/public)
 mkdir -p "${USER_SSH_ROOT}"
