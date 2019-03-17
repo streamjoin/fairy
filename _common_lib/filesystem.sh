@@ -30,8 +30,8 @@ find_and_link_files_by_ext() {
   mkdir -p "${to_dir}"
   
   # shellcheck disable=SC2016
-  find "${from_dir}" -print0 -maxdepth 1 -type f -iname "*.${ext}" |
-  td="${to_dir}" xargs -n 1 sh -c '[[ -f "$0" ]] && ln -s "$0" ${td}'
+  find "${from_dir}" -maxdepth 1 -type f -iname "*.${ext}" -print0 |
+  td="${to_dir}" xargs -0 -n 1 sh -c '[[ -f "$0" ]] && ln -s "$0" ${td}'
 }
 
 find_and_link_files_by_regex() {
@@ -50,8 +50,8 @@ find_and_link_files_by_regex() {
   mkdir -p "${to_dir}"
   
   # shellcheck disable=SC2016,SC2046
-  find $(arg_find_e) "${from_dir}" -print0 -maxdepth 1 -type f -iregex "${regex}" |
-  td="${to_dir}" xargs -n 1 sh -c '[[ -f "$0" ]] && ln -s "$0" ${td}'
+  find $(arg_find_e) "${from_dir}" -maxdepth 1 -type f -iregex "${regex}" -print0 |
+  td="${to_dir}" xargs -0 -n 1 sh -c '[[ -f "$0" ]] && ln -s "$0" ${td}'
 }
 
 find_and_link_subdirs() {
@@ -66,9 +66,10 @@ find_and_link_subdirs() {
   mkdir -p "${to_dir}"
   
   # shellcheck disable=SC2016
-  find "${from_dir}/." -print0 -maxdepth 1 -type d -exec basename -- {} \; |
+  find "${from_dir}/." -maxdepth 1 -type d -print0 |
+  xargs -0 -n 1 bash -c 'basename -- "$0"' |
   fd="${from_dir}" td="${to_dir}" xargs -n 1 \
-  sh -c '[[ "$0" != "." ]] && ln -s "${fd}/$0" "${td}"'
+  bash -c '[[ "$0" != "." ]] && ln -s "${fd}/$0" "${td}"'
 }
 
 check_file_exists() {
