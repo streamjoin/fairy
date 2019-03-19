@@ -169,7 +169,18 @@ compile_tex() {
 compile_bib() {
   (
     cd "${BUILD_DIR}"
-    ${CMD_BIBTEX} "${TEX_NAME}.aux"
+    case "${CMD_BIBTEX}" in
+      "bibtex")
+        ${CMD_BIBTEX} "${TEX_NAME}.aux"
+      ;;
+      "biber")
+        ${CMD_BIBTEX} "${TEX_NAME}"
+      ;;
+      *)
+        err "Unknown bib command '${CMD_BIBTEX}'"
+        exit 127
+      ;;
+    esac
     check_err "failed to compile '\\\\bibliography{${TGT_BIB%.*}}'"
   )
 }
