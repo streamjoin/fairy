@@ -155,7 +155,8 @@ compile_tex() {
       -aux-directory="${BUILD_DIR}" "${TEX_NAME}.tex"
     ;;
     "pdflatex")
-      ${CMD_LATEX} -output-directory "${BUILD_DIR}" "${TEX_NAME}.tex"
+      ${CMD_LATEX} --shell-escape \
+      -output-directory "${BUILD_DIR}" "${TEX_NAME}.tex"
     ;;
     *)
       err "unknown latex command '${CMD_LATEX}'"
