@@ -29,6 +29,8 @@ main() {
 
 # Helper functions
 check_args() {
+  unset_arg_var_flags
+  
   for arg in "$@"; do
     case "${arg}" in
       # Print help message
@@ -37,8 +39,11 @@ check_args() {
         exit 0
       ;;
       # Handler of some option
-      '--arg1'|'-a1' )
-        deal_with_arg1 "${arg}"
+      '--opt'|'-o' )
+        deal_with_opt "${arg}"
+      ;;
+      '--set-var'|'-v' )
+        deal_with_set_var
       ;;
       # Unknown options
       '-'* )
@@ -51,6 +56,23 @@ check_args() {
       ;;
     esac
   done
+  
+  check_arg_var_settings
+}
+
+unset_arg_var_flags() {
+  unset -v OPT_SET_VAR
+}
+
+check_arg_var_settings() {
+  check_dangling "${OPT_SET_VAR:-}"
+}
+
+check_dangling() {
+  if [[ -n "$1" ]]; then
+    echo "The expected variable setting is missing (see '--help' for usage)"
+    exit 126
+  fi
 }
 
 print_usage() {
@@ -63,12 +85,19 @@ Options:
 EndOfMsg
 }
 
-deal_with_arg1() {
+deal_with_opt() {
   printf "'%s' is specified\n" "$1"
 }
 
 assign_var () {
-  export ARG_VAR="$1"
+  if [[ "${OPT_SET_VAR:-}" = "true" ]]; then
+    if [[ -n "${ARG_VAR:-}" ]]; then
+      echo "Cannot set the same variable multiple times"
+      exit 126
+    fi
+    ARG_VAR="$1"
+    unset -v OPT_SET_VAR
+  fi
 }
 
 # Execution (SHOULDN'T EDIT AFTER THIS LINE!)
