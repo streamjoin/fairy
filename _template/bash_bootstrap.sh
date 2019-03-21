@@ -29,7 +29,7 @@ main() {
 
 # Helper functions
 check_args() {
-  unset_arg_var_flags
+  unset -v FLAG_ARG_SET_VAR
   
   for arg in "$@"; do
     case "${arg}" in
@@ -40,10 +40,10 @@ check_args() {
       ;;
       # Handler of some option
       '--opt'|'-o' )
-        deal_with_opt "${arg}"
+        deal_with_arg_opt "${arg}"
       ;;
       '--set-var'|'-v' )
-        deal_with_set_var
+        deal_with_arg_set_var "--set-var" "FLAG_ARG_SET_VAR"
       ;;
       # Unknown options
       '-'* )
@@ -52,27 +52,39 @@ check_args() {
       ;;
       # Default: assign variable
       * )
-        assign_var "${arg}"
+        arg_set_var "--set-var" "FLAG_ARG_SET_VAR" "ARG_VAR" "${arg}"
       ;;
     esac
   done
   
-  check_arg_var_settings
+  check_dangling_arg_set_var "--set-var" "FLAG_ARG_SET_VAR"
 }
 
-unset_arg_var_flags() {
-  unset -v OPT_SET_VAR
+deal_with_arg_set_var() {
+  check_dangling_arg_set_var "$1" "$2"
+  eval "$2"="true"
 }
 
-check_arg_var_settings() {
-  check_dangling "${OPT_SET_VAR:-}"
+arg_set_var() {
+  if [[ "${!2}" = "true" ]]; then
+    if [[ -n "${!3}" ]]; then
+      echo "Cannot set the option '$1' multiple times"
+      exit 126
+    fi
+    eval "$3"="$4"
+    unset -v "$2"
+  fi
 }
 
-check_dangling() {
-  if [[ -n "$1" ]]; then
-    echo "The expected variable setting is missing (see '--help' for usage)"
+check_dangling_arg_set_var() {
+  if [[ -n "${!2}" ]]; then
+    echo "Found redundant option '$1', or its value assignment is missing (see '--help' for usage)"
     exit 126
   fi
+}
+
+deal_with_arg_opt() {
+  printf "'%s' is specified\n" "$1"
 }
 
 print_usage() {
@@ -83,21 +95,6 @@ Options:
   -h, -?, --help    display this help and exit
 
 EndOfMsg
-}
-
-deal_with_opt() {
-  printf "'%s' is specified\n" "$1"
-}
-
-assign_var () {
-  if [[ "${OPT_SET_VAR:-}" = "true" ]]; then
-    if [[ -n "${ARG_VAR:-}" ]]; then
-      echo "Cannot set the same variable multiple times"
-      exit 126
-    fi
-    ARG_VAR="$1"
-    unset -v OPT_SET_VAR
-  fi
 }
 
 # Execution (SHOULDN'T EDIT AFTER THIS LINE!)
