@@ -60,15 +60,17 @@ check_args() {
   check_dangling_arg_set_var "--set-var" "FLAG_ARG_SET_VAR"
 }
 
+#TODO: Add function description.
 deal_with_arg_set_var() {
   check_dangling_arg_set_var "$1" "$2"
   eval "$2"="true"
 }
 
+#TODO: Add function description.
 arg_set_var() {
   if [[ "${!2}" = "true" ]]; then
-    if [[ -n "${!3}" ]]; then
-      echo "Cannot set the option '$1' multiple times"
+    if [[ -n "${!3:-}" ]]; then
+      echo "Cannot set option '$1' multiple times"
       exit 126
     fi
     eval "$3"="$4"
@@ -76,8 +78,9 @@ arg_set_var() {
   fi
 }
 
+#TODO: Add function description.
 check_dangling_arg_set_var() {
-  if [[ -n "${!2}" ]]; then
+  if [[ -n "${!2:-}" ]]; then
     echo "Found redundant option '$1', or its value assignment is missing (see '--help' for usage)"
     exit 126
   fi
@@ -87,6 +90,7 @@ deal_with_arg_opt() {
   printf "'%s' is specified\n" "$1"
 }
 
+#TODO: Add help message for other sample options.
 print_usage() {
 cat <<EndOfMsg
 Usage: ${__SCRIPT_NAME} [OPTION]...
