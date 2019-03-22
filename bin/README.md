@@ -1,6 +1,6 @@
 # Facilities #
 
-I strongly suggest that every Bash coding should start with `template.sh`, no matter how simple (or complex) the script is. 
+I strongly suggest that every Bash coding should start with [`_template/bash_bootstrap.sh`](_template/bash_bootstrap.sh), no matter how simple (or complex) the script is. 
 
 ## Setup ##
 
@@ -20,7 +20,7 @@ Once the above configuration takes effect (e.g., `source` the above configuratio
 
     $ bootstrap_sh my_script.sh
 
-The `my_script.sh` script will be instantiated from `template.sh`. Then you can start coding in the `main()` function. 
+The `my_script.sh` script will be instantiated from `_template/bash_bootstrap.sh`. Then you can start coding in the `main()` function. 
 
     ...
     main() {
