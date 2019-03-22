@@ -28,6 +28,7 @@ main() {
 }
 
 # Helper functions
+#TODO: Instructions for adding variable to be set by argument.
 check_args() {
   unset -v FLAG_ARG_SET_VAR
   
@@ -62,26 +63,32 @@ check_args() {
 
 #TODO: Add function description.
 deal_with_arg_set_var() {
-  check_dangling_arg_set_var "$1" "$2"
-  eval "$2"="true"
+  declare -r opt="$1" flag_name="$2"
+  
+  check_dangling_arg_set_var "${opt}" "${flag_name}"
+  eval "${flag_name}=true"
 }
 
 #TODO: Add function description.
 arg_set_var() {
-  if [[ "${!2}" = "true" ]]; then
-    if [[ -n "${!3:-}" ]]; then
-      echo "Cannot set option '$1' multiple times"
+  declare -r opt="$1" flag_name="$2" var_name="$3" value="$4"
+  
+  if [[ "${!flag_name}" = "true" ]]; then
+    if [[ -n "${!var_name:-}" ]]; then
+      echo "Cannot apply option '${opt}' multiple times"
       exit 126
     fi
-    eval "$3"="$4"
-    unset -v "$2"
+    eval "${var_name}=${value}"
+    unset -v "${flag_name}"
   fi
 }
 
 #TODO: Add function description.
 check_dangling_arg_set_var() {
-  if [[ -n "${!2:-}" ]]; then
-    echo "Found redundant option '$1', or its value assignment is missing (see '--help' for usage)"
+  declare -r opt="$1" flag_name="$2"
+  
+  if [[ -n "${!flag_name:-}" ]]; then
+    echo "Found redundant option '${opt}', or its value assignment is missing (see '--help' for usage)"
     exit 126
   fi
 }
