@@ -4,7 +4,7 @@ The scripts I ever programmed are just like little fairies who get jobs done mag
 
 ## Facilities ##
 
-Programming a robust Bash script is usually non-trivial. Fortunately, you can refer to [`bash_bootstrap.sh`](_template/bash_bootstrap.sh) to bootstrap you Bash script in a right shape. Moreover, you may also leverage `bin/bootstrap_sh` to further ease the bootstrapping. (See the quick two-step setup [here](bin/README.md))
+Programming a robust Bash script is usually non-trivial. Fortunately, you can refer to [`bash_bootstrap.sh`](_template/bash_bootstrap.sh) to bootstrap you Bash script in a right shape. Moreover, you may also leverage `bin/bootstrap_sh` to further ease the bootstrapping. (See the quick two-step setup [here](bin/README.md#setup))
 
 ## Resources ##
 
