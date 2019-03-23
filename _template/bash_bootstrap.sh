@@ -27,8 +27,21 @@ main() {
   
 }
 
-# Helper functions
-#TODO: Instructions for adding variable to be set by argument.
+#######################################
+# Check and process command-line arguments.
+# Globals:
+#   <none>
+# Arguments:
+#   Command-line arguments
+# Returns:
+#   Variables and flags set according to the command-line arguments (e.g., ARG_VAR)
+#
+# Notes: Programming instructions for adding variables to be set by command-line argument
+#   (1) Add "unset -v FLAG_ARG_SET_XXX" at the head
+#   (2) Add a case entry for the option
+#   (3) Add an "arg_set_var" entry with variable name specified in the default case
+#   (4) Add a "check_dangling_arg_set_var" entry at the end
+#######################################
 check_args() {
   unset -v FLAG_ARG_SET_VAR
   
@@ -39,10 +52,11 @@ check_args() {
         print_usage
         exit 0
       ;;
-      # Handler of some option
+      # Handler of some boolean option
       '--opt'|'-o' )
         deal_with_arg_opt "${arg}"
       ;;
+      # Handler of some option with variable to be set
       '--set-var'|'-v' )
         deal_with_arg_set_var "--set-var" "FLAG_ARG_SET_VAR"
       ;;
@@ -51,7 +65,7 @@ check_args() {
         echo "Unknown command argument(s) '${arg}' (see '--help' for usage)"
         exit 126
       ;;
-      # Default: assign variable
+      # Default: assign variables
       * )
         arg_set_var "--set-var" "FLAG_ARG_SET_VAR" "ARG_VAR" "${arg}"
       ;;
@@ -61,7 +75,7 @@ check_args() {
   check_dangling_arg_set_var "--set-var" "FLAG_ARG_SET_VAR"
 }
 
-#TODO: Add function description.
+# TODO(linqian): Add function description.
 deal_with_arg_set_var() {
   declare -r opt="$1" flag_name="$2"
   
@@ -69,7 +83,7 @@ deal_with_arg_set_var() {
   eval "${flag_name}=true"
 }
 
-#TODO: Add function description.
+# TODO(linqian): Add function description.
 arg_set_var() {
   declare -r opt="$1" flag_name="$2" var_name="$3" value="$4"
   
@@ -83,7 +97,7 @@ arg_set_var() {
   fi
 }
 
-#TODO: Add function description.
+# TODO(linqian): Add function description.
 check_dangling_arg_set_var() {
   declare -r opt="$1" flag_name="$2"
   
@@ -97,7 +111,7 @@ deal_with_arg_opt() {
   printf "'%s' is specified\n" "$1"
 }
 
-#TODO: Add help message for other sample options.
+# TODO(linqian): Add help message for other sample options.
 print_usage() {
 cat <<EndOfMsg
 Usage: ${__SCRIPT_NAME} [OPTION]...
