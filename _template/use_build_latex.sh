@@ -30,8 +30,9 @@ export CMD_LATEX="latex"
 # Options: bibtex, biber, <none>
 export CMD_BIBTEX="bibtex"
 
-# Path of the trimbib project cloned from https://github.com/streamjoin/trimbib
-export TRIMBIB_HOME="/path/to/trimbib"
+# Path of the trimbib.jar
+# You may need to clone the project from https://github.com/streamjoin/trimbib
+export TRIMBIB_JAR="/path/to/trimbib.jar"
 
 # Configuration of trimbib
 export TRIMBIB_ARGS=("--pages" "--booktitle" "--max-authors" "6")
