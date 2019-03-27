@@ -52,10 +52,12 @@ check_cmd_exists "${CMD_LATEX}" "compile .tex"
 CMD_BIBTEX="${CMD_BIBTEX-"bibtex"}"
 [[ "${CMD_BIBTEX}" = "<none>" ]] && CMD_BIBTEX=""
 readonly CMD_BIBTEX
-[[ -z "${CMD_BIBTEX}" ]] ||
-check_cmd_exists "${CMD_BIBTEX}" "compile .bib"
+[[ -z "${CMD_BIBTEX}" ]] || check_cmd_exists "${CMD_BIBTEX}" "compile .bib"
 
-readonly TRIMBIB_JAR="${TRIMBIB_JAR:-"${TRIMBIB_HOME:+"${TRIMBIB_HOME}/release/trimbib.jar"}"}"
+TRIMBIB_JAR="${TRIMBIB_JAR-"${TRIMBIB_HOME:+"${TRIMBIB_HOME}/release/trimbib.jar"}"}"
+[[ "${TRIMBIB_JAR}" = "<none>" ]] && TRIMBIB_JAR=""
+readonly TRIMBIB_JAR
+[[ -z "${TRIMBIB_JAR}" ]] || check_file_exists "${TRIMBIB_JAR}"
 
 readonly TRIMBIB_LOG="${TRIMBIB_LOG:-"trimbib_log.txt"}"
 
@@ -96,8 +98,6 @@ prepare() {
     check_err "target .bib cannot be the source .bib itself"
     
     if [[ -n "${TRIMBIB_JAR}" ]] && [[ -f "${WORK_DIR}/${src_bib}" ]]; then
-      check_file_exists "${TRIMBIB_JAR}"
-      
       readonly TGT_BIB="${tgt_bib_name}.bib"
       
       printf "Formatting %s ... " "${WORK_DIR}/${src_bib}"

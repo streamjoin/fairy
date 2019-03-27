@@ -30,7 +30,7 @@ export CMD_LATEX="latex"
 # Options: bibtex, biber, <none>
 export CMD_BIBTEX="bibtex"
 
-# Path of the trimbib.jar
+# Path of the trimbib.jar, or <none> for skipping the trimbib processing
 # You may need to clone the project from https://github.com/streamjoin/trimbib
 export TRIMBIB_JAR="/path/to/trimbib.jar"
 
