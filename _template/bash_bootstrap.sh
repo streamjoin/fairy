@@ -75,7 +75,16 @@ check_args() {
   check_dangling_arg_set_var "--set-var" "FLAG_ARG_SET_VAR"
 }
 
-# TODO(linqian): Add function description.
+#######################################
+# Handler of argument option.
+# Globals:
+#   <none>
+# Arguments:
+#   $1: Option descriptor
+#   $2: Name of flag variable
+# Returns:
+#   Flag variable set according to the option
+#######################################
 deal_with_arg_set_var() {
   declare -r opt="$1" flag_name="$2"
   
