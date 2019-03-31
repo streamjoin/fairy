@@ -93,6 +93,18 @@ deal_with_arg_set_var() {
 }
 
 # TODO(linqian): Add function description.
+#######################################
+# Handler of argument variable assignment.
+# Globals:
+#   <none>
+# Arguments:
+#   $1: Option descriptor
+#   $2: Name of flag variable
+#   $3: Name of variable to set
+#   $4: Assignment value
+# Returns:
+#   Variable set with the value specified
+#######################################
 arg_set_var() {
   declare -r opt="$1" flag_name="$2" var_name="$3" value="$4"
   
