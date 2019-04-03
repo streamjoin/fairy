@@ -34,17 +34,26 @@ main() {
 # Arguments:
 #   Command-line arguments
 # Returns:
-#   Variables and flags set according to the command-line arguments (e.g., ARG_VAR)
+#   Variables and flags set according to the command-line arguments
 #
-# Notes: Programming instructions for adding variables to be set by command-line argument
-#   (1) Add "unset -v FLAG_ARG_SET_XXX" at the head
-#   (2) Add a case entry for the option
-#   (3) Add an "arg_set_var" entry with variable name specified in the default case
-#   (4) Add a "check_dangling_arg_set_var" entry at the end
+# Notes: Programming instructions for adding variables to be set by
+#        command-line argument
+#   (1) Add 'unset -v FLAG_ARG_SET_XXX' at the head
+#   (2) Add a case entry with 'deal_with_arg_opt' for the option
+#   (3) Add an 'arg_set_var' entry with variable name specified in the
+#       default case
+#   (4) Add a 'check_dangling_arg_opt' entry at the end
+#
+# To add boolean option to be set by command-line argument, just follow
+# the above steps (1), (2), (4) but not (3). The flag variable should
+# follow the naming convention 'FLAG_ARG_XXX'.
 #######################################
 check_args() {
+  # unset variables of option flags
+  unset -v FLAG_ARG_OPT
   unset -v FLAG_ARG_SET_VAR
   
+  # process each command-line argument
   for arg in "$@"; do
     case "${arg}" in
       # Print help message
@@ -54,11 +63,11 @@ check_args() {
       ;;
       # Handler of some boolean option
       '--opt'|'-o' )
-        deal_with_arg_opt "${arg}"
+        deal_with_arg_opt "--opt" "FLAG_ARG_OPT"
       ;;
       # Handler of some option with variable to be set
       '--set-var'|'-v' )
-        deal_with_arg_set_var "--set-var" "FLAG_ARG_SET_VAR"
+        deal_with_arg_opt "--set-var" "FLAG_ARG_SET_VAR"
       ;;
       # Unknown options
       '-'* )
@@ -72,7 +81,9 @@ check_args() {
     esac
   done
   
-  check_dangling_arg_set_var "--set-var" "FLAG_ARG_SET_VAR"
+  # sanity check
+  check_dangling_arg_opt "--opt" "FLAG_ARG_OPT"
+  check_dangling_arg_opt "--set-var" "FLAG_ARG_SET_VAR"
 }
 
 #######################################
@@ -85,14 +96,13 @@ check_args() {
 # Returns:
 #   Flag variable set according to the option
 #######################################
-deal_with_arg_set_var() {
+deal_with_arg_opt() {
   declare -r opt="$1" flag_name="$2"
   
-  check_dangling_arg_set_var "${opt}" "${flag_name}"
+  check_dangling_arg_opt "${opt}" "${flag_name}"
   eval "${flag_name}=true"
 }
 
-# TODO(linqian): Add function description.
 #######################################
 # Handler of argument variable assignment.
 # Globals:
@@ -119,17 +129,13 @@ arg_set_var() {
 }
 
 # TODO(linqian): Add function description.
-check_dangling_arg_set_var() {
+check_dangling_arg_opt() {
   declare -r opt="$1" flag_name="$2"
   
   if [[ -n "${!flag_name:-}" ]]; then
     echo "Found redundant option '${opt}', or its value assignment is missing (see '--help' for usage)"
     exit 126
   fi
-}
-
-deal_with_arg_opt() {
-  printf "'%s' is specified\n" "$1"
 }
 
 # TODO(linqian): Add help message for other sample options.
