@@ -45,7 +45,7 @@ main() {
 #   (4) Add a 'check_dangling_arg_opt' entry at the end
 #
 # To add boolean option to be set by command-line argument, just follow
-# the above steps (1), (2), (4) but not (3). The flag variable should
+# the above steps (1) and (2) but not (3) and (4). The flag variable should
 # follow the naming convention 'FLAG_ARG_XXX'.
 #######################################
 check_args() {
@@ -82,7 +82,6 @@ check_args() {
   done
   
   # sanity check
-  check_dangling_arg_opt "--opt" "FLAG_ARG_OPT"
   check_dangling_arg_opt "--set-var" "FLAG_ARG_SET_VAR"
 }
 
