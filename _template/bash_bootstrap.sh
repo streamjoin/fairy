@@ -40,7 +40,7 @@ main() {
 #        command-line argument
 #   (1) Add 'unset -v FLAG_ARG_SET_XXX' at the head
 #   (2) Add a case entry with 'deal_with_arg_opt' for the option
-#   (3) Add an 'arg_set_var' entry with variable name specified in the
+#   (3) Add an 'arg_set_opt_var' entry with variable name specified in the
 #       default case
 #   (4) Add a 'check_dangling_arg_opt' entry at the end
 #
@@ -76,7 +76,7 @@ check_args() {
       ;;
       # Default: assign variables
       * )
-        arg_set_var "--set-var" "FLAG_ARG_SET_VAR" "ARG_VAR" "${arg}"
+        arg_set_opt_var "--set-var" "FLAG_ARG_SET_VAR" "ARG_VAR" "${arg}"
       ;;
     esac
   done
@@ -114,17 +114,25 @@ deal_with_arg_opt() {
 # Returns:
 #   Variable set with the value specified
 #######################################
-arg_set_var() {
+arg_set_opt_var() {
   declare -r opt="$1" flag_name="$2" var_name="$3" value="$4"
   
-  if [[ "${!flag_name}" = "true" ]]; then
-    if [[ -n "${!var_name:-}" ]]; then
+  if [[ "${!flag_name:-}" = "true" ]]; then
+    if ! assign_var_once "${var_name}" "${value}"; then
       echo "Cannot apply option '${opt}' multiple times"
       exit 126
     fi
     eval "${var_name}=${value}"
     unset -v "${flag_name}"
   fi
+}
+
+# TODO(linqian): Add function description.
+assign_var_once() {
+  declare -r var_name="$1" value="$2"
+  
+  [[ -z "${!var_name:-}" ]] || return 1
+  eval "${var_name}=${value}"
 }
 
 # TODO(linqian): Add function description.

@@ -60,7 +60,7 @@ finish() {
 #        command-line argument
 #   (1) Add 'unset -v FLAG_ARG_SET_XXX' at the head
 #   (2) Add a case entry with 'deal_with_arg_opt' for the option
-#   (3) Add an 'arg_set_var' entry with variable name specified in the
+#   (3) Add an 'arg_set_opt_var' entry with variable name specified in the
 #       default case
 #   (4) Add a 'check_dangling_arg_opt' entry at the end
 #
@@ -96,7 +96,7 @@ check_args() {
       ;;
       # Default: assign variables
       * )
-        arg_set_var "--set-var" "FLAG_ARG_SET_VAR" "ARG_VAR" "${arg}"
+        arg_set_opt_var "--set-var" "FLAG_ARG_SET_VAR" "ARG_VAR" "${arg}"
       ;;
     esac
   done

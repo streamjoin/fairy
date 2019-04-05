@@ -18,11 +18,11 @@ readonly FAIRY_HOME="${FAIRY_HOME:-${__SCRIPT_DIR}/..}"
 # shellcheck disable=SC1090
 source "${FAIRY_HOME}/_common_lib/argument_utils.sh"
 # shellcheck disable=SC1090
+source "${FAIRY_HOME}/_common_lib/filesystem.sh"
+# shellcheck disable=SC1090
 source "${FAIRY_HOME}/_common_lib/output_utils.sh"
 # shellcheck disable=SC1090
 source "${FAIRY_HOME}/_common_lib/system.sh"
-# shellcheck disable=SC1090
-source "${FAIRY_HOME}/_common_lib/filesystem.sh"
 
 # Global variables
 readonly START_TIME="$(timer)"
@@ -258,7 +258,7 @@ check_args() {
       ;;
       # Default: assign variable
       * )
-        arg_set_var "--pdf-name" "FLAG_ARG_SET_PDF_NAME" "ARG_PDF_NAME" "${arg}"
+        arg_set_opt_var "--pdf-name" "FLAG_ARG_SET_PDF_NAME" "ARG_PDF_NAME" "${arg}"
       ;;
     esac
   done

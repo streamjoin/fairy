@@ -3,6 +3,7 @@
 # Command-line argument utilities.
 #
 # Dependencies: output_utils.sh
+#               system.sh
 
 #######################################
 # Handler of argument option.
@@ -33,14 +34,13 @@ deal_with_arg_opt() {
 # Returns:
 #   Variable set with the value specified
 #######################################
-arg_set_var() {
+arg_set_opt_var() {
   declare -r opt="$1" flag_name="$2" var_name="$3" value="$4"
   
-  if [[ "${!flag_name}" = "true" ]]; then
-    [[ -z "${!var_name:-}" ]]
-    check_err "Cannot apply option '${opt}' multiple times"
+  if [[ "${!flag_name:-}" = "true" ]]; then
+    assign_var_once_on_err_exit "${var_name}" "${value}" \
+    "Cannot apply option '${opt}' multiple times"
     
-    eval "${var_name}=${value}"
     unset -v "${flag_name}"
   fi
 }
