@@ -103,10 +103,10 @@ prepare() {
   mkdir -p "${BUILD_DIR}"
   
   if [[ -n "${CMD_BIBTEX}" ]]; then
-    local -r src_bib="${SRC_BIB_NAME}.bib"
+    local -r src_bib="${SRC_BIB_NAME:-}.bib"
     
     local -r tgt_bib_name="${TGT_BIB_NAME:-"${SRC_BIB_NAME:+"${SRC_BIB_NAME}-trim"}"}"
-    [[ "${tgt_bib_name}" != "${SRC_BIB_NAME}" ]]
+    [[ "${tgt_bib_name}" != "${SRC_BIB_NAME:-}" ]]
     check_err "Target .bib cannot be the source .bib itself"
     
     if [[ -n "${TRIMBIB_JAR}" ]] && [[ -f "${WORK_DIR}/${src_bib}" ]]; then
