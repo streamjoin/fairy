@@ -135,7 +135,16 @@ assign_var_once() {
   eval "${var_name}=${value}"
 }
 
-# TODO(linqian): Add function description.
+#######################################
+# Check dangling argument option and exit on error.
+# Globals:
+#   <none>
+# Arguments:
+#   $1: Option descriptor
+#   $2: Name of flag variable
+# Returns:
+#   <none>
+#######################################
 check_dangling_arg_opt() {
   declare -r opt="$1" flag_name="$2"
   
