@@ -127,7 +127,17 @@ arg_set_opt_var() {
   fi
 }
 
-# TODO(linqian): Add function description.
+#######################################
+# Assign value to variable.
+# Globals:
+#   <none>
+# Arguments:
+#   $1: Name of variable to set
+#   $2: Assignment value
+# Returns:
+#   0 if the variable is successfully set with the value specified;
+#   non-zero if the variable has been previously set
+#######################################
 assign_var_once() {
   declare -r var_name="$1" value="$2"
   
