@@ -171,6 +171,7 @@ Usage: ${__SCRIPT_NAME} [OPTION]...
 
 Options:
   -h, -?, --help    display this help and exit
+  -v, --set-var     assign value to a variable
 
 EndOfMsg
 }
