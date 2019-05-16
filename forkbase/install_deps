@@ -46,7 +46,13 @@ main() {
   check_args "$@"
   check_sudo
   
-  pushd "${TEMP_DIR}" >/dev/null
+  [[ -d "${TEMP_DIR}" ]] && pushd "${TEMP_DIR}" >/dev/null &&
+  local -r in_temp_dir="true"
+  
+  [[ "${in_temp_dir:-}" = "true" ]] ||
+  [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] ||
+  check_err "Failed to enter the temporary directory"
+  
   install_essentials
   install_dep_cmake
   install_dep_boost
@@ -62,7 +68,8 @@ main() {
   install_dep_python3
   install_dep_python2
   install_dep_ccache
-  popd >/dev/null
+  
+  [[ "${in_temp_dir:-}" = "true" ]] && popd >/dev/null
   
   if [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]]; then
     finish_download
