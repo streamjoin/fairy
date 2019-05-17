@@ -17,11 +17,11 @@ readonly LUCENE_DIR="${USTORE_LUCENE_DIR:-"lucene"}"
 readonly CMAKE_ARGS="${USTORE_CMAKE_ARGS-"-DUSE_ROCKS_STORE=ON"}"
 
 # Validate paths
-[[ -d "${SOURCE_DIR}" ]]
+[[ -d "${SOURCE_DIR}" ]] ||
 check_err "Invalid path '${SOURCE_DIR}'"
 export USTORE_ROOT="$(cd "${SOURCE_DIR}"; pwd -P)"
 
-[[ -d "${LUCENE_DIR}" ]]
+[[ -d "${LUCENE_DIR}" ]] ||
 check_err "Invalid path: '${LUCENE_DIR}'"
 readonly USTORE_LUCENE="$(cd "${LUCENE_DIR}"; pwd -P)"
 
