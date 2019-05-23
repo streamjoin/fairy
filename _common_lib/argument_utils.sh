@@ -32,17 +32,36 @@ deal_with_arg_opt() {
 #   $3: Name of variable to set
 #   $4: Assignment value
 # Returns:
-#   Variable set with the value specified
+#   0 if the variable is set with the value specified;
+#   non-zero if no assignment is executed
 #######################################
 arg_set_opt_var() {
   declare -r opt="$1" flag_name="$2" var_name="$3" value="$4"
   
-  if [[ "${!flag_name:-}" = "true" ]]; then
-    assign_var_once_on_err_exit "${var_name}" "${value}" \
-    "Cannot apply option '${opt}' multiple times"
-    
-    unset -v "${flag_name}"
-  fi
+  [[ "${!flag_name:-}" = "true" ]] || return 1
+  
+  assign_var_once_on_err_exit "${var_name}" "${value}" \
+  "Cannot apply option '${opt}' multiple times"
+  
+  unset -v "${flag_name}"
+}
+
+#######################################
+# Handler of positional argument variable assignment.
+# Globals:
+#   <none>
+# Arguments:
+#   $1: Assignment value
+# Returns:
+#   Variable "ARG_POS_VAR_X" set with the value specified,
+#   where "X" is the positional index starting from 1
+#######################################
+arg_set_pos_var() {
+  declare -r value="$1"
+  
+  __POS_ARG_CURSOR="${__POS_ARG_CURSOR:-0}"
+  ((++__POS_ARG_CURSOR))
+  eval "ARG_POS_VAR_${__POS_ARG_CURSOR}=${value}"
 }
 
 #######################################

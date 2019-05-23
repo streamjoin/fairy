@@ -15,7 +15,7 @@ readonly __SCRIPT_NAME="$(basename -- "$0")"
 # The main function
 main() {
   check_args "$@"
-  readonly TEMPLATE="${TEMPLATE-"bash_bootstrap.sh"}"
+  readonly TEMPLATE="${TEMPLATE-"fairy_bash_bootstrap.sh"}"
   [[ -n "${FILENAME}" ]] || error_on_filename_missing
   [[ ! -f "${FILENAME}" ]] || error_on_file_exists
   
@@ -34,8 +34,9 @@ check_args() {
         print_usage
         exit 0
       ;;
-      '--fairy' )
-        TEMPLATE="fairy_bash_bootstrap.sh"
+      # Option: independently template
+      '--stand-alone' )
+        TEMPLATE="bash_bootstrap.sh"
       ;;
       # Option: template for suing build_latex.sh
       '--latex'|'--tex' )
@@ -60,6 +61,7 @@ Usage: ${__SCRIPT_NAME} [OPTION]... FILE
 
 Options:
   -h, -?, --help    display this help and exit
+  --stand-alone     template independently of Fairy
   --tex, --latex    template for using build_latex.sh
 
 EndOfMsg

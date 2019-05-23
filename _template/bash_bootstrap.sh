@@ -76,7 +76,8 @@ check_args() {
       ;;
       # Default: assign variables
       * )
-        arg_set_opt_var "--set-var" "FLAG_ARG_SET_VAR" "ARG_VAR" "${arg}"
+        arg_set_opt_var "--set-var" "FLAG_ARG_SET_VAR" "ARG_VAR" "${arg}" ||
+        arg_set_pos_var "${arg}"  # KEEP THIS AT THE TAIL
       ;;
     esac
   done
@@ -112,19 +113,20 @@ deal_with_arg_opt() {
 #   $3: Name of variable to set
 #   $4: Assignment value
 # Returns:
-#   Variable set with the value specified
+#   0 if the variable is set with the value specified;
+#   non-zero if no assignment is executed
 #######################################
 arg_set_opt_var() {
   declare -r opt="$1" flag_name="$2" var_name="$3" value="$4"
   
-  if [[ "${!flag_name:-}" = "true" ]]; then
-    if ! assign_var_once "${var_name}" "${value}"; then
-      echo "Cannot apply option '${opt}' multiple times"
-      exit 126
-    fi
-    eval "${var_name}=${value}"
-    unset -v "${flag_name}"
+  [[ "${!flag_name:-}" = "true" ]] || return 1
+  
+  if ! assign_var_once "${var_name}" "${value}"; then
+    echo "Cannot apply option '${opt}' multiple times"
+    exit 126
   fi
+  eval "${var_name}=${value}"
+  unset -v "${flag_name}"
 }
 
 #######################################
@@ -146,6 +148,24 @@ assign_var_once() {
 }
 
 #######################################
+# Handler of positional argument variable assignment.
+# Globals:
+#   <none>
+# Arguments:
+#   $1: Assignment value
+# Returns:
+#   Variable "ARG_POS_VAR_X" set with the value specified,
+#   where "X" is the positional index starting from 1
+#######################################
+arg_set_pos_var() {
+  declare -r value="$1"
+  
+  __POS_ARG_CURSOR="${__POS_ARG_CURSOR:-0}"
+  ((++__POS_ARG_CURSOR))
+  eval "ARG_POS_VAR_${__POS_ARG_CURSOR}=${value}"
+}
+
+#######################################
 # Check dangling argument option and exit on error.
 # Globals:
 #   <none>
@@ -164,7 +184,6 @@ check_dangling_arg_opt() {
   fi
 }
 
-# TODO(linqian): Add help message for other sample options.
 print_usage() {
 cat <<EndOfMsg
 Usage: ${__SCRIPT_NAME} [OPTION]...

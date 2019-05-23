@@ -61,7 +61,7 @@ finish() {
 #   (1) Add 'unset -v FLAG_ARG_SET_XXX' at the head
 #   (2) Add a case entry with 'deal_with_arg_opt' for the option
 #   (3) Add an 'arg_set_opt_var' entry with variable name specified in the
-#       default case
+#       default case, ending with "||"
 #   (4) Add a 'check_dangling_arg_opt' entry at the end
 #
 # To add boolean option to be set by command-line argument, just follow
@@ -96,7 +96,8 @@ check_args() {
       ;;
       # Default: assign variables
       * )
-        arg_set_opt_var "--set-var" "FLAG_ARG_SET_VAR" "ARG_VAR" "${arg}"
+        arg_set_opt_var "--set-var" "FLAG_ARG_SET_VAR" "ARG_VAR" "${arg}" ||
+        arg_set_pos_var "${arg}"  # KEEP THIS AT THE TAIL
       ;;
     esac
   done
@@ -112,6 +113,8 @@ Usage: ${__SCRIPT_NAME} [OPTION]...
 
 Options:
   -h, -?, --help    display this help and exit
+  -v, --set-var     sample: assign value to a variable
+  -o, --opt         sample: boolean option
 
 EndOfMsg
 }
