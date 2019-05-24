@@ -1,107 +1,218 @@
 #!/usr/bin/env bash
-#
-# Create an account.
 
-# set -o nounset
-# set -o errexit
+# Do not allow use of undefined vars. Use ${VAR:-} to use an undefined VAR
+set -o nounset
+# Exit on error. Append "|| true" if you expect an error.
+set -o errexit
+# Exit on error inside any functions or subshells.
+set -o errtrace
+# Catch the error in case mysqldump fails (but gzip succeeds) in `mysqldump |gzip`
 set -o pipefail
+# Turn on traces, useful while debugging but commented out by default
+# set -o xtrace
+
+IFS=$'\t\n'    # Split on newlines and tabs (but not on spaces)
+
+[[ -n "${__SCRIPT_DIR+x}" ]] ||
+readonly __SCRIPT_DIR="$(cd "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+
+[[ -n "${__SCRIPT_NAME+x}" ]] ||
+readonly __SCRIPT_NAME="$(basename -- "$0")"
 
 # Include libraries
-readonly SCRIPT_HOME="$(cd "$(dirname -- "$0")"; pwd -P)"
-source "${FAIRY_HOME:-${SCRIPT_HOME}/../..}/_common_lib/output_utils.sh"
-source "${FAIRY_HOME:-${SCRIPT_HOME}/../..}/_common_lib/system.sh"
+readonly FAIRY_HOME="${FAIRY_HOME:-${__SCRIPT_DIR}/..}"
+# shellcheck disable=SC1090
+source "${FAIRY_HOME}/_common_lib/argument_utils.sh"
+# shellcheck disable=SC1090
+source "${FAIRY_HOME}/_common_lib/filesystem.sh"
+# shellcheck disable=SC1090
+source "${FAIRY_HOME}/_common_lib/output_utils.sh"
+# shellcheck disable=SC1090
+source "${FAIRY_HOME}/_common_lib/system.sh"
+# shellcheck disable=SC1090
 source "${FAIRY_HOME:-${SCRIPT_HOME}/../..}/account/lib/load_script_conf.sh"
 
-# Command parameters
-readonly ID="$1"
-[[ -n "${ID}" ]]
-check_cmd_args "<account_id>"
+# The main function
+main() {
+  check_args "$@"
+  set_globals
+  
+  create_account
+  config_account
+  
+  # Do cleaning up and bookkeeping in 'finish()', if necessary
+  finish
+}
 
-# Set variables
-readonly GROUP="${ACCOUNT_USERNAME_INIT-${DEFAULT_USERNAME_INIT}}"
+finish() {
+  info "Account '${USERNAME}' has been created successfully"
+}
 
-readonly USERNAME="${GROUP:+"${GROUP}-"}${ID}"
+set_globals() {
+  [[ -n "${ARG_POS_VAR_1:-}" ]] ||
+  check_err "Missing account ID (see '--help' for usage)"
+  readonly ID="${ARG_POS_VAR_1}"
+  
+  readonly GROUP="${ACCOUNT_USERNAME_INIT-${DEFAULT_USERNAME_INIT:-}}"
+  
+  readonly USERNAME="${GROUP:+"${GROUP}-"}${ID}"
+  
+  local -r user_home_root="${ACCOUNT_USER_HOME_ROOT:-${DEFAULT_USER_HOME_ROOT:-$(dirname -- "${HOME}")}}"
+  readonly USER_HOME="${user_home_root}/${USERNAME}"
+}
 
-readonly USER_HOME_ROOT=\
-"${ACCOUNT_USER_HOME_ROOT:-${DEFAULT_USER_HOME_ROOT:-$(dirname -- "${HOME}")}}"
+create_account() {
+  local -r add_on_groups="${ACCOUNT_ADD_ON_GROUPS-${DEFAULT_ADD_ON_GROUPS:-}}"
+  
+  # Create groups, if necessary
+  for grp in ${GROUP} ${add_on_groups}; do
+    [[ -n "$(getent group "${grp}")" ]] || (sudo groupadd "${grp}")
+    check_err "failed to create non-existing group '${grp}'"
+  done
+  
+  # Delete the group named after the account
+  [[ -z "$(getent group "${USERNAME}")" ]] || (sudo groupdel "${USERNAME}")
+  check_err "failed to delete existing group '${USERNAME}'"
+  
+  # Create account
+  sudo useradd "${USERNAME}" "${GROUP:+"-G"}" "${GROUP}" -m -d "${USER_HOME}" -s /bin/bash
+  
+  check_err "failed to create account '${USERNAME}'"
+  
+  for grp in ${add_on_groups}; do
+    sudo usermod -a -G "${grp}" "${USERNAME}"
+  done
+}
 
-readonly USER_HOME="${USER_HOME_ROOT}/${USERNAME}"
+config_account() {
+  sudo chmod 777 "${USER_HOME}"
+  config_passwd
+  config_env
+  config_ssh_keys
+  sudo chmod 700 "${USER_HOME}"
+}
 
-readonly PASSWORD="${ACCOUNT_PASSWORD_INIT-${DEFAULT_PASSWORD_INIT}}${ID}"
+config_passwd() {
+  local -r password="${ARG_PASSWORD-"${ACCOUNT_PASSWORD_INIT-${DEFAULT_PASSWORD_INIT:-}}${ID}"}"
+  echo -e "${password}\n${password}" | sudo passwd "${USERNAME}" >/dev/null 2>&1 ||
+  check_err "failed to set password for account '${USERNAME}'"
+}
 
-readonly PEM_HOME="${ACCOUNT_PEM_HOME-${DEFAULT_PEM_HOME}}"
-
-readonly ENV_CONF_REF_ROOT=\
-"${ACCOUNT_ENV_CONF_REF_ROOT-${DEFAULT_ENV_CONF_REF_ROOT}}"
-
-readonly ENV_CONF_LIST="${ACCOUNT_ENV_CONF_LIST-${DEFAULT_ENV_CONF_LIST}}"
-
-readonly ADD_ON_GROUPS="${ACCOUNT_ADD_ON_GROUPS-${DEFAULT_ADD_ON_GROUPS}}"
-
-# Create groups, if necessary
-for group in ${GROUP} ${ADD_ON_GROUPS}; do
-  [[ -n "$(getent group "${group}")" ]] || (sudo groupadd "${group}")
-  check_err "failed to create non-existing group '${group}'"
-done
-
-# Delete the group named after the account
-[[ -z "$(getent group "${USERNAME}")" ]] || (sudo groupdel "${USERNAME}")
-check_err "failed to delete existing group '${USERNAME}'"
-
-# Create account
-sudo useradd "${USERNAME}" ${GROUP:+-G ${GROUP}} \
--m -d "${USER_HOME}" -s /bin/bash
-
-check_err "failed to create account '${USERNAME}'"
-
-for group in ${ADD_ON_GROUPS}; do
-  sudo usermod -a -G "${group}" "${USERNAME}"
-done
-
-# Configure account password
-echo -e "${PASSWORD}\n${PASSWORD}" | sudo passwd "${USERNAME}" > /dev/null 2>&1
-check_err "failed to set password for account '${USERNAME}'"
-
-# Confiugre enviornment
-sudo chmod 777 "${USER_HOME}"
-
-if [[ -n "${ENV_CONF_REF_ROOT}" ]]; then
-  for conf_file in ${ENV_CONF_LIST}; do
-    src_conf="${ENV_CONF_REF_ROOT}/${conf_file}"
+config_env() {
+  local -r env_conf_ref_root="${ACCOUNT_ENV_CONF_REF_ROOT-${DEFAULT_ENV_CONF_REF_ROOT:-}}"
+  [[ -n "${env_conf_ref_root}" ]] || return 0
+  
+  local -r env_conf_list="${ACCOUNT_ENV_CONF_LIST-${DEFAULT_ENV_CONF_LIST:-}}"
+  for conf_file in ${env_conf_list}; do
+    src_conf="${env_conf_ref_root}/${conf_file}"
     if [[ -f "${src_conf}" ]]; then
       dst_conf="${USER_HOME}/${conf_file}"
       sudo touch "${dst_conf}"
       sudo chmod 722 "${dst_conf}"
-      sudo cat "${src_conf}" > "${dst_conf}"
+      cat < "${src_conf}" | sudo tee "${dst_conf}" >/dev/null
       sudo chmod 644 "${dst_conf}"
       sudo chown "${USERNAME}":"${USERNAME}" "${dst_conf}"
     fi
   done
-fi
+}
 
-# Generate SSH keys (private/public)
-readonly USER_SSH_ROOT="${USER_HOME}/.ssh"
-sudo mkdir -p "${USER_SSH_ROOT}"
-sudo ssh-keygen -t rsa -f "${USER_SSH_ROOT}/id_rsa" -P '' -q
-check_err "failed to generate SSH key pair for account '${USERNAME}'"
+config_ssh_keys() {
+  [[ "${FLAG_ARG_NO_SSH_KEY:-}" = "true" ]] && return 0
+  
+  local -r user_ssh_root="${USER_HOME}/.ssh"
+  
+  # Generate SSH keys (private/public)
+  sudo mkdir -p "${user_ssh_root}"
+  sudo ssh-keygen -t rsa -f "${user_ssh_root}/id_rsa" -P '' -q
+  check_err "failed to generate SSH key pair for account '${USERNAME}'"
+  
+  # Authorize the public key for the user account
+  sudo touch "${user_ssh_root}/authorized_keys"
+  sudo chmod 722 "${user_ssh_root}/authorized_keys"
+  cat < "${user_ssh_root}/id_rsa.pub" | sudo tee -a "${user_ssh_root}/authorized_keys" >/dev/null
+  sudo chmod 600 "${user_ssh_root}/authorized_keys"
+  
+  # Copy the private key to the management folder
+  local -r pem_home="${ACCOUNT_PEM_HOME-${DEFAULT_PEM_HOME:-"$(pwd -P)/pem${GROUP:+"-${GROUP}"}"}}"
+  sudo mkdir -p "${pem_home}"
+  sudo cp -f "${user_ssh_root}/id_rsa" "${pem_home}/${USERNAME}.pem"
+  sudo chmod +r "${pem_home}/${USERNAME}.pem"
+  
+  # Configure access admissions
+  sudo chown -R "${USERNAME}":"${USERNAME}" "${user_ssh_root}"
+}
 
-# Authorize the public key for the user account
-sudo touch "${USER_SSH_ROOT}/authorized_keys"
-sudo chmod 722 "${USER_SSH_ROOT}/authorized_keys"
-sudo cat "${USER_SSH_ROOT}/id_rsa.pub" >> "${USER_SSH_ROOT}/authorized_keys"
-sudo chmod 600 "${USER_SSH_ROOT}/authorized_keys"
+#######################################
+# Check and process command-line arguments.
+# Globals:
+#   <none>
+# Arguments:
+#   Command-line arguments
+# Returns:
+#   Variables and flags set according to the command-line arguments
+#
+# Notes: Programming instructions for adding variables to be set by
+#        command-line argument
+#   (1) Add 'unset -v FLAG_ARG_SET_XXX' at the head
+#   (2) Add a case entry with 'deal_with_arg_opt' for the option
+#   (3) Add an 'arg_set_opt_var' entry with variable name specified in the
+#       default case, ending with "||"
+#   (4) Add a 'check_dangling_arg_opt' entry at the end
+#
+# To add boolean option to be set by command-line argument, just follow
+# the above steps (1) and (2) but not (3) and (4). The flag variable should
+# follow the naming convention 'FLAG_ARG_XXX'.
+#######################################
+check_args() {
+  # unset variables of option flags
+  unset -v FLAG_ARG_NO_SSH_KEY
+  unset -v FLAG_ARG_SET_PASSWORD
+  
+  # process each command-line argument
+  for arg in "$@"; do
+    case "${arg}" in
+      # Print help message
+      '--help'|'-h'|'-?' )
+        print_usage
+        exit 0
+      ;;
+      # Option: without generating SSH keys
+      '--no-ssh-key' )
+        deal_with_arg_opt "--no-ssh-key" "FLAG_ARG_NO_SSH_KEY"
+      ;;
+      # Option: specify password
+      '--password'|'-p' )
+        deal_with_arg_opt "--password" "FLAG_ARG_SET_PASSWORD"
+      ;;
+      # Unknown options
+      '-'* )
+        err "Unknown command argument(s) '${arg}' (see '--help' for usage)"
+        exit 126
+      ;;
+      # Default: assign variables
+      * )
+        arg_set_opt_var "--password" "FLAG_ARG_SET_PASSWORD" "ARG_PASSWORD" "${arg}" ||
+        arg_set_pos_var "${arg}"  # KEEP THIS AT THE TAIL
+      ;;
+    esac
+  done
+  
+  # sanity check
+  check_dangling_arg_opt "--password" "FLAG_ARG_SET_PASSWORD"
+}
 
-# Copy the private key to the management folder
-if [[ -n "${PEM_HOME}" ]]; then
-  sudo mkdir -p "${PEM_HOME}"
-  sudo cp -f "${USER_SSH_ROOT}/id_rsa" "${PEM_HOME}/${USERNAME}.pem"
-  sudo chmod +r "${PEM_HOME}/${USERNAME}.pem"
-fi
+print_usage() {
+cat <<EndOfMsg
+Usage: ${__SCRIPT_NAME} <id>
 
-# Configure access admissions
-sudo chown -R "${USERNAME}":"${USERNAME}" "${USER_SSH_ROOT}"
-sudo chmod 700 "${USER_HOME}"
+Options:
+  -h, -?, --help    display this help and exit
+  --no-ssh-key      without generating SSH keys
+  -p, --password    specify account password
 
-# End of script
-info "Account '${USERNAME}' has been created successfully"
-exit 0
+EndOfMsg
+}
+
+# Execution (SHOULDN'T EDIT AFTER THIS LINE!)
+main "$@"
+[[ "$0" != "${BASH_SOURCE[0]}" ]] || exit 0
