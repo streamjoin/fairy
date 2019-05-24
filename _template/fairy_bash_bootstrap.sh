@@ -106,7 +106,6 @@ check_args() {
   check_dangling_arg_opt "--set-var" "FLAG_ARG_SET_VAR"
 }
 
-# TODO(linqian): Add help message for other sample options.
 print_usage() {
 cat <<EndOfMsg
 Usage: ${__SCRIPT_NAME} [OPTION]...
