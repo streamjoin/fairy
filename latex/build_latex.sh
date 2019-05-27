@@ -44,10 +44,12 @@ main() {
   pushd "${WORK_DIR}" >/dev/null
   clean_all
   if [[ -z "${FLAG_ARG_CLEAN_ONLY:-}" ]]; then
-    prepare
+    mkdir -p "${BUILD_DIR}"
+    prepare_bib
     compile
     deliver
     finish
+    delete_dir "${BUILD_DIR}"
   fi
   popd >/dev/null
 }
@@ -107,45 +109,43 @@ clean_all() {
   echo "done"
 }
 
-prepare() {
-  mkdir -p "${BUILD_DIR}"
+prepare_bib() {
+  [[ -n "${CMD_BIBTEX}" ]] || return 0
   
-  if [[ -n "${CMD_BIBTEX}" ]]; then
-    local -r src_bib="${SRC_BIB_NAME:-}.bib"
+  local -r src_bib="${SRC_BIB_NAME:-}.bib"
+  
+  local -r tgt_bib_name="${TGT_BIB_NAME:-"${SRC_BIB_NAME:+"${SRC_BIB_NAME}-trim"}"}"
+  [[ "${tgt_bib_name}" != "${SRC_BIB_NAME:-}" ]]
+  check_err "Target .bib cannot be the source .bib itself"
+  
+  if [[ -n "${TRIMBIB_JAR}" ]] && [[ -f "${WORK_DIR}/${src_bib}" ]]; then
+    readonly TGT_BIB="${tgt_bib_name}.bib"
     
-    local -r tgt_bib_name="${TGT_BIB_NAME:-"${SRC_BIB_NAME:+"${SRC_BIB_NAME}-trim"}"}"
-    [[ "${tgt_bib_name}" != "${SRC_BIB_NAME:-}" ]]
-    check_err "Target .bib cannot be the source .bib itself"
+    printf "Formatting %s ... " "${WORK_DIR}/${src_bib}"
     
-    if [[ -n "${TRIMBIB_JAR}" ]] && [[ -f "${WORK_DIR}/${src_bib}" ]]; then
+    check_cmd_exists "java"
+    java -jar "${TRIMBIB_JAR}" -i "${WORK_DIR}/${src_bib}" -d "${WORK_DIR}" \
+    -o "${TGT_BIB}" --overwrite "${TRIMBIB_ARGS[@]}" \
+    > "${WORK_DIR}/${TRIMBIB_LOG}" 2>&1
+    check_err "Failed to format '${WORK_DIR}/${src_bib}'"
+    
+    echo "done"
+    info "Formatted bib: ${WORK_DIR}/${TGT_BIB}"
+    info "Log of bib formatting: ${WORK_DIR}/${TRIMBIB_LOG}"
+    
+  else  # no bib formatting to perform
+    if [[ -f "${WORK_DIR}/${tgt_bib_name}.bib" ]]; then
       readonly TGT_BIB="${tgt_bib_name}.bib"
-      
-      printf "Formatting %s ... " "${WORK_DIR}/${src_bib}"
-      
-      check_cmd_exists "java"
-      java -jar "${TRIMBIB_JAR}" -i "${WORK_DIR}/${src_bib}" -d "${WORK_DIR}" \
-      -o "${TGT_BIB}" --overwrite "${TRIMBIB_ARGS[@]}" \
-      > "${WORK_DIR}/${TRIMBIB_LOG}" 2>&1
-      check_err "Failed to format '${WORK_DIR}/${src_bib}'"
-      
-      echo "done"
-      info "Formatted bib: ${WORK_DIR}/${TGT_BIB}"
-      info "Log of bib formatting: ${WORK_DIR}/${TRIMBIB_LOG}"
-      
-    else  # no bib formatting to perform
-      if [[ -f "${WORK_DIR}/${tgt_bib_name}.bib" ]]; then
-        readonly TGT_BIB="${tgt_bib_name}.bib"
-      elif [[ -f "${WORK_DIR}/${src_bib}" ]]; then
-        readonly TGT_BIB="${src_bib}"
-      else
-        check_err "Failed to find .bib file"
-      fi
+    elif [[ -f "${WORK_DIR}/${src_bib}" ]]; then
+      readonly TGT_BIB="${src_bib}"
+    else
+      check_err "Failed to find .bib file"
     fi
-    
-    ln -s "${WORK_DIR}/${TGT_BIB}" "${BUILD_DIR}/${TGT_BIB}"
-    
-    find_and_link_files_by_ext "bst" "${WORK_DIR}" "${BUILD_DIR}" || true
   fi
+  
+  ln -s "${WORK_DIR}/${TGT_BIB}" "${BUILD_DIR}/${TGT_BIB}"
+  
+  find_and_link_files_by_ext "bst" "${WORK_DIR}" "${BUILD_DIR}" || true
 }
 
 compile() {
@@ -211,8 +211,6 @@ deliver() {
   
   [[ -n "${CMD_BIBTEX}" ]] &&
   mv "${BUILD_DIR}/${TEX_NAME}.bbl" "${WORK_DIR}/${TEX_NAME}.bbl"
-  
-  delete_dir "${BUILD_DIR}"
   
   readonly CMD_MD5SUM="$(cmd_md5sum)"
   [[ "$(command -v "${CMD_MD5SUM}")" ]] &&
