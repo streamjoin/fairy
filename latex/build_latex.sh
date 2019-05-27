@@ -2,10 +2,18 @@
 #
 # Execution of compiling LaTeX project.
 
+# Do not allow use of undefined vars. Use ${VAR:-} to use an undefined VAR
 set -o nounset
+# Exit on error. Append "|| true" if you expect an error.
 set -o errexit
+# Exit on error inside any functions or subshells.
 set -o errtrace
+# Catch the error in case mysqldump fails (but gzip succeeds) in `mysqldump |gzip`
 set -o pipefail
+# Turn on traces, useful while debugging but commented out by default
+# set -o xtrace
+
+IFS=$'\t\n'    # Split on newlines and tabs (but not on spaces)
 
 [[ -n "${__SCRIPT_DIR+x}" ]] ||
 readonly __SCRIPT_DIR="$(cd "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
@@ -258,7 +266,8 @@ check_args() {
       ;;
       # Default: assign variable
       * )
-        arg_set_opt_var "--pdf-name" "FLAG_ARG_SET_PDF_NAME" "ARG_PDF_NAME" "${arg}"
+        arg_set_opt_var "--pdf-name" "FLAG_ARG_SET_PDF_NAME" "ARG_PDF_NAME" "${arg}" ||
+        arg_set_pos_var "${arg}"  # KEEP THIS AT THE TAIL
       ;;
     esac
   done

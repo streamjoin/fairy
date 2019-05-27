@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+#
+# Create an account.
 
 # Do not allow use of undefined vars. Use ${VAR:-} to use an undefined VAR
 set -o nounset
@@ -66,18 +68,17 @@ create_account() {
   
   # Create groups, if necessary
   for grp in ${GROUP} ${add_on_groups}; do
-    [[ -n "$(getent group "${grp}")" ]] || (sudo groupadd "${grp}")
-    check_err "failed to create non-existing group '${grp}'"
+    [[ -n "$(getent group "${grp}")" ]] || (sudo groupadd "${grp}") ||
+    check_err "Failed to create non-existing group '${grp}'"
   done
   
   # Delete the group named after the account
-  [[ -z "$(getent group "${USERNAME}")" ]] || (sudo groupdel "${USERNAME}")
-  check_err "failed to delete existing group '${USERNAME}'"
+  [[ -z "$(getent group "${USERNAME}")" ]] || (sudo groupdel "${USERNAME}") ||
+  check_err "Failed to delete existing group '${USERNAME}'"
   
   # Create account
-  sudo useradd "${USERNAME}" "${GROUP:+"-G"}" "${GROUP}" -m -d "${USER_HOME}" -s /bin/bash
-  
-  check_err "failed to create account '${USERNAME}'"
+  sudo useradd "${USERNAME}" "${GROUP:+"-G"}" "${GROUP}" -m -d "${USER_HOME}" -s /bin/bash ||
+  check_err "Failed to create account '${USERNAME}'"
   
   for grp in ${add_on_groups}; do
     sudo usermod -a -G "${grp}" "${USERNAME}"
@@ -95,7 +96,7 @@ config_account() {
 config_passwd() {
   local -r password="${ARG_PASSWORD-"${ACCOUNT_PASSWORD_INIT-${DEFAULT_PASSWORD_INIT:-}}${ID}"}"
   echo -e "${password}\n${password}" | sudo passwd "${USERNAME}" >/dev/null 2>&1 ||
-  check_err "failed to set password for account '${USERNAME}'"
+  check_err "Failed to set password for account '${USERNAME}'"
 }
 
 config_env() {
@@ -123,8 +124,8 @@ config_ssh_keys() {
   
   # Generate SSH keys (private/public)
   sudo mkdir -p "${user_ssh_root}"
-  sudo ssh-keygen -t rsa -f "${user_ssh_root}/id_rsa" -P '' -q
-  check_err "failed to generate SSH key pair for account '${USERNAME}'"
+  sudo ssh-keygen -t rsa -f "${user_ssh_root}/id_rsa" -P '' -q ||
+  check_err "Failed to generate SSH key pair for account '${USERNAME}'"
   
   # Authorize the public key for the user account
   sudo touch "${user_ssh_root}/authorized_keys"
@@ -203,7 +204,7 @@ check_args() {
 
 print_usage() {
 cat <<EndOfMsg
-Usage: ${__SCRIPT_NAME} <id>
+Usage: ${__SCRIPT_NAME} [OPTION]... <id>
 
 Options:
   -h, -?, --help    display this help and exit
