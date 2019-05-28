@@ -15,14 +15,11 @@ set -o pipefail
 
 IFS=$'\t\n'    # Split on newlines and tabs (but not on spaces)
 
-[[ -n "${__SCRIPT_DIR+x}" ]] ||
-readonly __SCRIPT_DIR="$(cd "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
-
-[[ -n "${__SCRIPT_NAME+x}" ]] ||
-readonly __SCRIPT_NAME="$(basename -- "$0")"
+[[ -n "${__SCRIPT_DIR+x}" ]] || readonly __SCRIPT_DIR="$(cd "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+[[ -n "${__SCRIPT_NAME+x}" ]] || readonly __SCRIPT_NAME="$(basename -- "$0")"
 
 # Include libraries
-readonly FAIRY_HOME="${FAIRY_HOME:-${__SCRIPT_DIR}/..}"
+[[ -n "${FAIRY_HOME+x}" ]] || readonly FAIRY_HOME="${__SCRIPT_DIR}/.."
 # shellcheck disable=SC1090
 source "${FAIRY_HOME}/_common_lib/argument_utils.sh"
 # shellcheck disable=SC1090
@@ -33,7 +30,7 @@ source "${FAIRY_HOME}/_common_lib/output_utils.sh"
 source "${FAIRY_HOME}/_common_lib/system.sh"
 
 # Global variables
-readonly START_TIME="$(timer)"
+[[ -n "${__START_TIME+x}" ]] || readonly __START_TIME="$(timer)"
 
 # The main function
 main() {
@@ -224,7 +221,7 @@ finish() {
   info "------------------------------------------------------------------------"
   info "Output: ${WORK_DIR}/${PDF_NAME}.pdf (${pdf_bytes} bytes)"
   info "Finished at: $(date +"%T %Z, %-d %B %Y")"
-  info "Total time: $(timer "${START_TIME}")"
+  info "Total time: $(timer "${__START_TIME}")"
   info "------------------------------------------------------------------------"
 }
 

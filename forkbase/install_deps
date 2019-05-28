@@ -4,26 +4,31 @@
 #
 # https://github.com/streamjoin/forkbase-doc/blob/master/installation/install-deps.md
 
+# Do not allow use of undefined vars. Use ${VAR:-} to use an undefined VAR
 set -o nounset
+# Exit on error. Append "|| true" if you expect an error.
 set -o errexit
+# Exit on error inside any functions or subshells.
 set -o errtrace
+# Catch the error in case mysqldump fails (but gzip succeeds) in `mysqldump |gzip`
 set -o pipefail
+# Turn on traces, useful while debugging but commented out by default
+# set -o xtrace
 
-[[ -n "${__SCRIPT_DIR+x}" ]] ||
-readonly __SCRIPT_DIR="$(cd "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+IFS=$'\t\n'    # Split on newlines and tabs (but not on spaces)
 
-[[ -n "${__SCRIPT_NAME+x}" ]] ||
-readonly __SCRIPT_NAME="$(basename -- "$0")"
+[[ -n "${__SCRIPT_DIR+x}" ]] || readonly __SCRIPT_DIR="$(cd "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+[[ -n "${__SCRIPT_NAME+x}" ]] || readonly __SCRIPT_NAME="$(basename -- "$0")"
 
 # Include libraries
-readonly FAIRY_HOME="${FAIRY_HOME:-${__SCRIPT_DIR}/..}"
+[[ -n "${FAIRY_HOME+x}" ]] || readonly FAIRY_HOME="${__SCRIPT_DIR}/.."
 # shellcheck disable=SC1090
 source "${FAIRY_HOME}/_common_lib/output_utils.sh"
 # shellcheck disable=SC1090
 source "${FAIRY_HOME}/_common_lib/system.sh"
 
 # Global variables
-readonly START_TIME="$(timer)"
+[[ -n "${__START_TIME+x}" ]] || readonly __START_TIME="$(timer)"
 
 readonly BASH_PROFILE="${USTORE_BASH_PROFILE:-"${HOME}/.bash_profile"}"
 
@@ -124,8 +129,8 @@ EndOfMsg
 
 deal_with_arg_download() {
   OPT_DOWNLOAD_ONLY="true"
-  rmdir --ignore-fail-on-non-empty "${DEPS_DIR}"
-  rmdir --ignore-fail-on-non-empty "${TEMP_DIR}"
+  try_delete_empty_dir "${DEPS_DIR}"
+  try_delete_empty_dir "${TEMP_DIR}"
 }
 
 assign_var () {
@@ -171,7 +176,7 @@ finish_install() {
   info "Installed in: ${DEPS_DIR}"
   info "Updated configuration: ${BASH_PROFILE}"
   info "Finished at: $(date +"%T %Z, %-d %B %Y")"
-  info "Total time: $(timer "${START_TIME}")"
+  info "Total time: $(timer "${__START_TIME}")"
   info "------------------------------------------------------------------------"
 }
 
@@ -181,7 +186,7 @@ finish_download() {
   info "------------------------------------------------------------------------"
   info "Downloaded to: ${DOWNLOAD_DIR}"
   info "Finished at: $(date +"%T %Z, %-d %B %Y")"
-  info "Total time: $(timer "${START_TIME}")"
+  info "Total time: $(timer "${__START_TIME}")"
   info "------------------------------------------------------------------------"
 }
 
