@@ -4,7 +4,7 @@
 #
 # Dependencies: output_utils.sh
 
-DEFAULT_ACCOUNT_SCRIPT_CONF="${HOME}/account/conf/account_script.conf.default"
+readonly DEFAULT_ACCOUNT_SCRIPT_CONF="${FAIRY_HOME:+"${FAIRY_HOME}/account/conf/account_script.conf.default"}"
 
 # Inlcude script configuration
 readonly SCRIPT_CONF="${ACCOUNT_SCRIPT_CONF:-${DEFAULT_ACCOUNT_SCRIPT_CONF}}"

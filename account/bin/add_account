@@ -203,7 +203,7 @@ check_args() {
       # Default: assign variables
       * )
         arg_set_opt_var "--password" "FLAG_ARG_SET_PASSWORD" "ARG_PASSWORD" "${arg}" ||
-        arg_set_pos_var "${arg}"  # KEEP THIS AT THE TAIL
+        arg_set_pos_var "${arg}"    # KEEP THIS AT THE TAIL
       ;;
     esac
   done

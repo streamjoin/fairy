@@ -2,10 +2,10 @@
 #
 # Account script configuration.
 
-readonly DEFAULT_PEM_HOME="$HOME/account/private_keys"
+readonly DEFAULT_PEM_HOME="${HOME}/account/private_keys"
 readonly DEFAULT_USER_HOME_ROOT="$(dirname -- "$HOME")"
 readonly DEFAULT_ENV_CONF_REF_ROOT="/usr/local/share"
-readonly DEFAULT_ENV_CONF_LIST=(".bashrc" ".bash_aliases" ".bash_profile" ".profile" ".vimrc")
-readonly DEFAULT_ADD_ON_GROUPS=("docker")
+readonly DEFAULT_ENV_CONF_LIST=('.bashrc' '.bash_aliases' '.bash_profile' '.profile' '.vimrc')
+readonly DEFAULT_ADD_ON_GROUPS=()
 readonly DEFAULT_USERNAME_INIT="sandbox"
 readonly DEFAULT_PASSWORD_INIT="SB"

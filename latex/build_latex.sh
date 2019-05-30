@@ -262,7 +262,7 @@ check_args() {
       # Default: assign variable
       * )
         arg_set_opt_var "--pdf-name" "FLAG_ARG_SET_PDF_NAME" "ARG_PDF_NAME" "${arg}" ||
-        arg_set_pos_var "${arg}"  # KEEP THIS AT THE TAIL
+        arg_set_pos_var "${arg}"    # KEEP THIS AT THE TAIL
       ;;
     esac
   done
