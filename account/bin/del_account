@@ -23,11 +23,7 @@ IFS=$'\t\n'    # Split on newlines and tabs (but not on spaces)
 # shellcheck disable=SC1090
 source "${FAIRY_HOME}/_common_lib/argument_utils.sh"
 # shellcheck disable=SC1090
-source "${FAIRY_HOME}/_common_lib/filesystem.sh"
-# shellcheck disable=SC1090
 source "${FAIRY_HOME}/_common_lib/output_utils.sh"
-# shellcheck disable=SC1090
-source "${FAIRY_HOME}/_common_lib/system.sh"
 # shellcheck disable=SC1090
 source "${FAIRY_HOME}/account/lib/load_script_conf.sh"
 

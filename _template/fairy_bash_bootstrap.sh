@@ -19,11 +19,11 @@ IFS=$'\t\n'    # Split on newlines and tabs (but not on spaces)
 # Include libraries
 [[ -n "${FAIRY_HOME+x}" ]] || readonly FAIRY_HOME="${__SCRIPT_DIR}/.."
 # shellcheck disable=SC1090
+source "${FAIRY_HOME}/_common_lib/output_utils.sh"
+# shellcheck disable=SC1090
 source "${FAIRY_HOME}/_common_lib/argument_utils.sh"
 # shellcheck disable=SC1090
 source "${FAIRY_HOME}/_common_lib/filesystem.sh"
-# shellcheck disable=SC1090
-source "${FAIRY_HOME}/_common_lib/output_utils.sh"
 # shellcheck disable=SC1090
 source "${FAIRY_HOME}/_common_lib/system.sh"
 

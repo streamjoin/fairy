@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 #
 # Operating system related utilities.
-#
-# Dependencies: output_utils.sh
+
+[[ -n "${__FAIRY_COMMON_LIB_SYSTEM_SH__+x}" ]] && return
+readonly __FAIRY_COMMON_LIB_SYSTEM_SH__=1
+
+# Include dependencies
+[[ -n "${FAIRY_HOME+x}" ]] || readonly FAIRY_HOME="$(cd "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)/.."
+# shellcheck disable=SC1090
+source "${FAIRY_HOME}/_common_lib/output_utils.sh"
 
 check_cmd_exists() {
   [[ "$#" -gt 0 ]] && [[ "$#" -le 2 ]]

@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 #
 # Utilities for file and directory manipulation.
-#
-# Dependencies: output_utils.sh
+
+[[ -n "${__FAIRY_COMMON_LIB_FILESYSTEM_SH__+x}" ]] && return
+readonly __FAIRY_COMMON_LIB_FILESYSTEM_SH__=1
+
+# Include dependencies
+[[ -n "${FAIRY_HOME+x}" ]] || readonly FAIRY_HOME="$(cd "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)/.."
+# shellcheck disable=SC1090
+source "${FAIRY_HOME}/_common_lib/output_utils.sh"
 
 delete_file() {
   rm -f "$1"

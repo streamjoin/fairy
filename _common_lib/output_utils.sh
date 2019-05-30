@@ -2,6 +2,9 @@
 #
 # Output utilities
 
+[[ -n "${__FAIRY_COMMON_LIB_OUTPUT_UTILS_SH__+x}" ]] && return
+readonly __FAIRY_COMMON_LIB_OUTPUT_UTILS_SH__=1
+
 readonly __FONT_NE="\033[0m"  # for reset font
 readonly __FONT_BOLD="\033[1m"
 

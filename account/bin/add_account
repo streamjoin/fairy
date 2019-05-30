@@ -23,11 +23,7 @@ IFS=$'\t\n'    # Split on newlines and tabs (but not on spaces)
 # shellcheck disable=SC1090
 source "${FAIRY_HOME}/_common_lib/argument_utils.sh"
 # shellcheck disable=SC1090
-source "${FAIRY_HOME}/_common_lib/filesystem.sh"
-# shellcheck disable=SC1090
 source "${FAIRY_HOME}/_common_lib/output_utils.sh"
-# shellcheck disable=SC1090
-source "${FAIRY_HOME}/_common_lib/system.sh"
 # shellcheck disable=SC1090
 source "${FAIRY_HOME}/account/lib/load_script_conf.sh"
 
@@ -61,9 +57,9 @@ set_globals() {
 }
 
 create_account() {
-  if [[ -n "${ACCOUNT_ADD_ON_GROUPS:-}" ]]; then
+  if [[ -n "${ACCOUNT_ADD_ON_GROUPS+x}" ]]; then
     local -ar add_on_groups=("${ACCOUNT_ADD_ON_GROUPS[@]}")
-  elif [[ -n "${DEFAULT_ADD_ON_GROUPS:-}" ]]; then
+  elif [[ -n "${DEFAULT_ADD_ON_GROUPS+x}" ]]; then
     local -ar add_on_groups=("${DEFAULT_ADD_ON_GROUPS[@]}")
   else
     local -ar add_on_groups=()
@@ -106,9 +102,9 @@ config_env() {
   local -r env_conf_ref_root="${ACCOUNT_ENV_CONF_REF_ROOT-${DEFAULT_ENV_CONF_REF_ROOT:-}}"
   [[ -n "${env_conf_ref_root}" ]] || return 0
   
-  if [[ -n "${ACCOUNT_ENV_CONF_LIST:-}" ]]; then
+  if [[ -n "${ACCOUNT_ENV_CONF_LIST+x}" ]]; then
     local -ar env_conf_list=("${ACCOUNT_ENV_CONF_LIST[@]}")
-  elif [[ -n "${DEFAULT_ENV_CONF_LIST:-}" ]]; then
+  elif [[ -n "${DEFAULT_ENV_CONF_LIST+x}" ]]; then
     local -ar env_conf_list=("${DEFAULT_ENV_CONF_LIST[@]}")
   else
     local -ar env_conf_list=()
@@ -128,7 +124,7 @@ config_env() {
 }
 
 config_ssh_keys() {
-  [[ "${FLAG_ARG_NO_SSH_KEY:-}" = "true" ]] && return 0
+  [[ -n "${FLAG_ARG_NO_SSH_KEY+x}" ]] && return 0
   
   local -r user_ssh_root="${USER_HOME}/.ssh"
   

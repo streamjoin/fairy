@@ -14,11 +14,8 @@ set -o pipefail
 IFS=$'\t\n'    # Split on newlines and tabs (but not on spaces)
 
 # Global variables
-[[ -n "${__SCRIPT_DIR+x}" ]] ||
-readonly __SCRIPT_DIR="$(cd "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
-
-[[ -n "${__SCRIPT_NAME+x}" ]] ||
-readonly __SCRIPT_NAME="$(basename -- "$0")"
+[[ -n "${__SCRIPT_DIR+x}" ]] || readonly __SCRIPT_DIR="$(cd "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+[[ -n "${__SCRIPT_NAME+x}" ]] || readonly __SCRIPT_NAME="$(basename -- "$0")"
 
 # The main function
 main() {
