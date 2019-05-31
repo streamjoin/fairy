@@ -133,28 +133,29 @@ config_ssh_keys() {
   
   # Generate SSH keys (private/public)
   sudo mkdir -p "${user_ssh_root}"
-  local -r temp_pem="id_rsa_$(date +%Y%m%d_%H%M%S)"
+  local -r pem="id_rsa"
   if [[ -n "${ARG_PEM+x}" ]]; then
     check_file_exists "${ARG_PEM}"
-    cat < "${ARG_PEM}" | sudo tee "${user_ssh_root}/${temp_pem}" >/dev/null
-    ssh-keygen -f "${ARG_PEM}" -y | sudo tee "${user_ssh_root}/${temp_pem}.pub" >/dev/null ||
+    cat < "${ARG_PEM}" | sudo tee "${user_ssh_root}/${pem}" >/dev/null
+    sudo chmod 600 "${user_ssh_root}/${pem}"
+    
+    ssh-keygen -f "${ARG_PEM}" -y | sudo tee "${user_ssh_root}/${pem}.pub" >/dev/null ||
     check_err "Failed to generate public key from private key '${ARG_PEM}'"
   else
-    sudo ssh-keygen -t rsa -f "${user_ssh_root}/${temp_pem}" -P '' -q ||
+    sudo ssh-keygen -t rsa -f "${user_ssh_root}/${pem}" -P '' -q ||
     check_err "Failed to generate SSH key pair for account '${USERNAME}'"
   fi
   
   # Authorize the public key for the user account
   sudo touch "${user_ssh_root}/authorized_keys"
   sudo chmod 722 "${user_ssh_root}/authorized_keys"
-  cat < "${user_ssh_root}/${temp_pem}.pub" | sudo tee -a "${user_ssh_root}/authorized_keys" >/dev/null
+  cat < "${user_ssh_root}/${pem}.pub" | sudo tee -a "${user_ssh_root}/authorized_keys" >/dev/null
   sudo chmod 600 "${user_ssh_root}/authorized_keys"
-  sudo rm -f "${user_ssh_root}/${temp_pem}.pub"
   
-  # Move the private key to the management folder
+  # Copy the private key to the management folder
   local -r pem_home="${ACCOUNT_PEM_HOME-${DEFAULT_PEM_HOME:-"$(pwd -P)/pem${GROUP:+"-${GROUP}"}"}}"
   sudo mkdir -p "${pem_home}"
-  sudo mv -f "${user_ssh_root}/${temp_pem}" "${pem_home}/${USERNAME}.pem"
+  sudo cp -f "${user_ssh_root}/${pem}" "${pem_home}/${USERNAME}.pem"
   sudo chmod +r "${pem_home}/${USERNAME}.pem"
   
   # Configure access admissions
