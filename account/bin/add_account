@@ -139,7 +139,7 @@ config_ssh_keys() {
     cat < "${ARG_PEM}" | sudo tee "${user_ssh_root}/${pem}" >/dev/null
     sudo chmod 600 "${user_ssh_root}/${pem}"
     
-    ssh-keygen -f "${ARG_PEM}" -y | sudo tee "${user_ssh_root}/${pem}.pub" >/dev/null ||
+    sudo ssh-keygen -f "${user_ssh_root}/${pem}" -y | sudo tee "${user_ssh_root}/${pem}.pub" >/dev/null ||
     check_err "Failed to generate public key from private key '${ARG_PEM}'"
   else
     sudo ssh-keygen -t rsa -f "${user_ssh_root}/${pem}" -P '' -q ||
