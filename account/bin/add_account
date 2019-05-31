@@ -21,9 +21,11 @@ IFS=$'\t\n'    # Split on newlines and tabs (but not on spaces)
 # Include libraries
 [[ -n "${FAIRY_HOME+x}" ]] || readonly FAIRY_HOME="${__SCRIPT_DIR}/../.."
 # shellcheck disable=SC1090
+source "${FAIRY_HOME}/_common_lib/output_utils.sh"
+# shellcheck disable=SC1090
 source "${FAIRY_HOME}/_common_lib/argument_utils.sh"
 # shellcheck disable=SC1090
-source "${FAIRY_HOME}/_common_lib/output_utils.sh"
+source "${FAIRY_HOME}/_common_lib/filesystem.sh"
 # shellcheck disable=SC1090
 source "${FAIRY_HOME}/account/lib/load_script_conf.sh"
 
@@ -67,6 +69,7 @@ create_account() {
   
   # Create groups, if necessary
   for grp in "${GROUP}" "${add_on_groups[@]}"; do
+    [[ -z "${grp}" ]] ||
     [[ -n "$(getent group "${grp}")" ]] || sudo groupadd "${grp}" ||
     check_err "Failed to create non-existing group '${grp}'"
   done
@@ -130,19 +133,28 @@ config_ssh_keys() {
   
   # Generate SSH keys (private/public)
   sudo mkdir -p "${user_ssh_root}"
-  sudo ssh-keygen -t rsa -f "${user_ssh_root}/id_rsa" -P '' -q ||
-  check_err "Failed to generate SSH key pair for account '${USERNAME}'"
+  local -r temp_pem="id_rsa_$(date +%Y%m%d_%H%M%S)"
+  if [[ -n "${ARG_PEM+x}" ]]; then
+    check_file_exists "${ARG_PEM}"
+    cat < "${ARG_PEM}" | sudo tee "${user_ssh_root}/${temp_pem}" >/dev/null
+    ssh-keygen -f "${ARG_PEM}" -y | sudo tee "${user_ssh_root}/${temp_pem}.pub" >/dev/null ||
+    check_err "Failed to generate public key from private key '${ARG_PEM}'"
+  else
+    sudo ssh-keygen -t rsa -f "${user_ssh_root}/${temp_pem}" -P '' -q ||
+    check_err "Failed to generate SSH key pair for account '${USERNAME}'"
+  fi
   
   # Authorize the public key for the user account
   sudo touch "${user_ssh_root}/authorized_keys"
   sudo chmod 722 "${user_ssh_root}/authorized_keys"
-  cat < "${user_ssh_root}/id_rsa.pub" | sudo tee -a "${user_ssh_root}/authorized_keys" >/dev/null
+  cat < "${user_ssh_root}/${temp_pem}.pub" | sudo tee -a "${user_ssh_root}/authorized_keys" >/dev/null
   sudo chmod 600 "${user_ssh_root}/authorized_keys"
+  sudo rm -f "${user_ssh_root}/${temp_pem}.pub"
   
-  # Copy the private key to the management folder
+  # Move the private key to the management folder
   local -r pem_home="${ACCOUNT_PEM_HOME-${DEFAULT_PEM_HOME:-"$(pwd -P)/pem${GROUP:+"-${GROUP}"}"}}"
   sudo mkdir -p "${pem_home}"
-  sudo cp -f "${user_ssh_root}/id_rsa" "${pem_home}/${USERNAME}.pem"
+  sudo mv -f "${user_ssh_root}/${temp_pem}" "${pem_home}/${USERNAME}.pem"
   sudo chmod +r "${pem_home}/${USERNAME}.pem"
   
   # Configure access admissions
@@ -172,8 +184,9 @@ config_ssh_keys() {
 #######################################
 check_args() {
   # unset variables of option flags
-  unset -v FLAG_ARG_NO_SSH_KEY
   unset -v FLAG_ARG_SET_PASSWORD
+  unset -v FLAG_ARG_SET_PEM
+  unset -v FLAG_ARG_NO_SSH_KEY
   
   # process each command-line argument
   for arg in "$@"; do
@@ -183,13 +196,17 @@ check_args() {
         print_usage
         exit 0
       ;;
-      # Option: without generating SSH keys
-      '--no-ssh-key' )
-        deal_with_arg_opt "--no-ssh-key" "FLAG_ARG_NO_SSH_KEY"
-      ;;
       # Option: specify password
       '--password'|'-p' )
         deal_with_arg_opt "--password" "FLAG_ARG_SET_PASSWORD"
+      ;;
+      # Option: specify private key
+      '--private-key'|'-f' )
+        deal_with_arg_opt "--private-key" "FLAG_ARG_SET_PEM"
+      ;;
+      # Option: without generating SSH keys
+      '--no-ssh-key' )
+        deal_with_arg_opt "--no-ssh-key" "FLAG_ARG_NO_SSH_KEY"
       ;;
       # Unknown options
       '-'* )
@@ -199,6 +216,7 @@ check_args() {
       # Default: assign variables
       * )
         arg_set_opt_var "--password" "FLAG_ARG_SET_PASSWORD" "ARG_PASSWORD" "${arg}" ||
+        arg_set_opt_var "--private-key" "FLAG_ARG_SET_PEM" "ARG_PEM" "${arg}" ||
         arg_set_pos_var "${arg}"    # KEEP THIS AT THE TAIL
       ;;
     esac
@@ -206,6 +224,7 @@ check_args() {
   
   # sanity check
   check_dangling_arg_opt "--password" "FLAG_ARG_SET_PASSWORD"
+  check_dangling_arg_opt "--private-key" "FLAG_ARG_SET_PEM"
 }
 
 print_usage() {
@@ -213,9 +232,10 @@ cat <<EndOfMsg
 Usage: ${__SCRIPT_NAME} [OPTION]... <id>
 
 Options:
-  -h, -?, --help    display this help and exit
-  --no-ssh-key      without generating SSH keys
-  -p, --password    specify account password
+  -h, -?, --help       display this help and exit
+  -p, --password       specify account password
+  -f, --private-key    specify private key
+  --no-ssh-key         without generating SSH keys
 
 EndOfMsg
 }
