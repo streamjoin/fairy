@@ -96,6 +96,7 @@ clean_all() {
   delete_file "${WORK_DIR}/${PDF_NAME}.pdf"
   delete_file "${WORK_DIR}/${PDF_NAME}.md5"
   delete_file "${WORK_DIR}/${TEX_NAME}.aux"
+  delete_file "${TRIMBIB_LOG}"
   
   [[ -n "${CMD_BIBTEX}" ]] && delete_file "${WORK_DIR}/${TEX_NAME}.bbl"
   
