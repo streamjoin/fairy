@@ -67,11 +67,11 @@ main() {
   install_dep_zmq
   install_dep_czmq
   install_dep_rocksdb
-  install_dep_gtest
-  install_dep_jdk
+  # install_dep_gtest
+  # install_dep_jdk
   install_dep_maven
-  install_dep_python3
-  install_dep_python2
+  # install_dep_python3
+  # install_dep_python2
   install_dep_ccache
   
   [[ "${in_temp_dir:-}" = "true" ]] && popd >/dev/null
@@ -129,6 +129,7 @@ EndOfMsg
 
 deal_with_arg_download() {
   OPT_DOWNLOAD_ONLY="true"
+  # TODO(linqian): these two deletes are dangerous!
   try_delete_empty_dir "${DEPS_DIR}"
   try_delete_empty_dir "${TEMP_DIR}"
 }
@@ -512,6 +513,7 @@ install_dep_jdk() {
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing OpenJDK (via APT) ..."
+  # TODO(linqian): failed in installing openjdk
   apt_install default-jdk
   readonly JDK_VER="$(javac -version | awk '{ print $2 }')"
 }
