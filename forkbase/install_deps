@@ -69,7 +69,7 @@ main() {
   install_dep_rocksdb
   # install_dep_gtest
   # install_dep_jdk
-  install_dep_maven
+  # install_dep_maven
   # install_dep_python3
   # install_dep_python2
   # install_dep_ccache
@@ -519,12 +519,12 @@ install_dep_jdk() {
 }
 
 install_dep_maven() {
-  readonly MAVEN_VER="${USTORE_MAVEN_VER:-"3.6.0"}"
+  readonly MAVEN_VER="${USTORE_MAVEN_VER:-"3.6.3"}"
   local -r maven_dl_pkg="apache-maven-${MAVEN_VER}-bin.tar.gz"
   local -r maven_pkg="${DOWNLOAD_DIR}/maven-${MAVEN_VER}.tar.gz"
   local -r maven_dir="apache-maven-${MAVEN_VER}"
   
-  download_pkg "${maven_pkg}" "https://www-us.apache.org/dist/maven/maven-${MAVEN_VER:0:1}/${MAVEN_VER}/binaries/${maven_dl_pkg}"
+  download_pkg "${maven_pkg}" "https://downloads.apache.org/maven/maven-${MAVEN_VER:0:1}/${MAVEN_VER}/binaries/${maven_dl_pkg}"
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
   info "Installing Maven ${MAVEN_VER} ..."
