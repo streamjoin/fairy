@@ -210,7 +210,7 @@ install_essentials() {
   apt_install build-essential autoconf pkg-config libtool git openssl
   
 cat >> "${BASH_PROFILE}" <<-EndOfMsg
-export SHARE_HOME="${DEPS_DIR}"
+export USTORE_DEPS_HOME="${DEPS_DIR}"
 export NCORES="\$(cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print \$NF}')"
 
 EndOfMsg
@@ -232,7 +232,7 @@ install_dep_cmake() {
   tar xzf "${cmake_pkg}"
   (
     cd "${cmake_dir}"
-    ./bootstrap --prefix="${SHARE_HOME}/cmake" --parallel="${NCORES}"
+    ./bootstrap --prefix="${USTORE_DEPS_HOME}/cmake" --parallel="${NCORES}"
     make -j "${NCORES}"
     sudo make install
   )
@@ -240,7 +240,7 @@ install_dep_cmake() {
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # CMake
-export CMAKE_HOME="${SHARE_HOME}/cmake"
+export CMAKE_HOME="${USTORE_DEPS_HOME}/cmake"
 export PATH="${CMAKE_HOME}/bin:${PATH:-}"
 
 EndOfMsg
@@ -263,14 +263,14 @@ install_dep_boost() {
   tar xjf "${boost_pkg}"
   (
     cd "${boost_dir}"
-    ./bootstrap.sh --prefix="${SHARE_HOME}/boost"
+    ./bootstrap.sh --prefix="${USTORE_DEPS_HOME}/boost"
     sudo ./b2 install -j "${NCORES}"
   )
   sudo rm -rf "${boost_dir}" "${boost_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # Boost
-export BOOST_ROOT="${SHARE_HOME}/boost"
+export BOOST_ROOT="${USTORE_DEPS_HOME}/boost"
 export CPATH="${BOOST_ROOT}/include:${CPATH:-}"
 export LD_LIBRARY_PATH="${BOOST_ROOT}/lib:${LD_LIBRARY_PATH:-}"
 export LIBRARY_PATH="${BOOST_ROOT}/lib:${LIBRARY_PATH:-}"
@@ -294,7 +294,7 @@ install_dep_gflags() {
     mkdir -p build
     rm -rf build/*
     cd build
-    cmake -DCMAKE_INSTALL_PREFIX="${SHARE_HOME}/gflags" -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=ON ..
+    cmake -DCMAKE_INSTALL_PREFIX="${USTORE_DEPS_HOME}/gflags" -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=ON ..
     make -j "${NCORES}"
     sudo make install
   )
@@ -302,7 +302,7 @@ install_dep_gflags() {
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # gflags
-export GFLAGS_ROOT="${SHARE_HOME}/gflags"
+export GFLAGS_ROOT="${USTORE_DEPS_HOME}/gflags"
 export CPATH="${GFLAGS_ROOT}/include:${CPATH:-}"
 export LD_LIBRARY_PATH="${GFLAGS_ROOT}/lib:${LD_LIBRARY_PATH:-}"
 export LIBRARY_PATH="${GFLAGS_ROOT}/lib:${LIBRARY_PATH:-}"
@@ -326,7 +326,7 @@ install_dep_protobuf() {
   (
     cd "${protobuf_dir}"
     ./autogen.sh
-    ./configure --prefix="${SHARE_HOME}/protobuf"
+    ./configure --prefix="${USTORE_DEPS_HOME}/protobuf"
     make -j "${NCORES}"
     sudo make install
   )
@@ -334,7 +334,7 @@ install_dep_protobuf() {
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # Protocol Buffers
-export PROTOBUF_ROOT="${SHARE_HOME}/protobuf"
+export PROTOBUF_ROOT="${USTORE_DEPS_HOME}/protobuf"
 export PATH="${PROTOBUF_ROOT}/bin:${PATH:-}"
 export CPATH="${PROTOBUF_ROOT}/include:${CPATH:-}"
 export LD_LIBRARY_PATH="${PROTOBUF_ROOT}/lib:${LD_LIBRARY_PATH:-}"
@@ -360,13 +360,13 @@ install_dep_cryptopp() {
   (
     cd "${cryptopp_dir}"
     make -j "${NCORES}" libcryptopp.a libcryptopp.so
-    sudo make install PREFIX="${SHARE_HOME}/cryptopp"
+    sudo make install PREFIX="${USTORE_DEPS_HOME}/cryptopp"
   )
   sudo rm -rf "${cryptopp_dir}" "${cryptopp_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # Crypto++
-export CRYPTOPP_ROOT="${SHARE_HOME}/cryptopp"
+export CRYPTOPP_ROOT="${USTORE_DEPS_HOME}/cryptopp"
 export CPATH="${CRYPTOPP_ROOT}/include:${CPATH:-}"
 export LD_LIBRARY_PATH="${CRYPTOPP_ROOT}/lib:${LD_LIBRARY_PATH:-}"
 export LIBRARY_PATH="${CRYPTOPP_ROOT}/lib:${LIBRARY_PATH:-}"
@@ -390,7 +390,7 @@ install_dep_zmq() {
   (
     cd "${zmq_dir}"
     ./autogen.sh
-    ./configure --prefix="${SHARE_HOME}/zmq"
+    ./configure --prefix="${USTORE_DEPS_HOME}/zmq"
     make -j "${NCORES}"
     sudo make install
   )
@@ -398,7 +398,7 @@ install_dep_zmq() {
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # ZMQ
-export ZMQ_ROOT="${SHARE_HOME}/zmq"
+export ZMQ_ROOT="${USTORE_DEPS_HOME}/zmq"
 export CPATH="${ZMQ_ROOT}/include:${CPATH:-}"
 export LD_LIBRARY_PATH="${ZMQ_ROOT}/lib:${LD_LIBRARY_PATH:-}"
 export LIBRARY_PATH="${ZMQ_ROOT}/lib:${LIBRARY_PATH:-}"
@@ -425,7 +425,7 @@ install_dep_czmq() {
   (
     cd "${czmq_dir}"
     ./autogen.sh
-    ./configure --prefix="${SHARE_HOME}/czmq"
+    ./configure --prefix="${USTORE_DEPS_HOME}/czmq"
     make -j "${NCORES}"
     sudo make install
   )
@@ -433,7 +433,7 @@ install_dep_czmq() {
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # CZMQ
-export CZMQ_ROOT="${SHARE_HOME}/czmq"
+export CZMQ_ROOT="${USTORE_DEPS_HOME}/czmq"
 export CPATH="${CZMQ_ROOT}/include:${CPATH:-}"
 export LD_LIBRARY_PATH="${CZMQ_ROOT}/lib:${LD_LIBRARY_PATH:-}"
 export LIBRARY_PATH="${CZMQ_ROOT}/lib:${LIBRARY_PATH:-}"
@@ -458,13 +458,13 @@ install_dep_rocksdb() {
     cd "${rocksdb_dir}"
     apt_install libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev
     make shared_lib -j "${NCORES}" USE_RTTI=1 DISABLE_WARNING_AS_ERROR=ON
-    sudo make install-shared INSTALL_PATH="${SHARE_HOME}/rocksdb"
+    sudo make install-shared INSTALL_PATH="${USTORE_DEPS_HOME}/rocksdb"
   )
   sudo rm -rf "${rocksdb_dir}" "${rocksdb_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # RocksDB
-export ROCKSDB_ROOT="${SHARE_HOME}/rocksdb"
+export ROCKSDB_ROOT="${USTORE_DEPS_HOME}/rocksdb"
 export CPATH="${ROCKSDB_ROOT}/include:${CPATH:-}"
 export LD_LIBRARY_PATH="${ROCKSDB_ROOT}/lib:${LD_LIBRARY_PATH:-}"
 export LIBRARY_PATH="${ROCKSDB_ROOT}/lib:${LIBRARY_PATH:-}"
@@ -491,7 +491,7 @@ install_dep_gtest() {
     mkdir -p build
     rm -rf build/*
     cd build
-    cmake -DCMAKE_INSTALL_PREFIX="${SHARE_HOME}/gtest" -DBUILD_SHARED_LIBS=ON ..
+    cmake -DCMAKE_INSTALL_PREFIX="${USTORE_DEPS_HOME}/gtest" -DBUILD_SHARED_LIBS=ON ..
     make -j "${NCORES}"
     sudo make install
   )
@@ -499,7 +499,7 @@ install_dep_gtest() {
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # gtest
-export GTEST_ROOT="${SHARE_HOME}/gtest"
+export GTEST_ROOT="${USTORE_DEPS_HOME}/gtest"
 export CPATH="${GTEST_ROOT}/include:${CPATH:-}"
 export LD_LIBRARY_PATH="${GTEST_ROOT}/lib:${LD_LIBRARY_PATH:-}"
 export LIBRARY_PATH="${GTEST_ROOT}/lib:${LIBRARY_PATH:-}"
@@ -530,15 +530,15 @@ install_dep_maven() {
   info "Installing Maven ${MAVEN_VER} ..."
   tar xzf "${maven_pkg}"
   (
-    sudo mkdir -p "${SHARE_HOME}/maven"
-    sudo rm -rf "${SHARE_HOME}/maven/${maven_dir}"
-    sudo mv "${maven_dir}" "${SHARE_HOME}/maven/"
+    sudo mkdir -p "${USTORE_DEPS_HOME}/maven"
+    sudo rm -rf "${USTORE_DEPS_HOME}/maven/${maven_dir}"
+    sudo mv "${maven_dir}" "${USTORE_DEPS_HOME}/maven/"
   )
   sudo rm "${maven_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-EndOfMsg
 # Maven
-export MAVEN_HOME="\${SHARE_HOME}/maven/${maven_dir}"
+export MAVEN_HOME="\${USTORE_DEPS_HOME}/maven/${maven_dir}"
 export PATH="\${MAVEN_HOME}/bin:\${PATH:-}"
 
 EndOfMsg
@@ -558,7 +558,7 @@ install_dep_python3() {
   (
     cd "${python3_dir}"
     apt_install libffi-dev
-    ./configure --prefix="${SHARE_HOME}/python3"
+    ./configure --prefix="${USTORE_DEPS_HOME}/python3"
     make -j "${NCORES}"
     sudo make install
   )
@@ -566,7 +566,7 @@ install_dep_python3() {
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # Python 3
-export PYTHON3_ROOT="${SHARE_HOME}/python3"
+export PYTHON3_ROOT="${USTORE_DEPS_HOME}/python3"
 export PATH="${PYTHON3_ROOT}/bin:${PATH:-}"
 
 EndOfMsg
@@ -585,7 +585,7 @@ install_dep_python2() {
   tar xzf "${python2_pkg}"
   (
     cd "${python2_dir}"
-    ./configure --prefix="${SHARE_HOME}/python"
+    ./configure --prefix="${USTORE_DEPS_HOME}/python"
     make -j "${NCORES}"
     sudo make install
   )
@@ -593,7 +593,7 @@ install_dep_python2() {
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # Python 2
-export PYTHON_ROOT="${SHARE_HOME}/python"
+export PYTHON_ROOT="${USTORE_DEPS_HOME}/python"
 export PATH="${PYTHON_ROOT}/bin:${PATH:-}"
 
 EndOfMsg
@@ -612,11 +612,11 @@ install_dep_ccache() {
   tar xjf "${ccache_pkg}"
   (
     cd "${ccache_dir}"
-    ./configure --prefix="${SHARE_HOME}/ccache"
+    ./configure --prefix="${USTORE_DEPS_HOME}/ccache"
     make -j "${NCORES}"
     sudo make install
     
-    cd "${SHARE_HOME}/ccache/bin"
+    cd "${USTORE_DEPS_HOME}/ccache/bin"
     sudo rm -f gcc g++ cc c++
     sudo ln -s ccache gcc
     sudo ln -s ccache g++
@@ -627,7 +627,7 @@ install_dep_ccache() {
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # ccache
-export CCACHE_HOME="${SHARE_HOME}/ccache"
+export CCACHE_HOME="${USTORE_DEPS_HOME}/ccache"
 export PATH="${CCACHE_HOME}/bin:${PATH:-}"
 export MANPATH="${CCACHE_HOME}/share/man:${MANPATH:-}"
 
