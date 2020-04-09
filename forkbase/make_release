@@ -29,7 +29,7 @@ readonly WORK_DIR="$(pwd -P)"
 
 # Build UStore
 cd "${WORK_DIR}"
-rm -f "${BUILD_DIR}"
+rm -rf "${BUILD_DIR}"
 check_err "Failed to delete folder '${BUILD_DIR}'"
 mkdir -p "${BUILD_DIR}"
 

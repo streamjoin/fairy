@@ -7,3 +7,7 @@
 # Customized configurations
 *.conf
 !*.default
+
+# OS generated
+*.DS_Store
+
