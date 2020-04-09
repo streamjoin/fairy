@@ -72,7 +72,7 @@ main() {
   install_dep_maven
   # install_dep_python3
   # install_dep_python2
-  install_dep_ccache
+  # install_dep_ccache
   
   [[ "${in_temp_dir:-}" = "true" ]] && popd >/dev/null
   
