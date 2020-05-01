@@ -13,13 +13,13 @@ source "${FAIRY_HOME}/_common_lib/output_utils.sh"
 delete_file() {
   rm -f "$1"
   [[ ! -f "$1" ]] ||
-  check_err "failed to delete file '$1'"
+  check_err "Failed to delete file '$1'"
 }
 
 delete_dir() {
   rm -rf "$1"
   [[ ! -d "$1" ]] ||
-  check_err "failed to delete directory '$1'"
+  check_err "Failed to delete directory '$1'"
 }
 
 try_delete_empty_dir() {
@@ -29,13 +29,13 @@ try_delete_empty_dir() {
 
 find_and_link_files_by_ext() {
   [[ "$#" -eq 3 ]] ||
-  check_err "wrong number of parameters to 'find_and_link_files_by_ext()'"
+  check_err "Wrong number of parameters to 'find_and_link_files_by_ext()'"
   
   local -r ext="$1"
   
   local -r from_dir="$2"
   [[ -d "${from_dir}" ]] ||
-  check_err "invalid path of directory '${from_dir}'"
+  check_err "Invalid path of directory '${from_dir}'"
   
   local -r to_dir="$3"
   mkdir -p "${to_dir}"
@@ -47,7 +47,7 @@ find_and_link_files_by_ext() {
 
 find_and_link_files_by_regex() {
   [[ "$#" -eq 3 ]] ||
-  check_err "wrong number of parameters to 'find_and_link_files_by_regex()'"
+  check_err "Wrong number of parameters to 'find_and_link_files_by_regex()'"
   
   local regex="$1"
   [[ "$(os_type)" != "Mac" ]] &&
@@ -55,7 +55,7 @@ find_and_link_files_by_regex() {
   
   local -r from_dir="$2"
   [[ -d "${from_dir}" ]] ||
-  check_err "invalid path of directory '${from_dir}'"
+  check_err "Invalid path of directory '${from_dir}'"
   
   local -r to_dir="$3"
   mkdir -p "${to_dir}"
@@ -67,11 +67,11 @@ find_and_link_files_by_regex() {
 
 find_and_link_subdirs() {
   [[ "$#" -eq 2 ]] ||
-  check_err "wrong number of parameters to 'find_and_link_subdirs()'"
+  check_err "Wrong number of parameters to 'find_and_link_subdirs()'"
   
   local -r from_dir="$1"
   [[ -d "${from_dir}" ]] ||
-  check_err "invalid path of directory '${from_dir}'"
+  check_err "Invalid path of directory '${from_dir}'"
   
   local -r to_dir="$2"
   mkdir -p "${to_dir}"
@@ -85,23 +85,23 @@ find_and_link_subdirs() {
 
 check_file_exists() {
   [[ "$#" -eq 1 ]] ||
-  check_err "wrong number of parameters to 'check_file_exists()'"
+  check_err "Wrong number of parameters to 'check_file_exists()'"
   
   [[ -f "$1" ]] ||
-  check_err "invalid path of file '$1'"
+  check_err "Invalid path of file '$1'"
 }
 
 check_dir_exists() {
   [[ "$#" -eq 1 ]] ||
-  check_err "wrong number of parameters to 'check_dir_exists()'"
+  check_err "Wrong number of parameters to 'check_dir_exists()'"
   
   [[ -d "$1" ]] ||
-  check_err "invalid path of directory '$1'"
+  check_err "Invalid path of directory '$1'"
 }
 
 file_size_bytes() {
   [[ "$#" -eq 1 ]] ||
-  check_err "wrong number of parameters to 'get_file_size_bytes()'"
+  check_err "Wrong number of parameters to 'get_file_size_bytes()'"
   
   check_file_exists "$1"
   
