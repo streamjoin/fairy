@@ -49,7 +49,6 @@ check_err "The temporary directory cannot be the current working directory"
 # The main function
 main() {
   check_args "$@"
-  check_sudo
   
   [[ -d "${TEMP_DIR}" ]] && pushd "${TEMP_DIR}" >/dev/null &&
   local -r in_temp_dir="true"
@@ -145,11 +144,6 @@ error_on_multi_download_dir() {
   exit 3
 }
 
-check_sudo() {
-  [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] || sudo -v ||
-  check_err "No sudo privilege for current account '${USER}'"
-}
-
 finish_install() {
   rmdir --ignore-fail-on-non-empty "${TEMP_DIR}"
   
@@ -193,6 +187,12 @@ finish_download() {
 
 # Installation
 apt_install() {
+  [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
+  
+  if ! sudo -v >/dev/null 2>&1 ; then
+    warn "No sudo privilege for current account '${USER}', and apt invocation is ignored"
+    return 0
+  fi
   sudo apt-get -y install "$@" >/dev/null
 }
 
@@ -209,7 +209,7 @@ install_essentials() {
   
   apt_install build-essential autoconf pkg-config libtool git openssl
   
-cat >> "${BASH_PROFILE}" <<-EndOfMsg
+cat > "${BASH_PROFILE}" <<-EndOfMsg
 export USTORE_DEPS_HOME="${DEPS_DIR}"
 export NCORES="\$(cat /proc/cpuinfo | grep "cpu cores" | uniq | awk '{print \$NF}')"
 
@@ -232,11 +232,11 @@ install_dep_cmake() {
   tar xzf "${cmake_pkg}"
   (
     cd "${cmake_dir}"
-    ./bootstrap --prefix="${USTORE_DEPS_HOME}/cmake" --parallel="${NCORES}"
+    ./bootstrap --prefix="${DEPS_DIR}/cmake" --parallel="${NCORES}"
     make -j "${NCORES}"
-    sudo make install
+    make install
   )
-  sudo rm -rf "${cmake_dir}" "${cmake_pkg}"
+  rm -rf "${cmake_dir}" "${cmake_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # CMake
@@ -263,10 +263,10 @@ install_dep_boost() {
   tar xjf "${boost_pkg}"
   (
     cd "${boost_dir}"
-    ./bootstrap.sh --prefix="${USTORE_DEPS_HOME}/boost"
-    sudo ./b2 install -j "${NCORES}"
+    ./bootstrap.sh --prefix="${DEPS_DIR}/boost" || true
+    ./b2 install -j "${NCORES}" || true
   )
-  sudo rm -rf "${boost_dir}" "${boost_pkg}"
+  rm -rf "${boost_dir}" "${boost_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # Boost
@@ -294,11 +294,11 @@ install_dep_gflags() {
     mkdir -p build
     rm -rf build/*
     cd build
-    cmake -DCMAKE_INSTALL_PREFIX="${USTORE_DEPS_HOME}/gflags" -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=ON ..
+    cmake -DCMAKE_INSTALL_PREFIX="${DEPS_DIR}/gflags" -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=ON ..
     make -j "${NCORES}"
-    sudo make install
+    make install
   )
-  sudo rm -rf "${gflags_dir}" "${gflags_pkg}"
+  rm -rf "${gflags_dir}" "${gflags_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # gflags
@@ -326,11 +326,11 @@ install_dep_protobuf() {
   (
     cd "${protobuf_dir}"
     ./autogen.sh
-    ./configure --prefix="${USTORE_DEPS_HOME}/protobuf"
+    ./configure --prefix="${DEPS_DIR}/protobuf"
     make -j "${NCORES}"
-    sudo make install
+    make install
   )
-  sudo rm -rf "${protobuf_dir}" "${protobuf_pkg}"
+  rm -rf "${protobuf_dir}" "${protobuf_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # Protocol Buffers
@@ -360,9 +360,9 @@ install_dep_cryptopp() {
   (
     cd "${cryptopp_dir}"
     make -j "${NCORES}" libcryptopp.a libcryptopp.so
-    sudo make install PREFIX="${USTORE_DEPS_HOME}/cryptopp"
+    make install PREFIX="${DEPS_DIR}/cryptopp"
   )
-  sudo rm -rf "${cryptopp_dir}" "${cryptopp_pkg}"
+  rm -rf "${cryptopp_dir}" "${cryptopp_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # Crypto++
@@ -390,11 +390,11 @@ install_dep_zmq() {
   (
     cd "${zmq_dir}"
     ./autogen.sh
-    ./configure --prefix="${USTORE_DEPS_HOME}/zmq"
+    ./configure --prefix="${DEPS_DIR}/zmq"
     make -j "${NCORES}"
-    sudo make install
+    make install
   )
-  sudo rm -rf "${zmq_dir}" "${zmq_pkg}"
+  rm -rf "${zmq_dir}" "${zmq_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # ZMQ
@@ -425,11 +425,11 @@ install_dep_czmq() {
   (
     cd "${czmq_dir}"
     ./autogen.sh
-    ./configure --prefix="${USTORE_DEPS_HOME}/czmq"
+    ./configure --prefix="${DEPS_DIR}/czmq"
     make -j "${NCORES}"
-    sudo make install
+    make install
   )
-  sudo rm -rf "${czmq_dir}" "${czmq_pkg}"
+  rm -rf "${czmq_dir}" "${czmq_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # CZMQ
@@ -458,9 +458,9 @@ install_dep_rocksdb() {
     cd "${rocksdb_dir}"
     apt_install libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev
     make shared_lib -j "${NCORES}" USE_RTTI=1 DISABLE_WARNING_AS_ERROR=ON
-    sudo make install-shared INSTALL_PATH="${USTORE_DEPS_HOME}/rocksdb"
+    make install-shared INSTALL_PATH="${DEPS_DIR}/rocksdb"
   )
-  sudo rm -rf "${rocksdb_dir}" "${rocksdb_pkg}"
+  rm -rf "${rocksdb_dir}" "${rocksdb_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # RocksDB
@@ -491,11 +491,11 @@ install_dep_gtest() {
     mkdir -p build
     rm -rf build/*
     cd build
-    cmake -DCMAKE_INSTALL_PREFIX="${USTORE_DEPS_HOME}/gtest" -DBUILD_SHARED_LIBS=ON ..
+    cmake -DCMAKE_INSTALL_PREFIX="${DEPS_DIR}/gtest" -DBUILD_SHARED_LIBS=ON ..
     make -j "${NCORES}"
-    sudo make install
+    make install
   )
-  sudo rm -rf "${gtest_dir}" "${gtest_pkg}"
+  rm -rf "${gtest_dir}" "${gtest_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # gtest
@@ -530,11 +530,11 @@ install_dep_maven() {
   info "Installing Maven ${MAVEN_VER} ..."
   tar xzf "${maven_pkg}"
   (
-    sudo mkdir -p "${USTORE_DEPS_HOME}/maven"
-    sudo rm -rf "${USTORE_DEPS_HOME}/maven/${maven_dir}"
-    sudo mv "${maven_dir}" "${USTORE_DEPS_HOME}/maven/"
+    mkdir -p "${DEPS_DIR}/maven"
+    rm -rf "${DEPS_DIR}/maven/${maven_dir}"
+    mv "${maven_dir}" "${DEPS_DIR}/maven/"
   )
-  sudo rm "${maven_pkg}"
+  rm "${maven_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-EndOfMsg
 # Maven
@@ -558,11 +558,11 @@ install_dep_python3() {
   (
     cd "${python3_dir}"
     apt_install libffi-dev
-    ./configure --prefix="${USTORE_DEPS_HOME}/python3"
+    ./configure --prefix="${DEPS_DIR}/python3"
     make -j "${NCORES}"
-    sudo make install
+    make install
   )
-  sudo rm -rf "${python3_dir}" "${python3_pkg}"
+  rm -rf "${python3_dir}" "${python3_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # Python 3
@@ -585,11 +585,11 @@ install_dep_python2() {
   tar xzf "${python2_pkg}"
   (
     cd "${python2_dir}"
-    ./configure --prefix="${USTORE_DEPS_HOME}/python"
+    ./configure --prefix="${DEPS_DIR}/python"
     make -j "${NCORES}"
-    sudo make install
+    make install
   )
-  sudo rm -rf "${python2_dir}" "${python2_pkg}"
+  rm -rf "${python2_dir}" "${python2_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # Python 2
@@ -612,18 +612,18 @@ install_dep_ccache() {
   tar xjf "${ccache_pkg}"
   (
     cd "${ccache_dir}"
-    ./configure --prefix="${USTORE_DEPS_HOME}/ccache"
+    ./configure --prefix="${DEPS_DIR}/ccache"
     make -j "${NCORES}"
-    sudo make install
+    make install
     
-    cd "${USTORE_DEPS_HOME}/ccache/bin"
-    sudo rm -f gcc g++ cc c++
-    sudo ln -s ccache gcc
-    sudo ln -s ccache g++
-    sudo ln -s ccache cc
-    sudo ln -s ccache c++
+    cd "${DEPS_DIR}/ccache/bin"
+    rm -f gcc g++ cc c++
+    ln -s ccache gcc
+    ln -s ccache g++
+    ln -s ccache cc
+    ln -s ccache c++
   )
-  sudo rm -rf "${ccache_dir}" "${ccache_pkg}"
+  rm -rf "${ccache_dir}" "${ccache_pkg}"
   
 cat >> "${BASH_PROFILE}" <<-'EndOfMsg'
 # ccache
