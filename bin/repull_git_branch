@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Squash Git commits via iterative rebase.
+# Force repulling Git branch.
 
 # Do not allow use of undefined vars. Use ${VAR:-} to use an undefined VAR
 set -o nounset
@@ -42,28 +42,17 @@ main() {
   git rev-parse --git-dir >/dev/null 2>&1 ||
   check_err "'${PWD}' is not a Git folder"
   
-  local -r topic_branch="${ARG_POS_VAR_1:-"$(git rev-parse --abbrev-ref HEAD)"}"
-  [[ -n "${topic_branch}" ]] ||
-  check_err "Topic branch cannot be identified"
+  local -r branch="${ARG_POS_VAR_1:-"$(git rev-parse --abbrev-ref HEAD)"}"
+  [[ -n "${branch}" ]] ||
+  check_err "Branch cannot be identified"
+  [[ "${branch}" != "master" ]] ||
+  check_err "This is the 'master' branch. Use 'git pull' instead."
   
-  local -r base_branch="${ARG_BASE_BRANCH:-master}"
-  [[ "${base_branch}" != "${topic_branch}" ]] ||
-  check_err "Base branch cannot be topic branch itself"
+  info "Delete existing branch '${branch}'"
+  git checkout "master" && git branch -D "${branch}"
   
-  info "Update base branch '${base_branch}'"
-  git checkout "${base_branch}" && git pull
-  
-  info "Rebase topic branch '${topic_branch}' to base branch '${base_branch}'"
-  git checkout "${topic_branch}" && git rebase -i "${base_branch}"
-  
-  [[ -n "${FLAG_ARG_OPT_PUSH:-}" ]] &&
-  info "Push changes in '${topic_branch}'" &&
-  git push -f
-  
-  [[ -n "${FLAG_ARG_OPT_SYNC:-}" ]] &&
-  info "Synchronize changes with '${base_branch}' (remote)" &&
-  git checkout "${base_branch}" && git rebase "${topic_branch}" && git push &&
-  git checkout "${topic_branch}"
+  info "Pull updates from remote"
+  git pull && git checkout "${branch}"
   
   # Do cleaning up and bookkeeping in 'finish()', if necessary
   finish
@@ -96,9 +85,6 @@ finish() {
 #######################################
 check_args() {
   # unset variables of option flags
-  unset -v FLAG_ARG_SET_BASE_BRANCH
-  unset -v FLAG_ARG_OPT_PUSH
-  unset -v FLAG_ARG_OPT_SYNC
   
   # process each command-line argument
   for arg in "$@"; do
@@ -108,18 +94,6 @@ check_args() {
         print_usage
         exit 0
       ;;
-      # Handler of setting the base branch
-      '--base'|'-b' )
-        deal_with_arg_opt "--base" "FLAG_ARG_SET_BASE_BRANCH"
-      ;;
-      # Handler of enabling pushing changes immediately
-      '--push'|'-P' )
-        deal_with_arg_opt "--push" "FLAG_ARG_OPT_PUSH"
-      ;;
-      # Handler of enabling pushing changes immediately
-      '--sync'|'-S' )
-        deal_with_arg_opt "--sync" "FLAG_ARG_OPT_SYNC"
-      ;;
       # Unknown options
       '-'* )
         err "Unknown command argument(s) '${arg}' (see '--help' for usage)"
@@ -127,25 +101,20 @@ check_args() {
       ;;
       # Default: assign variables
       * )
-        arg_set_opt_var "--base" "FLAG_ARG_SET_BASE_BRANCH" "ARG_BASE_BRANCH" "${arg}" ||
         arg_set_pos_var "${arg}"    # KEEP THIS AT THE TAIL
       ;;
     esac
   done
   
   # sanity check
-  check_dangling_arg_opt "--base" "FLAG_ARG_SET_BASE_BRANCH"
 }
 
 print_usage() {
 cat <<EndOfMsg
-Usage: ${__SCRIPT_NAME} [OPTION]... <branch>
+Usage: ${__SCRIPT_NAME} <branch>
 
 Options:
-  -h, -?, --help         display this help and exit
-  -b, --base <branch>    set base branch (default: master)
-  -P, --push             push immediately
-  -S, --sync             sync with base branch and its remote
+  -h, -?, --help        display this help and exit
 
 EndOfMsg
 }
