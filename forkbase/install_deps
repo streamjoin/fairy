@@ -30,6 +30,20 @@ source "${FAIRY_HOME}/_common_lib/system.sh"
 # Global variables
 [[ -n "${__START_TIME+x}" ]] || readonly __START_TIME="$(timer)"
 
+readonly DEFAULT_CMAKE_VER="3.17.2"
+readonly DEFAULT_BOOST_VER="1.72.0"
+readonly DEFAULT_GFLAGS_VER="2.2.2"
+readonly DEFAULT_PROTOBUF_VER="3.11.4"
+readonly DEFAULT_CRYPTOPP_VER="8.2.0"
+readonly DEFAULT_ZMQ_VER="4.3.2"
+readonly DEFAULT_CZMQ_VER="4.2.0"
+readonly DEFAULT_ROCKSDB_VER="6.8.1"
+readonly DEFAULT_GTEST_VER="1.10.0"
+readonly DEFAULT_MAVEN_VER="3.6.3"
+readonly DEFAULT_PYTHON3_VER="3.8.2"
+readonly DEFAULT_PYTHON2_VER="2.7.15"
+readonly DEFAULT_CCACHE_VER="3.7.9"
+
 readonly BASH_PROFILE="${USTORE_BASH_PROFILE:-"${HOME}/.bash_profile"}"
 
 DEPS_DIR="${USTORE_DEPS_DIR:-"/usr/local/share"}"
@@ -207,7 +221,7 @@ download_pkg() {
 install_essentials() {
   [[ "${OPT_DOWNLOAD_ONLY}" = "true" ]] && return 0
   
-  apt_install build-essential autoconf pkg-config libtool git openssl
+  apt_install build-essential autoconf pkg-config libtool git openssl libssl-dev
   
 cat > "${BASH_PROFILE}" <<-EndOfMsg
 export USTORE_DEPS_HOME="${DEPS_DIR}"
@@ -220,7 +234,7 @@ EndOfMsg
 }
 
 install_dep_cmake() {
-  readonly CMAKE_VER="${USTORE_CMAKE_VER:-"3.13.4"}"
+  readonly CMAKE_VER="${USTORE_CMAKE_VER:-"${DEFAULT_CMAKE_VER}"}"
   local -r cmake_dl_pkg="cmake-${CMAKE_VER}.tar.gz"
   local -r cmake_pkg="${DOWNLOAD_DIR}/${cmake_dl_pkg}"
   local -r cmake_dir="cmake-${CMAKE_VER}"
@@ -250,7 +264,7 @@ EndOfMsg
 }
 
 install_dep_boost() {
-  readonly BOOST_VER="${USTORE_BOOST_VER:-"1.69.0"}"
+  readonly BOOST_VER="${USTORE_BOOST_VER:-"${DEFAULT_BOOST_VER}"}"
   local -r boost_pkg_ver="${BOOST_VER//./_}"
   local -r boost_dl_pkg="boost_${boost_pkg_ver}.tar.bz2"
   local -r boost_pkg="${DOWNLOAD_DIR}/boost-${BOOST_VER}.tar.bz2"
@@ -279,7 +293,7 @@ EndOfMsg
 }
 
 install_dep_gflags() {
-  readonly GFLAGS_VER="${USTORE_GFLAGS_VER:-"2.2.2"}"
+  readonly GFLAGS_VER="${USTORE_GFLAGS_VER:-"${DEFAULT_GFLAGS_VER}"}"
   local -r gflags_dl_pkg="v${GFLAGS_VER}.tar.gz"
   local -r gflags_pkg="${DOWNLOAD_DIR}/gflags-${GFLAGS_VER}.tar.gz"
   local -r gflags_dir="gflags-${GFLAGS_VER}"
@@ -313,7 +327,7 @@ EndOfMsg
 }
 
 install_dep_protobuf() {
-  readonly PROTOBUF_VER="${USTORE_PROTOBUF_VER:-"3.6.1"}"
+  readonly PROTOBUF_VER="${USTORE_PROTOBUF_VER:-"${DEFAULT_PROTOBUF_VER}"}"
   local -r protobuf_dl_pkg="v${PROTOBUF_VER}.tar.gz"
   local -r protobuf_pkg="${DOWNLOAD_DIR}/protobuf-${PROTOBUF_VER}.tar.gz"
   local -r protobuf_dir="protobuf-${PROTOBUF_VER}"
@@ -346,7 +360,7 @@ EndOfMsg
 }
 
 install_dep_cryptopp() {
-  readonly CRYPTOPP_VER="${USTORE_CRYPTOPP_VER:-"8.0.0"}"
+  readonly CRYPTOPP_VER="${USTORE_CRYPTOPP_VER:-"${DEFAULT_CRYPTOPP_VER}"}"
   local -r cryptopp_pkg_ver="${CRYPTOPP_VER//./_}"
   local -r cryptopp_dl_pkg="CRYPTOPP_${cryptopp_pkg_ver}.tar.gz"
   local -r cryptopp_pkg="${DOWNLOAD_DIR}/cryptopp-${CRYPTOPP_VER}.tar.gz"
@@ -377,7 +391,7 @@ EndOfMsg
 }
 
 install_dep_zmq() {
-  readonly ZMQ_VER="${USTORE_ZMQ_VER:-"4.3.1"}"
+  readonly ZMQ_VER="${USTORE_ZMQ_VER:-"${DEFAULT_ZMQ_VER}"}"
   local -r zmq_dl_pkg="v${ZMQ_VER}.tar.gz"
   local -r zmq_pkg="${DOWNLOAD_DIR}/zmq-${ZMQ_VER}.tar.gz"
   local -r zmq_dir="libzmq-${ZMQ_VER}"
@@ -412,7 +426,7 @@ EndOfMsg
 }
 
 install_dep_czmq() {
-  readonly CZMQ_VER="${USTORE_CZMQ_VER:-"4.2.0"}"
+  readonly CZMQ_VER="${USTORE_CZMQ_VER:-"${DEFAULT_CZMQ_VER}"}"
   local -r czmq_dl_pkg="v${CZMQ_VER}.tar.gz"
   local -r czmq_pkg="${DOWNLOAD_DIR}/czmq-${CZMQ_VER}.tar.gz"
   local -r czmq_dir="czmq-${CZMQ_VER}"
@@ -444,7 +458,7 @@ EndOfMsg
 }
 
 install_dep_rocksdb() {
-  readonly ROCKSDB_VER="${USTORE_ROCKSDB_VER:-"5.17.2"}"
+  readonly ROCKSDB_VER="${USTORE_ROCKSDB_VER:-"${DEFAULT_ROCKSDB_VER}"}"
   local -r rocksdb_dl_pkg="v${ROCKSDB_VER}.tar.gz"
   local -r rocksdb_pkg="${DOWNLOAD_DIR}/rocksdb-${ROCKSDB_VER}.tar.gz"
   local -r rocksdb_dir="rocksdb-${ROCKSDB_VER}"
@@ -475,7 +489,7 @@ EndOfMsg
 }
 
 install_dep_gtest() {
-  readonly GTEST_VER="${USTORE_GTEST_VER:-"1.8.1"}"
+  readonly GTEST_VER="${USTORE_GTEST_VER:-"${DEFAULT_GTEST_VER}"}"
   local -r gtest_pkg_ver="release-${GTEST_VER}"
   local -r gtest_dl_pkg="${gtest_pkg_ver}.tar.gz"
   local -r gtest_pkg="${DOWNLOAD_DIR}/gtest-${GTEST_VER}.tar.gz"
@@ -519,7 +533,7 @@ install_dep_jdk() {
 }
 
 install_dep_maven() {
-  readonly MAVEN_VER="${USTORE_MAVEN_VER:-"3.6.3"}"
+  readonly MAVEN_VER="${USTORE_MAVEN_VER:-"${DEFAULT_MAVEN_VER}"}"
   local -r maven_dl_pkg="apache-maven-${MAVEN_VER}-bin.tar.gz"
   local -r maven_pkg="${DOWNLOAD_DIR}/maven-${MAVEN_VER}.tar.gz"
   local -r maven_dir="apache-maven-${MAVEN_VER}"
@@ -545,7 +559,7 @@ EndOfMsg
 }
 
 install_dep_python3() {
-  readonly PYTHON3_VER="${USTORE_PYTHON3_VER:-"3.7.2"}"
+  readonly PYTHON3_VER="${USTORE_PYTHON3_VER:-"${DEFAULT_PYTHON3_VER}"}"
   local -r python3_dl_pkg="Python-${PYTHON3_VER}.tgz"
   local -r python3_pkg="${DOWNLOAD_DIR}/python-${PYTHON3_VER}.tgz"
   local -r python3_dir="Python-${PYTHON3_VER}"
@@ -573,7 +587,7 @@ EndOfMsg
 }
 
 install_dep_python2() {
-  readonly PYTHON2_VER="${USTORE_PYTHON_VER:-"2.7.15"}"
+  readonly PYTHON2_VER="${USTORE_PYTHON2_VER:-"${DEFAULT_PYTHON2_VER}"}"
   local -r python2_dl_pkg="Python-${PYTHON2_VER}.tgz"
   local -r python2_pkg="${DOWNLOAD_DIR}/python-${PYTHON2_VER}.tgz"
   local -r python2_dir="Python-${PYTHON2_VER}"
@@ -600,7 +614,7 @@ EndOfMsg
 }
 
 install_dep_ccache() {
-  readonly CCACHE_VER="${USTORE_CCACHE_VER:-"3.6"}"
+  readonly CCACHE_VER="${USTORE_CCACHE_VER:-"${DEFAULT_CCACHE_VER}"}"
   local -r ccache_dl_pkg="ccache-${CCACHE_VER}.tar.bz2"
   local -r ccache_pkg="${DOWNLOAD_DIR}/${ccache_dl_pkg}"
   local -r ccache_dir="ccache-${CCACHE_VER}"
