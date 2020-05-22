@@ -31,7 +31,7 @@ source "${FAIRY_HOME}/_common_lib/system.sh"
 [[ -n "${__START_TIME+x}" ]] || readonly __START_TIME="$(timer)"
 
 readonly DEFAULT_CMAKE_VER="3.17.2"
-readonly DEFAULT_BOOST_VER="1.72.0"
+readonly DEFAULT_BOOST_VER="1.73.0"
 readonly DEFAULT_GFLAGS_VER="2.2.2"
 readonly DEFAULT_PROTOBUF_VER="3.11.4"
 readonly DEFAULT_CRYPTOPP_VER="8.2.0"
@@ -277,8 +277,11 @@ install_dep_boost() {
   tar xjf "${boost_pkg}"
   (
     cd "${boost_dir}"
-    ./bootstrap.sh --prefix="${DEPS_DIR}/boost" || true
-    ./b2 install -j "${NCORES}" || true
+    ./bootstrap.sh --prefix="${DEPS_DIR}/boost" ||
+    check_err "Finished 'bootstrap.sh' with error"
+    
+    ./b2 install -j "${NCORES}" ||
+    check_err "Finished 'b2' with error"
   )
   rm -rf "${boost_dir}" "${boost_pkg}"
   
