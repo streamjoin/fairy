@@ -1,12 +1,34 @@
 # Fairy #
 
-The scripts I ever programmed are just like little fairies who get jobs done magically. May you feel helpful with them. 
+The shell scripts I ever programmed are just like little fairies who get jobs done magically. May you feel helpful with them. 
 
-## Facilities ##
+While the scripts in this repository are more or less application-specific, you may checkout the [Fairy-commons](https://github.com/streamjoin/fairy-commons) repository for common script libraries. 
 
-Programming a robust Bash script is usually non-trivial. Fortunately, you can refer to [`bash_bootstrap.sh`](_template/bash_bootstrap.sh) to bootstrap you Bash script in a right shape. Moreover, you may also leverage `bin/bootstrap_sh` to further ease the bootstrapping. (See the quick two-step setup [here](bin/README.md#setup))
+## About This Repository
 
-## Resources ##
+This repository contains [submodules](modules) as dependencies. Therefore, you should run the following command to get the complete source code: 
+
+
+```sh
+git clone --recursive https://github.com/streamjoin/fairy.git
+```
+
+When there are updates of the submodules at their remote repositories, use the following command to pull the changes:  
+
+```sh
+git submodule update --init --recursive
+```
+
+If local changes of the submodules need to be synchronized with their corresponding remote repositories, run the following command: 
+
+```sh
+git submodule update --init --remote
+```
+
+
+## Resources
+
+Before looking into the following references, you may consider leveraging the [bootstrapping facilities](https://github.com/streamjoin/fairy-commons/blob/master/bin/README.md) crafted based on my years of experience to initiate your shell programming in a more elegant way. 
 
 - [Google Shell Style Guide](https://google.github.io/styleguide/shell.xml)
 - [Bash Guide for Beginners](https://www.tldp.org/LDP/Bash-Beginners-Guide/html/index.html) (by Machtelt Garrels)
