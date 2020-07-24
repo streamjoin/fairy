@@ -1,8 +1,8 @@
-# Managing Sandbox Accounts #
+# Managing Sandbox Accounts
 
 Currently, sandbox is account based. The development environment is shared among all the sandbox accounts. 
 
-## Creating Account ##
+## Creating Account
 
 Administrator can create a new account using `add_account` which takes an ID as parameter. For example, 
 
@@ -13,7 +13,7 @@ Default password for the generated account is `sb<ID>`. A randomly generated SSH
 
 Once the account is created, administrator can pass the account name (e.g. `sandbox-00`) and the private key (e.g. `sandbox-00.pem`) to user for login. 
 
-## Managing Account ##
+## Managing Account
 
 The following scripts are used for sandbox account management: 
 
@@ -23,7 +23,7 @@ The following scripts are used for sandbox account management:
 
 Note that all the above scripts (including `add_account`) must be run by administrator who has the `sudo` privilege. 
 
-## Customization ##
+## Customization
 
 By default, the above scripts load configuration from `conf/account_script.conf.default` whose path is *hard-coded* as the `DEFAULT_ACCOUNT_SCRIPT_CONF` variable in the common script `lib/load_script_conf.sh`. The default configuration contains settings of the following variables: 
 
@@ -37,7 +37,7 @@ By default, the above scripts load configuration from `conf/account_script.conf.
 
 Generally, there are two ways to change the script configuration without modifying the scripts. 
 
-### Using Customized Default Configuration ### 
+### Using Customized Default Configuration
 
 By all means, it is *not recommended* to edit the `account_script.conf.default` file. Instead, you are suggested to copy it out, e.g. saved as `account_script.conf`, and further make changes in `account_script.conf`. Once the customization is done, set the environment variable `ACCOUNT_SCRIPT_CONF` to refer to the path of the customized configuration file. For example, 
 
@@ -45,7 +45,7 @@ By all means, it is *not recommended* to edit the `account_script.conf.default` 
 
 Then use the sandbox scripts as usual and the customized configuration should take effect. Basically, for loading default configuration, each sandbox script first looks for `ACCOUNT_SCRIPT_CONF` (environment variable) and, if not found, falls back to `DEFAULT_ACCOUNT_SCRIPT_CONF` (script-scoped variable). 
 
-### Setting Customized Environment Variable ###
+### Setting Customized Environment Variable
 
 The following environment variables starting with `ACCOUNT_` correspond to the aforementioned variables starting with `DEFAULT_`: 
 

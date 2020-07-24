@@ -46,4 +46,4 @@ export BUILD_DIR="${WORK_DIR}/pdfbuild"
 
 # Run build_latex.sh with the above settings
 # shellcheck disable=SC1090
-source "${FAIRY_HOME}/latex/build_latex.sh"
+source "${FAIRY_HOME}/projects/latex/build_latex.sh"

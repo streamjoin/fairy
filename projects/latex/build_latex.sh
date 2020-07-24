@@ -19,15 +19,16 @@ IFS=$'\t\n'    # Split on newlines and tabs (but not on spaces)
 [[ -n "${__SCRIPT_NAME+x}" ]] || readonly __SCRIPT_NAME="$(basename -- "$0")"
 
 # Include libraries
-[[ -n "${FAIRY_HOME+x}" ]] || readonly FAIRY_HOME="${__SCRIPT_DIR}/.."
+[[ -n "${FAIRY_COMMONS_HOME+x}" ]] ||
+readonly FAIRY_COMMONS_HOME="${__SCRIPT_DIR}/../../modules/fairy-commons"
 # shellcheck disable=SC1090
-source "${FAIRY_HOME}/_common_lib/argument_utils.sh"
+source "${FAIRY_COMMONS_HOME}/lib/argument_utils.sh"
 # shellcheck disable=SC1090
-source "${FAIRY_HOME}/_common_lib/filesystem.sh"
+source "${FAIRY_COMMONS_HOME}/lib/filesystem.sh"
 # shellcheck disable=SC1090
-source "${FAIRY_HOME}/_common_lib/output_utils.sh"
+source "${FAIRY_COMMONS_HOME}/lib/output_utils.sh"
 # shellcheck disable=SC1090
-source "${FAIRY_HOME}/_common_lib/system.sh"
+source "${FAIRY_COMMONS_HOME}/lib/system.sh"
 
 # Global variables
 [[ -n "${__START_TIME+x}" ]] || readonly __START_TIME="$(timer)"

@@ -1,0 +1,4 @@
+[submodule "modules/fairy-commons"]
+	path = modules/fairy-commons
+	url = https://github.com/streamjoin/fairy-commons.git
+	branch = master
