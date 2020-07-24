@@ -13,13 +13,13 @@ This repository contains [submodules](modules) as dependencies. Therefore, you s
 git clone --recursive https://github.com/streamjoin/fairy.git
 ```
 
-When there are updates of the submodules at their remote repositories, use the following command to pull the changes:  
+When there are updates of the submodules at *the remote of this repository*, use the following command to pull the changes:  
 
 ```sh
 git submodule update --init --recursive
 ```
 
-If local changes of the submodules need to be synchronized with their corresponding remote repositories, run the following command: 
+Use the following command to synchronize the submodules with *their corresponding remote repositories*: 
 
 ```sh
 git submodule update --init --remote
