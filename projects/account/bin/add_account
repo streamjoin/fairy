@@ -19,8 +19,10 @@ IFS=$'\t\n'    # Split on newlines and tabs (but not on spaces)
 [[ -n "${__SCRIPT_NAME+x}" ]] || readonly __SCRIPT_NAME="$(basename -- "$0")"
 
 # Include libraries
+[[ -n "${FAIRY_HOME+x}" ]] ||
+readonly FAIRY_HOME="${__SCRIPT_DIR}/../../.."
 [[ -n "${FAIRY_COMMONS_HOME+x}" ]] ||
-readonly FAIRY_COMMONS_HOME="${__SCRIPT_DIR}/../../../modules/fairy-commons"
+readonly FAIRY_COMMONS_HOME="${FAIRY_HOME}/modules/fairy-commons"
 # shellcheck disable=SC1090
 source "${FAIRY_COMMONS_HOME}/lib/output_utils.sh"
 # shellcheck disable=SC1090
@@ -28,7 +30,7 @@ source "${FAIRY_COMMONS_HOME}/lib/argument_utils.sh"
 # shellcheck disable=SC1090
 source "${FAIRY_COMMONS_HOME}/lib/filesystem.sh"
 # shellcheck disable=SC1090
-source "${__SCRIPT_DIR}/../lib/load_script_conf.sh"
+source "${FAIRY_HOME}/projects/account/lib/load_script_conf.sh"
 
 # The main function
 main() {
@@ -61,15 +63,17 @@ set_globals() {
 
 create_account() {
   if [[ -n "${ACCOUNT_ADD_ON_GROUPS+x}" ]]; then
-    local -ar add_on_groups=("${ACCOUNT_ADD_ON_GROUPS[@]}")
+    local -ar groups=("${ACCOUNT_ADD_ON_GROUPS[@]}")
   elif [[ -n "${DEFAULT_ADD_ON_GROUPS+x}" ]]; then
-    local -ar add_on_groups=("${DEFAULT_ADD_ON_GROUPS[@]}")
+    local -ar groups=("${DEFAULT_ADD_ON_GROUPS[@]}")
   else
-    local -ar add_on_groups=()
+    local -ar groups=()
   fi
+  [[ -z "${GROUP}" ]] || 
+  groups+=("${GROUP}")
   
   # Create groups, if necessary
-  for grp in "${GROUP}" "${add_on_groups[@]}"; do
+  for grp in "${groups[@]}"; do
     [[ -z "${grp}" ]] ||
     [[ -n "$(getent group "${grp}")" ]] || sudo groupadd "${grp}" ||
     check_err "Failed to create non-existing group '${grp}'"
@@ -80,11 +84,12 @@ create_account() {
   check_err "Failed to delete existing group '${USERNAME}' (probably account '${USERNAME}' exists)"
   
   # Create account
-  sudo useradd "${USERNAME}" "${GROUP:+"-G"}" "${GROUP}" -m -d "${USER_HOME}" -s /bin/bash ||
+  sudo useradd "${USERNAME}" -m -d "${USER_HOME}" -s /bin/bash ||
   check_err "Failed to create account '${USERNAME}'"
-  
-  for grp in "${add_on_groups[@]}"; do
-    sudo usermod -a -G "${grp}" "${USERNAME}"
+
+  for grp in "${groups[@]}"; do
+    sudo usermod -a -G "${grp}" "${USERNAME}" ||
+    check_err "Failed to add '${USERNAME}' into group '${grp}'"
   done
 }
 
