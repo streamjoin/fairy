@@ -33,6 +33,8 @@ main() {
   check_args "$@"
   local -r root="${ARG_ROOT:-"."}"
 
+  rm -f "${root}"/*.sublime-workspace
+  rm -rf "${root}/.idea"
   rm -rf "${root}/project/project"
   rm -rf "${root}/project/src"
   delete_all_dir "${root}" ".bsp"
